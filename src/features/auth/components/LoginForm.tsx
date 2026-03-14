@@ -14,10 +14,11 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
+    mode: "onChange",
   });
 
   return (
@@ -30,13 +31,13 @@ export function LoginForm() {
         {...register("email")}
       />
 
-     <PasswordInput
-  label="Password"
-  placeholder="Enter your password"
-  autoComplete="current-password"
-  error={errors.password?.message}
-  {...register("password")}
-/>
+      <PasswordInput
+        label="Password"
+        placeholder="Enter your password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       <div className="flex items-center justify-between gap-4 text-sm text-slate-400">
         <Checkbox label="Remember this device" />
@@ -47,8 +48,8 @@ export function LoginForm() {
         <InlineError message={mutation.error instanceof Error ? mutation.error.message : "Unable to sign in. Check your credentials."} />
       ) : null}
 
-      <Button type="submit" size="lg" isLoading={mutation.isPending} className="mt-2 w-full">
-        Sign in to admin console
+      <Button type="submit" size="lg" isLoading={mutation.isPending} disabled={!isValid} className="mt-2 w-full">
+        {mutation.isPending ? "Validating credentials..." : "Sign in to admin console"}
       </Button>
     </form>
   );

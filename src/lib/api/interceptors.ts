@@ -1,6 +1,7 @@
 import type { AxiosError, AxiosInstance } from "axios";
 import { toast } from "sonner";
 import { showSessionExpiredToast } from "@/features/auth/components/SessionExpiredToast";
+import { useAuthStore } from "@/app/store/auth.store";
 import { ApiError } from "@/lib/api/errors";
 import { storageKeys, readStorage, removeStorage } from "@/lib/utils/storage";
 
@@ -32,6 +33,7 @@ export function attachInterceptors(client: AxiosInstance) {
       if (error.response?.status === 401) {
         removeStorage(storageKeys.accessToken);
         removeStorage(storageKeys.user);
+        useAuthStore.getState().clearSession();
         if (!hasShownSessionExpired) {
           hasShownSessionExpired = true;
           showSessionExpiredToast();

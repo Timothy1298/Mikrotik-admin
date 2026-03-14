@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import { LogOut, Settings, UserCircle2 } from "lucide-react";
 import { useAuthStore } from "@/app/store/auth.store";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { appRoutes } from "@/config/routes";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 
 export function UserMenu() {
@@ -27,9 +29,18 @@ export function UserMenu() {
           <Badge tone="info" className="mt-3">{user.role}</Badge>
         </div>
         <div className="space-y-1">
-          <button className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]"><UserCircle2 className="h-4 w-4" />Profile</button>
-          <button className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]"><Settings className="h-4 w-4" />Settings</button>
-          <button className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-danger transition hover:border-danger/30 hover:bg-danger/10" onClick={logout}><LogOut className="h-4 w-4" />Logout</button>
+          <Link to={appRoutes.settings} className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]">
+            <UserCircle2 className="h-4 w-4" />
+            Profile
+          </Link>
+          <Link to={appRoutes.settingsSecurity} className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]">
+            <Settings className="h-4 w-4" />
+            Settings
+          </Link>
+          <button className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-danger transition hover:border-danger/30 hover:bg-danger/10" onClick={() => void logout()}>
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
       </div>
     </div>

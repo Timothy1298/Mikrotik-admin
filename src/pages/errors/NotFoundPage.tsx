@@ -12,8 +12,9 @@ export function NotFoundPage() {
         </div>
         <h1 className="text-2xl font-semibold text-slate-100">Page not found</h1>
         <p className="mt-3 text-sm text-slate-400">The requested route has not been mapped yet or the URL is invalid.</p>
-        <Button className="mt-6" onClick={() => (window.location.href = appRoutes.dashboard)}>Return to dashboard</Button>
-        <Link to={appRoutes.dashboard} className="sr-only">Dashboard</Link>
+        <Link to={appRoutes.dashboard}>
+          <Button className="mt-6">Return to dashboard</Button>
+        </Link>
       </div>
     </div>
   );

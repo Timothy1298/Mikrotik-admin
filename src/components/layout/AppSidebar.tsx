@@ -61,7 +61,7 @@ export function AppSidebar() {
             variant="ghost"
             className={`w-full ${sidebarCollapsed ? "justify-center" : "justify-start"}`}
             leftIcon={<LogOut className="h-4 w-4" />}
-            onClick={logout}
+            onClick={() => void logout()}
           >
             {sidebarCollapsed ? "" : "Logout"}
           </Button>

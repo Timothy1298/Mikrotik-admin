@@ -1,1 +1,7 @@
-export type SettingsState = { theme?: string };
+export type SettingsState = {
+  appName: string;
+  appEnv: string;
+  apiBaseUrl: string;
+  requestTimeout: number;
+  mockModeEnabled: boolean;
+};
