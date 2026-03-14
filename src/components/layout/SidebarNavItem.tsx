@@ -3,14 +3,31 @@ import { NavLink } from "react-router-dom";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
 
-export function SidebarNavItem({ icon: Icon, label, to, collapsed, badge }: { icon: LucideIcon; label: string; to: string; collapsed?: boolean; badge?: string | number }) {
+export function SidebarNavItem({
+  icon: Icon,
+  label,
+  to,
+  collapsed,
+  badge,
+  active,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  to: string;
+  collapsed?: boolean;
+  badge?: string | number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   const content = (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         cn(
           "flex items-center justify-between rounded-2xl border px-3 py-3 text-sm transition",
-          isActive ? "surface-active border-brand-500/35 text-slate-100" : "border-transparent text-slate-300 hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)] hover:text-white",
+          (active ?? isActive) ? "surface-active border-brand-500/35 text-slate-100" : "border-transparent text-slate-300 hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)] hover:text-white",
           collapsed && "justify-center",
         )
       }

@@ -38,6 +38,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
 export function SettingsPage() {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
+  const permissionCount = user?.permissions?.length ?? 0;
   const view = settingsViews[location.pathname as keyof typeof settingsViews] ?? settingsViews[appRoutes.settings];
   const ViewIcon = view.icon;
   const sessionStatus = user ? "Authenticated session active" : "No active operator session";
@@ -69,7 +70,7 @@ export function SettingsPage() {
             <SummaryItem label="Operator" value={user?.name ?? "Unknown operator"} />
             <SummaryItem label="Email" value={user?.email ?? "No email available"} />
             <SummaryItem label="Role" value={user?.role ?? "No role loaded"} />
-            <SummaryItem label="Permissions" value={`${user?.permissions.length ?? 0} effective grants`} />
+            <SummaryItem label="Permissions" value={`${permissionCount} effective grants`} />
           </div>
 
           {location.pathname === appRoutes.settings ? (

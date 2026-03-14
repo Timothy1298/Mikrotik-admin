@@ -1,5 +1,4 @@
 import type { AxiosError, AxiosInstance } from "axios";
-import { toast } from "sonner";
 import { showSessionExpiredToast } from "@/features/auth/components/SessionExpiredToast";
 import { useAuthStore } from "@/app/store/auth.store";
 import { ApiError } from "@/lib/api/errors";
@@ -30,11 +29,15 @@ export function attachInterceptors(client: AxiosInstance) {
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<{ error?: string; details?: string; message?: string }>) => {
+      const hadSessionToken = Boolean(readStorage(storageKeys.accessToken));
+      const requestUrl = String(error.config?.url || "");
+      const isAuthRequest = requestUrl.includes("/api/auth/");
+
       if (error.response?.status === 401) {
         removeStorage(storageKeys.accessToken);
         removeStorage(storageKeys.user);
         useAuthStore.getState().clearSession();
-        if (!hasShownSessionExpired) {
+        if (hadSessionToken && !isAuthRequest && !hasShownSessionExpired) {
           hasShownSessionExpired = true;
           showSessionExpiredToast();
           window.setTimeout(() => {
@@ -44,14 +47,7 @@ export function attachInterceptors(client: AxiosInstance) {
         return Promise.reject(normalizeError(error));
       }
 
-      if (error.code === "ERR_NETWORK") {
-        toast.error("Network request failed. Check your connection and try again.");
-        return Promise.reject(normalizeError(error));
-      }
-
-      const normalized = normalizeError(error);
-      toast.error(normalized.message);
-      return Promise.reject(normalized);
+      return Promise.reject(normalizeError(error));
     },
   );
 }

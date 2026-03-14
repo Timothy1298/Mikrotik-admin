@@ -195,7 +195,7 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
               {selectedTicket?.escalated ? <Button variant="ghost" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
               {selectedTicket?.status === "resolved" || selectedTicket?.status === "closed" ? <Button variant="ghost" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
               {selectedTicket?.status !== "closed" ? <Button variant="ghost" onClick={closeDisclosure.onOpen} disabled={!selectedTicket}>Close</Button> : null}
-              {selectedTicket?.flags.length ? <Button variant="ghost" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }} disabled={!selectedTicket}>Unflag</Button> : null}
+              {selectedTicket?.flags?.length ? <Button variant="ghost" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }} disabled={!selectedTicket}>Unflag</Button> : null}
               <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={() => { void ticketsQuery.refetch(); void unassignedQuery.refetch(); void escalatedQuery.refetch(); void staleQuery.refetch(); void workloadQuery.refetch(); void agentsQuery.refetch(); if (selectedAssigneeId) void assigneeTicketsQuery.refetch(); }} />
             </div>
           </DataToolbar>
