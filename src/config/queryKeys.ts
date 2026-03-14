@@ -1,0 +1,16 @@
+export const queryKeys = {
+  auth: ["auth"] as const,
+  me: ["auth", "me"] as const,
+  dashboard: ["dashboard"] as const,
+  users: ["users"] as const,
+  userDetail: (id: string) => ["users", id] as const,
+  routers: ["routers"] as const,
+  routerDetail: (id: string) => ["routers", id] as const,
+  vpnServers: ["vpn-servers"] as const,
+  vpnServerDetail: (id: string) => ["vpn-servers", id] as const,
+  monitoring: ["monitoring"] as const,
+  billing: ["billing"] as const,
+  logs: ["logs"] as const,
+  support: ["support"] as const,
+  settings: ["settings"] as const,
+};

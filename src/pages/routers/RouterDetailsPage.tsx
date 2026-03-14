@@ -1,0 +1,116 @@
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ErrorState } from "@/components/feedback/ErrorState";
+import { PageLoader } from "@/components/feedback/PageLoader";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { appRoutes } from "@/config/routes";
+import {
+  AddRouterFlagDialog,
+  AddRouterNoteDialog,
+  DeleteRouterDialog,
+  DisableRouterDialog,
+  MarkRouterReviewedDialog,
+  MoveServerDialog,
+  ReactivateRouterDialog,
+  ReassignPortsDialog,
+  RegenerateSetupDialog,
+  ReprovisionRouterDialog,
+  ResetPeerDialog,
+  RemoveRouterFlagDialog,
+  RouterDetailsWorkspace,
+} from "@/features/routers/components";
+import {
+  useAddRouterFlag,
+  useAddRouterNote,
+  useDeleteRouter,
+  useDisableRouter,
+  useMarkRouterReviewed,
+  useMoveRouterServer,
+  useReactivateRouter,
+  useReassignRouterPorts,
+  useRegenerateRouterSetup,
+  useRemoveRouterFlag,
+  useReprovisionRouter,
+  useResetRouterPeer,
+  useRouter,
+} from "@/features/routers/hooks/useRouter";
+import type { RouterDetail } from "@/features/routers/types/router.types";
+import { useDisclosure } from "@/hooks/ui/useDisclosure";
+
+export function RouterDetailsPage() {
+  const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const [selectedFlag, setSelectedFlag] = useState<RouterDetail["flags"][number] | null>(null);
+  const routerQuery = useRouter(id);
+
+  const disableDisclosure = useDisclosure(false);
+  const deleteDisclosure = useDisclosure(false);
+  const reactivateDisclosure = useDisclosure(false);
+  const reprovisionDisclosure = useDisclosure(false);
+  const regenerateDisclosure = useDisclosure(false);
+  const resetPeerDisclosure = useDisclosure(false);
+  const reassignPortsDisclosure = useDisclosure(false);
+  const moveServerDisclosure = useDisclosure(false);
+  const reviewedDisclosure = useDisclosure(false);
+  const noteDisclosure = useDisclosure(false);
+  const flagDisclosure = useDisclosure(false);
+  const removeFlagDisclosure = useDisclosure(false);
+
+  const disableMutation = useDisableRouter();
+  const deleteMutation = useDeleteRouter();
+  const reactivateMutation = useReactivateRouter();
+  const reprovisionMutation = useReprovisionRouter();
+  const regenerateMutation = useRegenerateRouterSetup();
+  const resetPeerMutation = useResetRouterPeer();
+  const reassignPortsMutation = useReassignRouterPorts();
+  const moveServerMutation = useMoveRouterServer();
+  const markReviewedMutation = useMarkRouterReviewed();
+  const noteMutation = useAddRouterNote();
+  const addFlagMutation = useAddRouterFlag();
+  const removeFlagMutation = useRemoveRouterFlag();
+
+  if (routerQuery.isPending) return <PageLoader />;
+  if (routerQuery.isError || !routerQuery.data) {
+    return <ErrorState title="Unable to load router" description="The router detail workspace could not be loaded. Retry after confirming the backend admin router API is available." onAction={() => void routerQuery.refetch()} />;
+  }
+
+  const router = routerQuery.data;
+
+  return (
+    <section className="space-y-6">
+      <PageHeader title={router.profile.name} description="Route-driven router workspace for operational diagnostics, connectivity actions, and customer-impact context." meta={router.profile.vpnIp} />
+
+      <RouterDetailsWorkspace
+        router={router}
+        onDisable={disableDisclosure.onOpen}
+        onDelete={deleteDisclosure.onOpen}
+        onReactivate={reactivateDisclosure.onOpen}
+        onReprovision={reprovisionDisclosure.onOpen}
+        onRegenerateSetup={regenerateDisclosure.onOpen}
+        onResetPeer={resetPeerDisclosure.onOpen}
+        onReassignPorts={reassignPortsDisclosure.onOpen}
+        onMoveServer={moveServerDisclosure.onOpen}
+        onMarkReviewed={reviewedDisclosure.onOpen}
+        onAddNote={noteDisclosure.onOpen}
+        onAddFlag={flagDisclosure.onOpen}
+        onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
+      />
+
+      <DisableRouterDialog open={disableDisclosure.open} loading={disableMutation.isPending} onClose={disableDisclosure.onClose} onConfirm={(reason) => disableMutation.mutate([router.id, reason] as never, { onSuccess: () => disableDisclosure.onClose() })} />
+      <DeleteRouterDialog open={deleteDisclosure.open} loading={deleteMutation.isPending} onClose={deleteDisclosure.onClose} onConfirm={(reason) => deleteMutation.mutate([router.id, reason] as never, { onSuccess: () => { deleteDisclosure.onClose(); navigate(appRoutes.routersAll); } })} />
+      <ReactivateRouterDialog open={reactivateDisclosure.open} loading={reactivateMutation.isPending} onClose={reactivateDisclosure.onClose} onConfirm={(reason) => reactivateMutation.mutate([router.id, reason] as never, { onSuccess: () => reactivateDisclosure.onClose() })} />
+      <ReprovisionRouterDialog open={reprovisionDisclosure.open} loading={reprovisionMutation.isPending} onClose={reprovisionDisclosure.onClose} onConfirm={(reason) => reprovisionMutation.mutate([router.id, reason] as never, { onSuccess: () => reprovisionDisclosure.onClose() })} />
+      <RegenerateSetupDialog open={regenerateDisclosure.open} loading={regenerateMutation.isPending} onClose={regenerateDisclosure.onClose} onConfirm={(reason) => regenerateMutation.mutate([router.id, reason] as never, { onSuccess: () => regenerateDisclosure.onClose() })} />
+      <ResetPeerDialog open={resetPeerDisclosure.open} loading={resetPeerMutation.isPending} onClose={resetPeerDisclosure.onClose} onConfirm={(reason) => resetPeerMutation.mutate([router.id, reason] as never, { onSuccess: () => resetPeerDisclosure.onClose() })} />
+      <ReassignPortsDialog open={reassignPortsDisclosure.open} loading={reassignPortsMutation.isPending} onClose={reassignPortsDisclosure.onClose} onConfirm={(payload) => reassignPortsMutation.mutate([router.id, payload] as never, { onSuccess: () => reassignPortsDisclosure.onClose() })} />
+      <MoveServerDialog open={moveServerDisclosure.open} loading={moveServerMutation.isPending} onClose={moveServerDisclosure.onClose} onConfirm={(payload) => moveServerMutation.mutate([router.id, payload] as never, { onSuccess: () => moveServerDisclosure.onClose() })} />
+      <MarkRouterReviewedDialog open={reviewedDisclosure.open} loading={markReviewedMutation.isPending} onClose={reviewedDisclosure.onClose} onConfirm={(reason) => markReviewedMutation.mutate([router.id, reason] as never, { onSuccess: () => reviewedDisclosure.onClose() })} />
+      <AddRouterNoteDialog open={noteDisclosure.open} loading={noteMutation.isPending} onClose={noteDisclosure.onClose} onConfirm={(payload) => noteMutation.mutate([router.id, payload] as never, { onSuccess: () => noteDisclosure.onClose() })} />
+      <AddRouterFlagDialog open={flagDisclosure.open} loading={addFlagMutation.isPending} onClose={flagDisclosure.onClose} onConfirm={(payload) => addFlagMutation.mutate([router.id, payload] as never, { onSuccess: () => flagDisclosure.onClose() })} />
+      <RemoveRouterFlagDialog open={removeFlagDisclosure.open} loading={removeFlagMutation.isPending} flag={selectedFlag} onClose={removeFlagDisclosure.onClose} onConfirm={(reason) => {
+        if (!selectedFlag?.id) return;
+        removeFlagMutation.mutate([router.id, selectedFlag.id, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() });
+      }} />
+    </section>
+  );
+}
