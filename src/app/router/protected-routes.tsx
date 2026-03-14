@@ -6,7 +6,8 @@ import { BillingPage } from "@/pages/billing/BillingPage";
 import { BillingOverviewPage } from "@/pages/billing/BillingOverviewPage";
 import { BillingSectionPage } from "@/pages/billing/BillingSectionPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
-import { LogsPage } from "@/pages/logs/LogsPage";
+import { LogsSecurityOverviewPage } from "@/pages/logs-security/LogsSecurityOverviewPage";
+import { LogsSecuritySectionPage } from "@/pages/logs-security/LogsSecuritySectionPage";
 import { MonitoringOverviewPage } from "@/pages/monitoring/MonitoringOverviewPage";
 import { MonitoringSectionPage } from "@/pages/monitoring/MonitoringSectionPage";
 import { RouterManagementOverviewPage } from "@/pages/routers/RouterManagementOverviewPage";
@@ -92,9 +93,18 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.billingEntitlements} element={<BillingSectionPage section="entitlements" />} />
         <Route path={appRoutes.billingActivity} element={<BillingSectionPage section="activity" />} />
         <Route path={appRoutes.billingNotesFlags} element={<BillingSectionPage section="notes-flags" />} />
-        <Route path={appRoutes.logs} element={<LogsPage />} />
-        <Route path={appRoutes.activityLogs} element={<LogsPage />} />
-        <Route path={appRoutes.securityLogs} element={<LogsPage />} />
+        <Route path={appRoutes.logsSecurityRoot} element={<Navigate to={appRoutes.logsSecurityOverview} replace />} />
+        <Route path={appRoutes.logsSecurity} element={<LogsSecurityOverviewPage />} />
+        <Route path={appRoutes.logsSecurityOverview} element={<LogsSecurityOverviewPage />} />
+        <Route path={appRoutes.logsSecurityActivity} element={<LogsSecuritySectionPage section="activity" />} />
+        <Route path={appRoutes.logsSecurityAudit} element={<LogsSecuritySectionPage section="audit" />} />
+        <Route path={appRoutes.logsSecuritySecurityOverview} element={<LogsSecuritySectionPage section="security-overview" />} />
+        <Route path={appRoutes.logsSecuritySecurityEvents} element={<LogsSecuritySectionPage section="security-events" />} />
+        <Route path={appRoutes.logsSecuritySuspiciousActivity} element={<LogsSecuritySectionPage section="suspicious-activity" />} />
+        <Route path={appRoutes.logsSecuritySessions} element={<LogsSecuritySectionPage section="sessions" />} />
+        <Route path={appRoutes.logsSecurityUserSecurityReview} element={<LogsSecuritySectionPage section="user-security-review" />} />
+        <Route path={appRoutes.logsSecurityResourceTimelines} element={<LogsSecuritySectionPage section="resource-timelines" />} />
+        <Route path={appRoutes.logsSecurityReviewsNotes} element={<LogsSecuritySectionPage section="reviews-notes" />} />
         <Route path={appRoutes.support} element={<TicketsPage />} />
         <Route path={appRoutes.supportTicket()} element={<TicketDetailsPage />} />
         <Route path={appRoutes.settings} element={<SettingsPage />} />
