@@ -1,0 +1,16 @@
+import { useMemo } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { DataTable } from "@/components/data-display/DataTable";
+import type { BillingTrialRow } from "@/features/billing/types/billing.types";
+import { formatDateTime } from "@/lib/formatters/date";
+
+export function TrialAccountsTable({ rows, onOpen }: { rows: BillingTrialRow[]; onOpen: (row: BillingTrialRow) => void }) {
+  const columns = useMemo<ColumnDef<BillingTrialRow>[]>(() => [
+    { header: "Account", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.name}</p><p className="text-xs text-slate-500">{row.original.email}</p></div> },
+    { header: "Trial ends", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.trialEndsAt)}</span> },
+    { header: "Ending soon", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.trialEndingSoon ? "Yes" : "No"}</span> },
+    { header: "Trial subscriptions", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.subscriptionsOnTrial}</span> },
+    { header: "Estimated value", cell: ({ row }) => <span className="text-sm text-slate-200">${row.original.estimatedRecurringValue.toFixed(2)}</span> },
+  ], []);
+  return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No trial accounts found" emptyDescription="No trial accounts matched the current filters." />;
+}

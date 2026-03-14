@@ -3,9 +3,12 @@ import { RequireAuth } from "@/app/router/guards";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { appRoutes } from "@/config/routes";
 import { BillingPage } from "@/pages/billing/BillingPage";
+import { BillingOverviewPage } from "@/pages/billing/BillingOverviewPage";
+import { BillingSectionPage } from "@/pages/billing/BillingSectionPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { LogsPage } from "@/pages/logs/LogsPage";
-import { MonitoringPage } from "@/pages/monitoring/MonitoringPage";
+import { MonitoringOverviewPage } from "@/pages/monitoring/MonitoringOverviewPage";
+import { MonitoringSectionPage } from "@/pages/monitoring/MonitoringSectionPage";
 import { RouterManagementOverviewPage } from "@/pages/routers/RouterManagementOverviewPage";
 import { RouterManagementSectionPage } from "@/pages/routers/RouterManagementSectionPage";
 import { RouterDetailsPage } from "@/pages/routers/RouterDetailsPage";
@@ -16,6 +19,8 @@ import { TicketsPage } from "@/pages/support/TicketsPage";
 import { UserDetailsPage } from "@/pages/users/UserDetailsPage";
 import { UserManagementOverviewPage } from "@/pages/users/UserManagementOverviewPage";
 import { UserManagementSectionPage } from "@/pages/users/UserManagementSectionPage";
+import { VpnServerManagementOverviewPage } from "@/pages/vpn-servers/VpnServerManagementOverviewPage";
+import { VpnServerManagementSectionPage } from "@/pages/vpn-servers/VpnServerManagementSectionPage";
 import { VpnServerDetailsPage } from "@/pages/vpn-servers/VpnServerDetailsPage";
 import { VpnServersPage } from "@/pages/vpn-servers/VpnServersPage";
 
@@ -50,12 +55,43 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.routersDiagnosticsReview} element={<RouterManagementSectionPage section="diagnostics-review" />} />
         <Route path={appRoutes.routersNotesFlags} element={<RouterManagementSectionPage section="notes-flags" />} />
         <Route path={appRoutes.routerDetail()} element={<RouterDetailsPage />} />
-        <Route path={appRoutes.vpnServers} element={<VpnServersPage />} />
+        <Route path={appRoutes.vpnServersRoot} element={<Navigate to={appRoutes.vpnServersOverview} replace />} />
+        <Route path={appRoutes.vpnServers} element={<VpnServerManagementOverviewPage />} />
+        <Route path={appRoutes.vpnServersOverview} element={<VpnServerManagementOverviewPage />} />
+        <Route path={appRoutes.vpnServersAll} element={<VpnServerManagementSectionPage section="all" />} />
+        <Route path={appRoutes.vpnServersHealthy} element={<VpnServerManagementSectionPage section="healthy" />} />
+        <Route path={appRoutes.vpnServersUnhealthy} element={<VpnServerManagementSectionPage section="unhealthy" />} />
+        <Route path={appRoutes.vpnServersMaintenance} element={<VpnServerManagementSectionPage section="maintenance" />} />
+        <Route path={appRoutes.vpnServersOverloaded} element={<VpnServerManagementSectionPage section="overloaded" />} />
+        <Route path={appRoutes.vpnServersRouterDistribution} element={<VpnServerManagementSectionPage section="router-distribution" />} />
+        <Route path={appRoutes.vpnServersPeerHealth} element={<VpnServerManagementSectionPage section="peer-health" />} />
+        <Route path={appRoutes.vpnServersTrafficLoad} element={<VpnServerManagementSectionPage section="traffic-load" />} />
+        <Route path={appRoutes.vpnServersDiagnosticsReview} element={<VpnServerManagementSectionPage section="diagnostics-review" />} />
         <Route path={appRoutes.vpnServerDetail()} element={<VpnServerDetailsPage />} />
-        <Route path={appRoutes.monitoring} element={<MonitoringPage />} />
-        <Route path={appRoutes.billing} element={<BillingPage />} />
-        <Route path={appRoutes.billingInvoices} element={<BillingPage />} />
-        <Route path={appRoutes.billingSubscriptions} element={<BillingPage />} />
+        <Route path={appRoutes.monitoringRoot} element={<Navigate to={appRoutes.monitoringOverview} replace />} />
+        <Route path={appRoutes.monitoring} element={<MonitoringOverviewPage />} />
+        <Route path={appRoutes.monitoringOverview} element={<MonitoringOverviewPage />} />
+        <Route path={appRoutes.monitoringRouterHealth} element={<MonitoringSectionPage section="router-health" />} />
+        <Route path={appRoutes.monitoringVpnServerHealth} element={<MonitoringSectionPage section="vpn-server-health" />} />
+        <Route path={appRoutes.monitoringPeerHealth} element={<MonitoringSectionPage section="peer-health" />} />
+        <Route path={appRoutes.monitoringTrafficBandwidth} element={<MonitoringSectionPage section="traffic-bandwidth" />} />
+        <Route path={appRoutes.monitoringCustomerImpact} element={<MonitoringSectionPage section="customer-impact" />} />
+        <Route path={appRoutes.monitoringProvisioningAnalytics} element={<MonitoringSectionPage section="provisioning-analytics" />} />
+        <Route path={appRoutes.monitoringIncidentsAlerts} element={<MonitoringSectionPage section="incidents-alerts" />} />
+        <Route path={appRoutes.monitoringDiagnostics} element={<MonitoringSectionPage section="diagnostics" />} />
+        <Route path={appRoutes.monitoringActivityFeed} element={<MonitoringSectionPage section="activity-feed" />} />
+        <Route path={appRoutes.billingRoot} element={<Navigate to={appRoutes.billingOverview} replace />} />
+        <Route path={appRoutes.billing} element={<BillingOverviewPage />} />
+        <Route path={appRoutes.billingOverview} element={<BillingOverviewPage />} />
+        <Route path={appRoutes.billingSubscriptions} element={<BillingSectionPage section="subscriptions" />} />
+        <Route path={appRoutes.billingTrials} element={<BillingSectionPage section="trials" />} />
+        <Route path={appRoutes.billingActivePaid} element={<BillingSectionPage section="active-paid" />} />
+        <Route path={appRoutes.billingOverdueRisk} element={<BillingSectionPage section="overdue-risk" />} />
+        <Route path={appRoutes.billingInvoices} element={<BillingSectionPage section="invoices" />} />
+        <Route path={appRoutes.billingPayments} element={<BillingSectionPage section="payments" />} />
+        <Route path={appRoutes.billingEntitlements} element={<BillingSectionPage section="entitlements" />} />
+        <Route path={appRoutes.billingActivity} element={<BillingSectionPage section="activity" />} />
+        <Route path={appRoutes.billingNotesFlags} element={<BillingSectionPage section="notes-flags" />} />
         <Route path={appRoutes.logs} element={<LogsPage />} />
         <Route path={appRoutes.activityLogs} element={<LogsPage />} />
         <Route path={appRoutes.securityLogs} element={<LogsPage />} />

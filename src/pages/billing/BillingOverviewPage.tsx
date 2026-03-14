@@ -1,0 +1,78 @@
+import { AlertTriangle, ArrowRight, Clock3, CreditCard, Receipt, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import { EmptyState } from "@/components/feedback/EmptyState";
+import { ErrorState } from "@/components/feedback/ErrorState";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
+import { TableLoader } from "@/components/feedback/TableLoader";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { MetricCard } from "@/components/shared/MetricCard";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { appRoutes } from "@/config/routes";
+import { BillingStatsRow } from "@/features/billing/components";
+import { useBillingActivity, useBillingAnalytics, useBillingOverview, useBillingRisk, useSubscriptions } from "@/features/billing/hooks/useBilling";
+
+export function BillingOverviewPage() {
+  const overviewQuery = useBillingOverview();
+  const analyticsQuery = useBillingAnalytics({ window: "30d" });
+  const riskQuery = useBillingRisk();
+  const activityQuery = useBillingActivity({ limit: 5 });
+  const overdueQuery = useSubscriptions({ limit: 5, overdue: "true" } as never);
+
+  if (overviewQuery.isPending) return <TableLoader />;
+  if (overviewQuery.isError || !overviewQuery.data) return <ErrorState title="Unable to load billing overview" description="Retry after confirming the admin billing API is available." onAction={() => void overviewQuery.refetch()} />;
+
+  const overview = overviewQuery.data;
+
+  return (
+    <section className="space-y-6">
+      <PageHeader title="Billing & Subscriptions" description="Platform-wide command center for subscription health, invoice/payment state, trial pressure, grace-period operations, and revenue risk." meta={overview.lastBillingSyncAt ? `Last sync ${overview.lastBillingSyncAt}` : "Billing telemetry ready"} />
+      <div className="flex justify-end">
+        <RefreshButton loading={overviewQuery.isFetching || analyticsQuery.isFetching || riskQuery.isFetching || activityQuery.isFetching || overdueQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void analyticsQuery.refetch(); void riskQuery.refetch(); void activityQuery.refetch(); void overdueQuery.refetch(); }} />
+      </div>
+      <BillingStatsRow overview={overview} />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard title="Estimated MRR" value={`$${overview.estimatedMRR.toFixed(2)}`} progress={100} />
+        <MetricCard title="Failed payments" value={String(overview.failedPaymentCount)} progress={Math.min(100, overview.failedPaymentCount * 10)} />
+        <MetricCard title="Trials ending soon" value={String(overview.trialsEndingSoon)} progress={Math.min(100, overview.trialsEndingSoon * 12)} />
+        <MetricCard title="Grace period accounts" value={String(overview.accountsInGracePeriod)} progress={Math.min(100, overview.accountsInGracePeriod * 12)} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <CardHeader><div><CardTitle>Risk summary</CardTitle><CardDescription>Highest-signal billing follow-up counts from the real backend risk model.</CardDescription></div></CardHeader>
+          {riskQuery.isPending ? <SectionLoader /> : riskQuery.isError || !riskQuery.data ? <ErrorState title="Unable to load billing risk" description="Retry after confirming the risk endpoint is available." onAction={() => void riskQuery.refetch()} /> : (
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Overdue accounts: {riskQuery.data.overdueAccounts}</div>
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Failed payments: {riskQuery.data.failedPayments}</div>
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Suspension risk: {riskQuery.data.accountsAtRiskOfSuspension}</div>
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Repeated failures: {riskQuery.data.repeatedPaymentFailures}</div>
+            </div>
+          )}
+        </Card>
+        <Card>
+          <CardHeader><div><CardTitle>Quick jumps</CardTitle><CardDescription>Open the highest-signal billing queues directly from the overview.</CardDescription></div></CardHeader>
+          <div className="grid gap-3">
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.billingOverdueRisk}>Overdue & Risk <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.billingTrials}>Trial Accounts <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.billingInvoices}>Invoices <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.billingPayments}>Payments <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+        </Card>
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <Card>
+          <CardHeader><div><CardTitle>Recent billing activity</CardTitle><CardDescription>Latest billing events across subscriptions, invoices, payments, and admin actions.</CardDescription></div></CardHeader>
+          <div className="space-y-3">
+            {activityQuery.isPending ? <SectionLoader /> : activityQuery.isError ? <ErrorState title="Unable to load billing activity" description="Retry after confirming the activity endpoint is available." onAction={() => void activityQuery.refetch()} /> : (activityQuery.data?.items || []).length ? activityQuery.data?.items.map((item) => <div key={item.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">{item.summary}</div>) : <EmptyState icon={Receipt} title="No billing activity" description="Recent billing events will appear here." />}
+          </div>
+        </Card>
+        <Card>
+          <CardHeader><div><CardTitle>Top risk accounts</CardTitle><CardDescription>Accounts currently carrying overdue or failed-payment risk.</CardDescription></div></CardHeader>
+          <div className="space-y-3">
+            {overdueQuery.isPending ? <SectionLoader /> : overdueQuery.isError ? <ErrorState title="Unable to load overdue accounts" description="Retry after confirming the subscriptions endpoint is available." onAction={() => void overdueQuery.refetch()} /> : (overdueQuery.data?.items || []).length ? overdueQuery.data?.items.map((item) => <div key={item.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium text-slate-100">{item.account?.name}</p><p className="text-sm text-slate-400">{item.subscriptionStatus} • {item.openInvoiceCount} open invoices</p></div><AlertTriangle className="h-4 w-4 text-danger" /></div></div>) : <EmptyState icon={ShieldAlert} title="No overdue accounts" description="No accounts are currently in the overdue subscription queue." />}
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
