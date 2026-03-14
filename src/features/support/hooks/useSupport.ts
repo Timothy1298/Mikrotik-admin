@@ -56,7 +56,7 @@ export const useSupportAgents = () => useQuery({ queryKey: [...supportBase, "age
 export const useTicketNotes = (id: string) => useQuery({ queryKey: [...supportBase, "notes", id], queryFn: () => getTicketNotes(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketFlags = (id: string) => useQuery({ queryKey: [...supportBase, "flags", id], queryFn: () => getTicketFlags(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 
-function useSupportMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<{ message?: string }>, successMessage: string) {
+function useSupportMutation<TArgs extends unknown[], TResult>(mutationFn: (...args: TArgs) => Promise<TResult>, successMessage: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
