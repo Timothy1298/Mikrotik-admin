@@ -185,7 +185,19 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
               <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
               <div><p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p><p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p></div>
             </div>
-            <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={() => { void ticketsQuery.refetch(); void unassignedQuery.refetch(); void escalatedQuery.refetch(); void staleQuery.refetch(); void workloadQuery.refetch(); void agentsQuery.refetch(); if (selectedAssigneeId) void assigneeTicketsQuery.refetch(); }} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="ghost" onClick={statusDisclosure.onOpen} disabled={!selectedTicket}>Status</Button>
+              <Button variant="ghost" onClick={priorityDisclosure.onOpen} disabled={!selectedTicket}>Priority</Button>
+              <Button variant="ghost" onClick={categoryDisclosure.onOpen} disabled={!selectedTicket}>Category</Button>
+              <Button variant="ghost" onClick={reviewedDisclosure.onOpen} disabled={!selectedTicket}>Review</Button>
+              <Button variant="ghost" onClick={noteDisclosure.onOpen} disabled={!selectedTicket}>Note</Button>
+              <Button variant="ghost" onClick={flagDisclosure.onOpen} disabled={!selectedTicket}>Flag</Button>
+              {selectedTicket?.escalated ? <Button variant="ghost" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
+              {selectedTicket?.status === "resolved" || selectedTicket?.status === "closed" ? <Button variant="ghost" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
+              {selectedTicket?.status !== "closed" ? <Button variant="ghost" onClick={closeDisclosure.onOpen} disabled={!selectedTicket}>Close</Button> : null}
+              {selectedTicket?.flags.length ? <Button variant="ghost" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }} disabled={!selectedTicket}>Unflag</Button> : null}
+              <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={() => { void ticketsQuery.refetch(); void unassignedQuery.refetch(); void escalatedQuery.refetch(); void staleQuery.refetch(); void workloadQuery.refetch(); void agentsQuery.refetch(); if (selectedAssigneeId) void assigneeTicketsQuery.refetch(); }} />
+            </div>
           </DataToolbar>
           <div className="mt-4">
             {isPending ? <TableLoader /> : isError ? <ErrorState title={`Unable to load ${sectionMeta.title.toLowerCase()}`} description="Retry after confirming the support endpoints are reachable." onAction={() => void ticketsQuery.refetch()} /> : <TicketsTable rows={rows} onOpen={openTicket} onAssign={(row) => { setSelectedTicket(row); assignDisclosure.onOpen(); }} onReassign={(row) => { setSelectedTicket(row); setAssigneeValue(row.assignee?.id || ""); reassignDisclosure.onOpen(); }} onUnassign={(row) => { setSelectedTicket(row); unassignDisclosure.onOpen(); }} onReply={(row) => { setSelectedTicket(row); replyDisclosure.onOpen(); }} onResolve={(row) => { setSelectedTicket(row); resolveDisclosure.onOpen(); }} onEscalate={(row) => { setSelectedTicket(row); escalateDisclosure.onOpen(); }} />}
