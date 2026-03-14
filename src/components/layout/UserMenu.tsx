@@ -22,7 +22,7 @@ export function UserMenu() {
           <p className="text-xs text-slate-500">{user.email}</p>
         </div>
       </Button>
-      <div className="absolute right-0 z-30 mt-2 hidden min-w-64 rounded-3xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 group-hover:block">
+      <div className="absolute right-0 z-30 mt-2 hidden min-w-64 rounded-3xl border border-brand-500/15 bg-[rgba(8,14,31,0.96)] p-3 shadow-[0_20px_45px_rgba(2,6,23,0.45)] group-focus-within:block group-hover:block">
         <div className="mb-3 rounded-2xl border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-3">
           <p className="text-sm font-medium text-white">{user.name}</p>
           <p className="text-xs text-slate-500">{user.email}</p>
