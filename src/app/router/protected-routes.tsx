@@ -16,7 +16,8 @@ import { RouterDetailsPage } from "@/pages/routers/RouterDetailsPage";
 import { RoutersPage } from "@/pages/routers/RoutersPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
 import { TicketDetailsPage } from "@/pages/support/TicketDetailsPage";
-import { TicketsPage } from "@/pages/support/TicketsPage";
+import { SupportOverviewPage } from "@/pages/support/SupportOverviewPage";
+import { SupportSectionPage } from "@/pages/support/SupportSectionPage";
 import { UserDetailsPage } from "@/pages/users/UserDetailsPage";
 import { UserManagementOverviewPage } from "@/pages/users/UserManagementOverviewPage";
 import { UserManagementSectionPage } from "@/pages/users/UserManagementSectionPage";
@@ -105,7 +106,18 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.logsSecurityUserSecurityReview} element={<LogsSecuritySectionPage section="user-security-review" />} />
         <Route path={appRoutes.logsSecurityResourceTimelines} element={<LogsSecuritySectionPage section="resource-timelines" />} />
         <Route path={appRoutes.logsSecurityReviewsNotes} element={<LogsSecuritySectionPage section="reviews-notes" />} />
-        <Route path={appRoutes.support} element={<TicketsPage />} />
+        <Route path={appRoutes.supportRoot} element={<Navigate to={appRoutes.supportOverview} replace />} />
+        <Route path={appRoutes.support} element={<SupportOverviewPage />} />
+        <Route path={appRoutes.supportOverview} element={<SupportOverviewPage />} />
+        <Route path={appRoutes.supportTickets} element={<SupportSectionPage section="tickets" />} />
+        <Route path={appRoutes.supportUnassigned} element={<SupportSectionPage section="unassigned" />} />
+        <Route path={appRoutes.supportEscalated} element={<SupportSectionPage section="escalated" />} />
+        <Route path={appRoutes.supportHighPriority} element={<SupportSectionPage section="high-priority" />} />
+        <Route path={appRoutes.supportStale} element={<SupportSectionPage section="stale" />} />
+        <Route path={appRoutes.supportByAssignee} element={<SupportSectionPage section="by-assignee" />} />
+        <Route path={appRoutes.supportLinkedIssues} element={<SupportSectionPage section="linked-issues" />} />
+        <Route path={appRoutes.supportConversations} element={<SupportSectionPage section="conversations" />} />
+        <Route path={appRoutes.supportNotesFlags} element={<SupportSectionPage section="notes-flags" />} />
         <Route path={appRoutes.supportTicket()} element={<TicketDetailsPage />} />
         <Route path={appRoutes.settings} element={<SettingsPage />} />
         <Route path={appRoutes.settingsSecurity} element={<SettingsPage />} />
