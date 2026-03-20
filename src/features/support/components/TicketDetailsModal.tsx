@@ -46,23 +46,29 @@ export function TicketDetailsModal({
   const detail = detailQuery.data;
 
   return (
-    <Modal open={open} title={detail?.ticket.subject || "Support ticket"} description="Support workspace with conversation, linked context, internal notes, flags, and activity." onClose={onClose}>
+    <Modal
+      open={open}
+      title={detail?.ticket.subject || "Support ticket"}
+      description="Support workspace with conversation, linked context, internal notes, flags, and activity."
+      onClose={onClose}
+      maxWidthClass="max-w-5xl"
+    >
       {detailQuery.isPending ? <SectionLoader /> : !detail ? <EmptyState icon={LifeBuoy} title="Ticket not found" description="The selected support ticket could not be loaded." /> : (
         <div className="space-y-4">
           <Card>
-            <CardHeader>
-              <div>
+            <CardHeader className="flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
                 <CardTitle>{detail.ticket.ticketReference}</CardTitle>
-                <CardDescription>{detail.ticket.customer?.email || "No customer email"} · {formatDateTime(detail.ticket.createdAt)}</CardDescription>
+                <CardDescription className="break-words">{detail.ticket.customer?.email || "No customer email"} · {formatDateTime(detail.ticket.createdAt)}</CardDescription>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 lg:justify-end">
                 <TicketStatusBadge status={detail.ticket.status} />
                 <TicketPriorityBadge priority={detail.ticket.priority} />
                 <TicketCategoryBadge category={detail.ticket.category} />
                 <TicketEscalationBadge escalated={detail.ticket.escalated} />
               </div>
             </CardHeader>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Awaiting: {detail.ticket.awaitingState.replace(/_/g, " ")}</div>
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Assignee: {detail.ticket.assignee?.name || "Unassigned"}</div>
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Age: {detail.ticket.age.ageHours}h · Idle {detail.ticket.age.idleHours}h</div>
@@ -70,7 +76,7 @@ export function TicketDetailsModal({
             </div>
           </Card>
 
-          <div className="flex flex-wrap gap-2 border-b border-brand-500/15 pb-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-brand-500/15 pb-3">
             {onReply ? <Button variant="ghost" size="sm" onClick={onReply}>Reply</Button> : null}
             {!detail.ticket.assignee && onAssign ? <Button variant="ghost" size="sm" onClick={onAssign}>Assign</Button> : null}
             {detail.ticket.assignee && onReassign ? <Button variant="ghost" size="sm" onClick={onReassign}>Reassign</Button> : null}
@@ -84,8 +90,8 @@ export function TicketDetailsModal({
           </div>
 
           <Card>
-            <CardHeader><div><CardTitle>Customer & context</CardTitle><CardDescription>Customer summary and related operational context for this ticket.</CardDescription></div></CardHeader>
-            <div className="grid gap-3 md:grid-cols-2">
+            <CardHeader className="flex-col"><div><CardTitle>Customer & context</CardTitle><CardDescription>Customer summary and related operational context for this ticket.</CardDescription></div></CardHeader>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Customer: {detail.context.customer?.name || "Unknown"} · {detail.context.customer?.supportTier || "standard"}</div>
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Router: {detail.context.router?.name || "None linked"}</div>
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">VPN server: {detail.context.vpnServer?.name || "None linked"}</div>
@@ -94,13 +100,13 @@ export function TicketDetailsModal({
           </Card>
 
           <Card>
-            <CardHeader><div><CardTitle>Conversation thread</CardTitle><CardDescription>Customer, admin, and system-visible ticket messages.</CardDescription></div></CardHeader>
+            <CardHeader className="flex-col"><div><CardTitle>Conversation thread</CardTitle><CardDescription>Customer, admin, and system-visible ticket messages.</CardDescription></div></CardHeader>
             <div className="space-y-3">
               {messagesQuery.isPending ? <SectionLoader /> : (messagesQuery.data?.items || []).length ? messagesQuery.data?.items.map((message) => (
                 <div key={message.id} className={`rounded-2xl border p-4 ${message.direction === "admin" ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)]"}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-slate-100">{message.author?.email || message.source}</p>
-                    <p className="text-xs text-slate-500">{formatDateTime(message.createdAt)}</p>
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <p className="break-words text-sm font-medium text-slate-100">{message.author?.email || message.source}</p>
+                    <p className="shrink-0 text-xs text-slate-500">{formatDateTime(message.createdAt)}</p>
                   </div>
                   <p className="mt-2 text-sm text-slate-300">{message.body}</p>
                   {message.attachments.length ? <div className="mt-3 flex flex-wrap gap-2">{message.attachments.map((attachment) => <span key={attachment.url} className="rounded-full border border-brand-500/15 px-3 py-1 text-xs text-slate-400">{attachment.filename}</span>)}</div> : null}
@@ -109,9 +115,9 @@ export function TicketDetailsModal({
             </div>
           </Card>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 2xl:grid-cols-2">
             <Card>
-              <CardHeader><div><CardTitle>Internal notes</CardTitle><CardDescription>Private operator notes for support workflows.</CardDescription></div></CardHeader>
+              <CardHeader className="flex-col"><div><CardTitle>Internal notes</CardTitle><CardDescription>Private operator notes for support workflows.</CardDescription></div></CardHeader>
               <div className="space-y-3">
                 {notesQuery.isPending ? <SectionLoader /> : (notesQuery.data || []).length ? notesQuery.data?.map((note) => (
                   <div key={note.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
@@ -123,7 +129,7 @@ export function TicketDetailsModal({
             </Card>
 
             <Card>
-              <CardHeader><div><CardTitle>Flags & activity</CardTitle><CardDescription>Internal review markers and support workflow events.</CardDescription></div></CardHeader>
+              <CardHeader className="flex-col"><div><CardTitle>Flags & activity</CardTitle><CardDescription>Internal review markers and support workflow events.</CardDescription></div></CardHeader>
               <div className="space-y-3">
                 {(flagsQuery.data || []).length ? flagsQuery.data?.map((flag) => (
                   <div key={flag.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">

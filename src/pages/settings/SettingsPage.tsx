@@ -16,10 +16,20 @@ import { Tabs } from "@/components/ui/Tabs";
 import { appRoutes } from "@/config/routes";
 import { settingsTabs } from "@/config/module-tabs";
 import { env } from "@/config/env";
-import { usePlatformConfig, useSettings, useUpdateAdminProfile } from "@/features/settings/hooks";
+import {
+  useAdminProfile,
+  useDisableTwoFactor,
+  useEnableTwoFactor,
+  usePlatformConfig,
+  useSettings,
+  useStartTwoFactorSetup,
+  useUpdateAdminProfile,
+} from "@/features/settings/hooks";
 import { useForceLogoutUser } from "@/features/users/hooks";
 import { permissions } from "@/lib/permissions/permissions";
 import { can } from "@/lib/permissions/can";
+import { toast } from "sonner";
+import { generateQrSvgDataUrl } from "@/lib/utils/qrcode";
 
 const settingsViews = {
   [appRoutes.settings]: {
@@ -75,9 +85,13 @@ export function SettingsPage() {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   const settingsQuery = useSettings();
+  const adminProfileQuery = useAdminProfile();
   const platformQuery = usePlatformConfig();
   const updateProfileMutation = useUpdateAdminProfile();
   const forceLogoutMutation = useForceLogoutUser();
+  const startTwoFactorSetupMutation = useStartTwoFactorSetup();
+  const enableTwoFactorMutation = useEnableTwoFactor();
+  const disableTwoFactorMutation = useDisableTwoFactor();
 
   const [displayName, setDisplayName] = useState(user?.name || "");
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -85,6 +99,13 @@ export function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [twoFactorPassword, setTwoFactorPassword] = useState("");
+  const [twoFactorDisablePassword, setTwoFactorDisablePassword] = useState("");
+  const [twoFactorDisableCode, setTwoFactorDisableCode] = useState("");
+  const [twoFactorSetupCode, setTwoFactorSetupCode] = useState("");
+  const [twoFactorSetupError, setTwoFactorSetupError] = useState<string | null>(null);
+  const [twoFactorDisableError, setTwoFactorDisableError] = useState<string | null>(null);
+  const [twoFactorSetup, setTwoFactorSetup] = useState<{ secret: string; otpauthUrl: string; manualEntryKey: string; issuer: string } | null>(null);
 
   const view = settingsViews[location.pathname as keyof typeof settingsViews] ?? settingsViews[appRoutes.settings];
   const ViewIcon = view.icon;
@@ -174,6 +195,79 @@ export function SettingsPage() {
     forceLogoutMutation.mutate([user.id] as never);
   };
 
+  const currentTwoFactorEnabled = adminProfileQuery.data?.twoFactorEnabled ?? user?.twoFactorEnabled ?? false;
+  const isAdminAccount = Boolean(user?.adminRole || user?.role);
+  const twoFactorQrCode = useMemo(() => {
+    if (!twoFactorSetup?.otpauthUrl) return null;
+    try {
+      return generateQrSvgDataUrl(twoFactorSetup.otpauthUrl, {
+        cellSize: 4,
+        margin: 4,
+        darkColor: "#f8fafc",
+        lightColor: "#0b1220",
+      });
+    } catch {
+      return null;
+    }
+  }, [twoFactorSetup]);
+
+  const copyText = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Could not copy ${label.toLowerCase()}`);
+    }
+  };
+
+  const handleStartTwoFactorSetup = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTwoFactorSetupError(null);
+    try {
+      const setup = await startTwoFactorSetupMutation.mutateAsync({ currentPassword: twoFactorPassword });
+      setTwoFactorSetup(setup);
+      setTwoFactorSetupCode("");
+      setTwoFactorPassword("");
+    } catch (error) {
+      setTwoFactorSetupError(error instanceof Error ? error.message : "Failed to start 2FA setup");
+    }
+  };
+
+  const handleEnableTwoFactor = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTwoFactorSetupError(null);
+    if (twoFactorSetupCode.trim().length !== 6) {
+      setTwoFactorSetupError("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+    try {
+      await enableTwoFactorMutation.mutateAsync({ code: twoFactorSetupCode.trim() });
+      setTwoFactorSetup(null);
+      setTwoFactorSetupCode("");
+    } catch (error) {
+      setTwoFactorSetupError(error instanceof Error ? error.message : "Failed to enable 2FA");
+    }
+  };
+
+  const handleDisableTwoFactor = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setTwoFactorDisableError(null);
+    if (!twoFactorDisablePassword || twoFactorDisableCode.trim().length !== 6) {
+      setTwoFactorDisableError("Current password and a valid 6-digit code are required.");
+      return;
+    }
+    try {
+      await disableTwoFactorMutation.mutateAsync({
+        currentPassword: twoFactorDisablePassword,
+        code: twoFactorDisableCode.trim(),
+      });
+      setTwoFactorDisablePassword("");
+      setTwoFactorDisableCode("");
+    } catch (error) {
+      setTwoFactorDisableError(error instanceof Error ? error.message : "Failed to disable 2FA");
+    }
+  };
+
   const renderMainContent = () => {
     if (location.pathname === appRoutes.settings) {
       return (
@@ -224,16 +318,116 @@ export function SettingsPage() {
             <CardHeader>
               <div>
                 <CardTitle>Two-Factor Authentication</CardTitle>
-                <CardDescription>Prepare for stronger operator authentication once backend support is available.</CardDescription>
+                <CardDescription>Protect administrator login with a 6-digit code from your authenticator app.</CardDescription>
               </div>
-              <Badge tone="warning">Not configured</Badge>
+              <Badge tone={currentTwoFactorEnabled ? "success" : "warning"}>
+                {currentTwoFactorEnabled ? "Configured" : "Not configured"}
+              </Badge>
             </CardHeader>
-            <p className="text-sm leading-6 text-slate-400">
-              Two-factor authentication is not yet available. When enabled, you will be required to enter a verification code on each login.
-            </p>
-            <div className="pt-2">
-              <Button variant="outline" disabled>Enable 2FA</Button>
-            </div>
+            {!isAdminAccount ? (
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                Authenticator-based two-factor authentication is restricted to admin console accounts. Non-admin users can continue using the standard account login flow.
+              </div>
+            ) : currentTwoFactorEnabled ? (
+              <form className="space-y-4" onSubmit={handleDisableTwoFactor}>
+                <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                  Two-factor authentication is active. You will be prompted for an authenticator code after entering your password.
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <PasswordInput label="Current Password" value={twoFactorDisablePassword} onChange={(event) => setTwoFactorDisablePassword(event.target.value)} />
+                  <Input
+                    label="Authenticator Code"
+                    value={twoFactorDisableCode}
+                    onChange={(event) => setTwoFactorDisableCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                </div>
+                {twoFactorDisableError ? <InlineError message={twoFactorDisableError} /> : null}
+                <div className="flex justify-end">
+                  <Button type="submit" variant="outline" isLoading={disableTwoFactorMutation.isPending}>
+                    Disable 2FA
+                  </Button>
+                </div>
+              </form>
+            ) : twoFactorSetup ? (
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                  Scan the QR code below with your authenticator app. If scanning fails, use the manual entry key as the fallback.
+                </div>
+                <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+                  <div className="rounded-3xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+                    {twoFactorQrCode ? (
+                      <img
+                        src={twoFactorQrCode}
+                        alt="Authenticator app QR code"
+                        className="mx-auto h-auto w-full rounded-2xl border border-brand-500/15 bg-[#0b1220] p-3"
+                      />
+                    ) : (
+                      <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-center text-sm text-slate-400">
+                        QR generation is unavailable. Use the manual setup key instead.
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <SummaryItem label="Issuer" value={twoFactorSetup.issuer} />
+                      <SummaryItem label="Manual entry key" value={twoFactorSetup.manualEntryKey} />
+                    </div>
+                    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                      <p>Recommended: open Google Authenticator, Microsoft Authenticator, Authy, or 1Password and scan this QR code.</p>
+                      <p className="mt-2">Fallback: choose manual setup in the app and paste the secret key if scanning does not work.</p>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Button type="button" variant="outline" onClick={() => void copyText(twoFactorSetup.manualEntryKey, "Manual entry key")}>
+                        Copy secret key
+                      </Button>
+                      <Button type="button" variant="outline" onClick={() => void copyText(twoFactorSetup.otpauthUrl, "Authenticator URI")}>
+                        Copy authenticator URI
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <form className="space-y-4" onSubmit={handleEnableTwoFactor}>
+                  <Input
+                    label="Enter code from authenticator app"
+                    value={twoFactorSetupCode}
+                    onChange={(event) => setTwoFactorSetupCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    inputMode="numeric"
+                    maxLength={6}
+                  />
+                  {twoFactorSetupError ? <InlineError message={twoFactorSetupError} /> : null}
+                  <div className="flex flex-wrap justify-end gap-3">
+                    <Button type="button" variant="ghost" onClick={() => { setTwoFactorSetup(null); setTwoFactorSetupError(null); setTwoFactorSetupCode(""); }}>
+                      Cancel setup
+                    </Button>
+                    <Button type="submit" isLoading={enableTwoFactorMutation.isPending}>
+                      Verify and enable 2FA
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            ) : (
+              <form className="space-y-4" onSubmit={handleStartTwoFactorSetup}>
+                <p className="text-sm leading-6 text-slate-400">
+                  Use an authenticator app such as Google Authenticator, Microsoft Authenticator, Authy, or 1Password. You can disable 2FA later from this same page using your password and a valid authenticator code.
+                </p>
+                <PasswordInput
+                  label="Current Password"
+                  value={twoFactorPassword}
+                  onChange={(event) => setTwoFactorPassword(event.target.value)}
+                  hint="Required before generating a new authenticator secret."
+                />
+                {twoFactorSetupError ? <InlineError message={twoFactorSetupError} /> : null}
+                <div className="pt-2">
+                  <Button type="submit" variant="outline" isLoading={startTwoFactorSetupMutation.isPending}>
+                    Enable 2FA
+                  </Button>
+                </div>
+              </form>
+            )}
           </Card>
 
           <Card>

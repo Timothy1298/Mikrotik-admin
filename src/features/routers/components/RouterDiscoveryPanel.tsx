@@ -67,6 +67,8 @@ export function RouterDiscoveryPanel({
 
   const candidates = activeSession?.candidates || [];
   const selectedCandidate = candidates.find((candidate) => candidate.id === selectedCandidateId) || null;
+  const selectedCandidateSupportsApi = Boolean(selectedCandidate?.openPorts.includes(8728));
+  const selectedCandidateSupportsSsh = Boolean(selectedCandidate?.openPorts.includes(22));
 
   useEffect(() => {
     if (!selectedCandidate) return;
@@ -77,6 +79,17 @@ export function RouterDiscoveryPanel({
       name: current.name || selectedCandidate.verification?.metadata?.identity || selectedCandidate.hostname || current.name,
     }));
   }, [activeSession?.id, selectedCandidate]);
+
+  useEffect(() => {
+    if (!selectedCandidate) return;
+    setCredentials((current) => {
+      if (current.method !== "auto") return current;
+      return {
+        ...current,
+        method: selectedCandidate.openPorts.includes(8728) ? "api" : selectedCandidate.openPorts.includes(22) ? "ssh" : "auto",
+      };
+    });
+  }, [selectedCandidate]);
 
   const handleStartScan = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -279,6 +292,23 @@ export function RouterDiscoveryPanel({
             <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3 text-sm text-slate-400">
               RouterOS API verification uses the authenticated MikroTik API on port 8728 when available. SSH remains available for environments where API access is disabled.
             </div>
+          </div>
+          <div className="space-y-3">
+            {selectedCandidateSupportsApi ? (
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(37,99,235,0.08)] px-4 py-3 text-sm text-slate-300">
+                RouterOS API is available on this router and is the recommended verification method for password-based discovery onboarding.
+              </div>
+            ) : null}
+            {credentials.method === "ssh" ? (
+              <div className="rounded-2xl border border-warning/20 bg-[rgba(245,158,11,0.08)] px-4 py-3 text-sm text-slate-300">
+                SSH password verification requires server-side `sshpass` support. If verification fails and this router exposes port `8728`, switch to `RouterOS API`.
+              </div>
+            ) : null}
+            {!selectedCandidateSupportsApi && !selectedCandidateSupportsSsh ? (
+              <div className="rounded-2xl border border-danger/20 bg-[rgba(239,68,68,0.08)] px-4 py-3 text-sm text-slate-300">
+                This candidate does not expose RouterOS API (`8728`) or SSH (`22`) in the scan results. Verification may fail until one of those services is reachable.
+              </div>
+            ) : null}
           </div>
           <div className="flex justify-end">
             <Button isLoading={verifyMutation.isPending} onClick={handleVerify}>

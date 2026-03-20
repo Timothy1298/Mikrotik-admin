@@ -16,7 +16,7 @@ import { LoginProgressDialog } from "@/features/auth/components/LoginProgressDia
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { loginSchema, type LoginSchema } from "@/features/auth/schemas/auth.schema";
 import { useLogin, useVerifyTwoFactorLogin } from "@/features/auth/hooks/useLogin";
-import type { TwoFactorChallenge } from "@/types/auth/auth.types";
+import type { AuthSession, TwoFactorChallenge } from "@/types/auth/auth.types";
 
 const LOGIN_TOAST_ID = "auth-login-progress";
 const MIN_VALIDATING_MS = 1800;
@@ -71,8 +71,9 @@ export function LoginForm() {
         return;
       }
 
-      setSession(session.token, session.user);
-      queryClient.setQueryData(queryKeys.me, session.user);
+      const resolvedSession = session as AuthSession;
+      setSession(resolvedSession.token, resolvedSession.user);
+      queryClient.setQueryData(queryKeys.me, resolvedSession.user);
       setProgressStage("redirecting");
       toast.success("Credentials verified. Redirecting to dashboard...", {
         id: LOGIN_TOAST_ID,

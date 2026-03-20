@@ -2,12 +2,14 @@ import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type { AuthSession, LoginPayload, TwoFactorChallenge, TwoFactorLoginPayload } from "@/types/auth/auth.types";
 
-export async function login(payload: LoginPayload) {
+export async function login(payload: LoginPayload): Promise<AuthSession | TwoFactorChallenge> {
   const { data } = await apiClient.post<{ success: boolean; data: ({ token: string; user: AuthSession["user"] } | TwoFactorChallenge) }>(endpoints.auth.login, payload);
-  if ("requiresTwoFactor" in data.data && data.data.requiresTwoFactor) {
-    return data.data;
+  const response = data.data;
+  if ((response as TwoFactorChallenge).requiresTwoFactor) {
+    return response as TwoFactorChallenge;
   }
-  return { token: data.data.token, user: data.data.user } satisfies AuthSession;
+  const session = response as { token: string; user: AuthSession["user"] };
+  return { token: session.token, user: session.user } satisfies AuthSession;
 }
 
 export async function verifyTwoFactorLogin(payload: TwoFactorLoginPayload) {
