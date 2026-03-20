@@ -1,7 +1,10 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { appRoutes } from '@/config/routes';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
+import { AddRouterAdminDialog } from '@/features/routers/components';
 import { SubscriptionStatusBadge } from '@/features/users/components/SubscriptionStatusBadge';
 import { UserAccountHealthCard } from '@/features/users/components/UserAccountHealthCard';
 import { UserActivityTimeline } from '@/features/users/components/UserActivityTimeline';
@@ -17,6 +20,9 @@ import { UserStatusBadge } from '@/features/users/components/UserStatusBadge';
 import { UserSummaryCards } from '@/features/users/components/UserSummaryCards';
 import { UserSupportPanel } from '@/features/users/components/UserSupportPanel';
 import type { UserDetail } from '@/features/users/types/user.types';
+import { useDisclosure } from '@/hooks/ui/useDisclosure';
+import { can } from '@/lib/permissions/can';
+import { permissions } from '@/lib/permissions/permissions';
 import { useNavigate } from 'react-router-dom';
 
 export function UserDetailsWorkspace({
@@ -32,6 +38,8 @@ export function UserDetailsWorkspace({
   onAddNote,
   onAddFlag,
   onRemoveFlag,
+  onDelete,
+  onEditProfile,
 }: {
   user: UserDetail;
   showRouteLink?: boolean;
@@ -45,8 +53,14 @@ export function UserDetailsWorkspace({
   onAddNote: () => void;
   onAddFlag: () => void;
   onRemoveFlag: (flag: UserDetail['flags'][number]) => void;
+  onDelete: () => void;
+  onEditProfile: () => void;
 }) {
   const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
+  const addRouterDisclosure = useDisclosure(false);
+  const canManageUsers = can(currentUser, permissions.usersManage);
+  const canDeleteUsers = can(currentUser, permissions.usersDelete);
 
   return (
     <div className="space-y-6">
@@ -63,14 +77,22 @@ export function UserDetailsWorkspace({
             </div>
             <p className="text-sm text-slate-400">{user.profile.email} • {user.profile.company} • {user.profile.country}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Secondary tools</p>
+            <div className="flex flex-wrap gap-2">
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.userDetail(user.id))}>Open full page</Button> : null}
-            <Button variant="outline" onClick={onResendVerification}>Resend verification</Button>
-            <Button variant="outline" onClick={onPasswordReset}>Send password reset</Button>
-            <Button variant="outline" onClick={onForceLogout}>Force logout</Button>
-            <Button onClick={onAddFlag}>Add flag</Button>
+            {canManageUsers ? <Button variant="outline" leftIcon={<Pencil className="h-4 w-4" />} onClick={onEditProfile}>Edit Profile</Button> : null}
+            {canManageUsers ? <Button variant="outline" onClick={onResendVerification}>Resend verification</Button> : null}
+            {canManageUsers ? <Button variant="outline" onClick={onPasswordReset}>Send password reset</Button> : null}
+            {canManageUsers ? <Button variant="outline" onClick={onForceLogout}>Force logout</Button> : null}
+            {canManageUsers ? <Button onClick={onAddFlag}>Add flag</Button> : null}
+            {canDeleteUsers ? <Button variant="danger" leftIcon={<Trash2 className="h-4 w-4" />} onClick={onDelete}>Delete Account</Button> : null}
+            </div>
           </div>
         </div>
+        {canManageUsers ? (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Primary actions</p>
         <UserQuickActions
           user={user}
           onSuspend={onSuspend}
@@ -79,6 +101,8 @@ export function UserDetailsWorkspace({
           onExtendTrial={onExtendTrial}
           onAddNote={onAddNote}
         />
+        </div>
+        ) : null}
       </Card>
 
       <UserSummaryCards user={user} />
@@ -89,15 +113,14 @@ export function UserDetailsWorkspace({
       </div>
 
       <UserServicesPanel user={user} />
-      <UserRoutersTable user={user} />
+      <UserRoutersTable user={user} onAddRouter={addRouterDisclosure.onOpen} />
       <UserBillingPanel user={user} />
       <UserSecurityPanel user={user} />
       <UserSupportPanel user={user} />
       <UserFlagsPanel user={user} onRemoveFlag={onRemoveFlag} />
       <UserInternalNotesPanel user={user} />
-      <Card>
-        <UserActivityTimeline user={user} />
-      </Card>
+      <UserActivityTimeline user={user} />
+      <AddRouterAdminDialog open={addRouterDisclosure.open} onClose={addRouterDisclosure.onClose} initialUserId={user.id} />
     </div>
   );
 }

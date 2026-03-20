@@ -22,6 +22,7 @@ export function RouterDetailsModal({
   onDelete: () => void;
   onReactivate: () => void;
   onReprovision: () => void;
+  onReboot: () => void;
   onRegenerateSetup: () => void;
   onResetPeer: () => void;
   onReassignPorts: () => void;

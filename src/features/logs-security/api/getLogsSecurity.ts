@@ -3,6 +3,7 @@ import { endpoints } from "@/lib/api/endpoints";
 import type {
   ActivityLogItem,
   AuditTrailItem,
+  LogsExportParams,
   LogsSecurityFilterState,
   LogsSecurityListResponse,
   ResourceTimelineItem,
@@ -14,9 +15,23 @@ import type {
   UserSecuritySummary,
 } from "@/features/logs-security/types/logs-security.types";
 
+function triggerCsvDownload(data: BlobPart, filename: string) {
+  const url = URL.createObjectURL(new Blob([data], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function getActivityLogs(params?: LogsSecurityFilterState) {
   const { data } = await apiClient.get<{ success: boolean; items: ActivityLogItem[]; pagination: LogsSecurityListResponse<ActivityLogItem>["pagination"] }>(endpoints.admin.logsActivity, { params });
   return { items: data.items, pagination: data.pagination };
+}
+
+export async function exportActivityLogs(params?: LogsExportParams) {
+  const { data } = await apiClient.get(endpoints.admin.exportActivityLogs, { params, responseType: "blob" });
+  triggerCsvDownload(data, `activity-logs-${Date.now()}.csv`);
 }
 
 export async function getActivityLogById(id: string) {
@@ -34,6 +49,11 @@ export async function getAuditTrail(params?: LogsSecurityFilterState) {
   return { items: data.items, pagination: data.pagination };
 }
 
+export async function exportAuditTrail(params?: LogsExportParams) {
+  const { data } = await apiClient.get(endpoints.admin.exportAuditTrail, { params, responseType: "blob" });
+  triggerCsvDownload(data, `audit-trail-${Date.now()}.csv`);
+}
+
 export async function getAuditById(id: string) {
   const { data } = await apiClient.get<{ success: boolean; audit: AuditTrailItem }>(endpoints.admin.auditDetail(id));
   return data.audit;
@@ -47,6 +67,11 @@ export async function getSecurityOverview() {
 export async function getSecurityEvents(params?: LogsSecurityFilterState) {
   const { data } = await apiClient.get<{ success: boolean; items: SecurityEventItem[]; pagination: LogsSecurityListResponse<SecurityEventItem>["pagination"] }>(endpoints.admin.securityEvents, { params });
   return { items: data.items, pagination: data.pagination };
+}
+
+export async function exportSecurityEvents(params?: LogsExportParams) {
+  const { data } = await apiClient.get(endpoints.admin.exportSecurityEvents, { params, responseType: "blob" });
+  triggerCsvDownload(data, `security-events-${Date.now()}.csv`);
 }
 
 export async function getSecurityEventById(id: string) {

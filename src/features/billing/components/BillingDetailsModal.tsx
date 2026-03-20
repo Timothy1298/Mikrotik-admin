@@ -1,10 +1,14 @@
+import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InvoiceStatusBadge } from "@/features/billing/components/InvoiceStatusBadge";
+import { PaymentStatusBadge } from "@/features/billing/components/PaymentStatusBadge";
 import { SubscriptionStatusBadge } from "@/features/billing/components/SubscriptionStatusBadge";
 import type { BillingAccountDetail } from "@/features/billing/types/billing.types";
+import { formatCurrency } from "@/lib/formatters/currency";
 import { formatDateTime } from "@/lib/formatters/date";
 
-export function BillingDetailsModal({ open, detail, onClose }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void }) {
+export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSuspend, onReactivate, onApplyGracePeriod, onResendInvoice, onRecordPayment, onCreateInvoice }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void; onExtendTrial?: () => void; onSuspend?: () => void; onReactivate?: () => void; onApplyGracePeriod?: () => void; onResendInvoice?: () => void; onRecordPayment?: () => void; onCreateInvoice?: () => void }) {
   if (!open || !detail) return null;
   return (
     <Modal open={open} title={detail.account.name} description={detail.account.email} onClose={onClose}>
@@ -14,7 +18,7 @@ export function BillingDetailsModal({ open, detail, onClose }: { open: boolean; 
           <div className="space-y-3 text-sm text-slate-200">
             <div className="flex items-center justify-between"><span>Plan</span><span>{detail.overview.currentPlan}</span></div>
             <div className="flex items-center justify-between"><span>Status</span><SubscriptionStatusBadge status={detail.overview.subscriptionStatus} /></div>
-            <div className="flex items-center justify-between"><span>Recurring value</span><span>${detail.overview.estimatedRecurringValue.toFixed(2)}</span></div>
+            <div className="flex items-center justify-between"><span>Recurring value</span><span>{formatCurrency(detail.overview.estimatedRecurringValue, detail.account.currency || "USD")}</span></div>
             <div className="flex items-center justify-between"><span>Next billing</span><span>{formatDateTime(detail.overview.nextBillingDate)}</span></div>
             <div className="flex items-center justify-between"><span>Grace period</span><span>{detail.overview.gracePeriodActive ? "Active" : "No"}</span></div>
           </div>
@@ -34,13 +38,22 @@ export function BillingDetailsModal({ open, detail, onClose }: { open: boolean; 
         <CardHeader><div><CardTitle>Recent invoices / payments</CardTitle><CardDescription>Latest transaction preview from the billing account workspace.</CardDescription></div></CardHeader>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-2">
-            {detail.invoices.slice(0, 3).map((invoice) => <div key={invoice.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200">{invoice.transactionId} • ${invoice.amount.toFixed(2)} • {invoice.status}</div>)}
+            {detail.invoices.slice(0, 3).map((invoice) => <div key={invoice.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-slate-400">{invoice.transactionId}</span><InvoiceStatusBadge status={invoice.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(invoice.amount, invoice.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-slate-500">{formatDateTime(invoice.createdAt)}</span></div></div>)}
           </div>
           <div className="space-y-2">
-            {detail.payments.slice(0, 3).map((payment) => <div key={payment.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200">{payment.transactionId} • ${payment.amount.toFixed(2)} • {payment.status}</div>)}
+            {detail.payments.slice(0, 3).map((payment) => <div key={payment.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-slate-400">{payment.transactionId}</span><PaymentStatusBadge status={payment.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(payment.amount, payment.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-slate-500">{formatDateTime(payment.createdAt)}</span></div></div>)}
           </div>
         </div>
       </Card>
+      <div className="mt-2 flex flex-wrap gap-2 border-t border-brand-500/15 pt-4">
+        {detail.account.accountStatus !== "suspended" && onSuspend ? <Button variant="danger" onClick={onSuspend}>Suspend account</Button> : null}
+        {detail.account.accountStatus === "suspended" && onReactivate ? <Button variant="outline" onClick={onReactivate}>Reactivate</Button> : null}
+        {!detail.overview.gracePeriodActive && onApplyGracePeriod ? <Button variant="outline" onClick={onApplyGracePeriod}>Apply grace period</Button> : null}
+        {detail.overview.subscriptionStatus === "trial" && onExtendTrial ? <Button variant="outline" onClick={onExtendTrial}>Extend trial</Button> : null}
+        {detail.overview.openInvoices > 0 && onResendInvoice ? <Button variant="outline" onClick={onResendInvoice}>Resend invoice</Button> : null}
+        {onRecordPayment ? <Button onClick={onRecordPayment}>Record payment</Button> : null}
+        {onCreateInvoice ? <Button variant="outline" onClick={onCreateInvoice}>Create invoice</Button> : null}
+      </div>
     </Modal>
   );
 }

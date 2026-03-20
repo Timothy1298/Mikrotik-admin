@@ -1,7 +1,8 @@
 import { Navigate, Route } from "react-router-dom";
-import { RequireAuth } from "@/app/router/guards";
+import { RequireAuth, RequirePermission } from "@/app/router/guards";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { appRoutes } from "@/config/routes";
+import { permissions } from "@/lib/permissions/permissions";
 import { BillingPage } from "@/pages/billing/BillingPage";
 import { BillingOverviewPage } from "@/pages/billing/BillingOverviewPage";
 import { BillingSectionPage } from "@/pages/billing/BillingSectionPage";
@@ -13,8 +14,12 @@ import { MonitoringSectionPage } from "@/pages/monitoring/MonitoringSectionPage"
 import { RouterManagementOverviewPage } from "@/pages/routers/RouterManagementOverviewPage";
 import { RouterManagementSectionPage } from "@/pages/routers/RouterManagementSectionPage";
 import { RouterDetailsPage } from "@/pages/routers/RouterDetailsPage";
+import { RouterAddPage } from "@/pages/routers/RouterAddPage";
 import { RoutersPage } from "@/pages/routers/RoutersPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
+import { AdminManagementPage } from "@/pages/settings/AdminManagementPage";
+import { ResellersPage } from "@/pages/settings/ResellersPage";
+import { ServicePlansPage } from "@/pages/settings/ServicePlansPage";
 import { TicketDetailsPage } from "@/pages/support/TicketDetailsPage";
 import { SupportOverviewPage } from "@/pages/support/SupportOverviewPage";
 import { SupportSectionPage } from "@/pages/support/SupportSectionPage";
@@ -45,6 +50,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.usersInternalNotes} element={<UserManagementSectionPage section="internal-notes" />} />
         <Route path={appRoutes.userDetail()} element={<UserDetailsPage />} />
         <Route path={appRoutes.routersRoot} element={<Navigate to={appRoutes.routersOverview} replace />} />
+        <Route path={appRoutes.routersAdd} element={<RouterAddPage />} />
         <Route path={appRoutes.routers} element={<RouterManagementOverviewPage />} />
         <Route path={appRoutes.routersOverview} element={<RouterManagementOverviewPage />} />
         <Route path={appRoutes.routersAll} element={<RouterManagementSectionPage section="all" />} />
@@ -92,6 +98,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.billingInvoices} element={<BillingSectionPage section="invoices" />} />
         <Route path={appRoutes.billingPayments} element={<BillingSectionPage section="payments" />} />
         <Route path={appRoutes.billingEntitlements} element={<BillingSectionPage section="entitlements" />} />
+        <Route path={appRoutes.billingReports} element={<BillingSectionPage section="reports" />} />
         <Route path={appRoutes.billingActivity} element={<BillingSectionPage section="activity" />} />
         <Route path={appRoutes.billingNotesFlags} element={<BillingSectionPage section="notes-flags" />} />
         <Route path={appRoutes.logsSecurityRoot} element={<Navigate to={appRoutes.logsSecurityOverview} replace />} />
@@ -122,6 +129,13 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.settings} element={<SettingsPage />} />
         <Route path={appRoutes.settingsSecurity} element={<SettingsPage />} />
         <Route path={appRoutes.settingsSystem} element={<SettingsPage />} />
+        <Route element={<RequirePermission permission={permissions.settingsManage} />}>
+          <Route path={appRoutes.settingsAdmins} element={<AdminManagementPage />} />
+          <Route path={appRoutes.settingsResellers} element={<ResellersPage />} />
+        </Route>
+        <Route element={<RequirePermission permission={permissions.servicePlansView} />}>
+          <Route path={appRoutes.settingsServicePlans} element={<ServicePlansPage />} />
+        </Route>
       </Route>
     </Route>
   );

@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { Activity, Fingerprint, ShieldAlert, ShieldQuestion, UserCog } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { TableLoader } from "@/components/feedback/TableLoader";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
 import { MetricCard } from "@/components/shared/MetricCard";
@@ -11,6 +13,8 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { Tabs } from "@/components/ui/Tabs";
+import { logsSecurityTabs } from "@/config/module-tabs";
 import {
   ActivityLogsTable,
   AuditTrailTable,
@@ -28,6 +32,9 @@ import {
   useAcknowledgeSecurityEvent,
   useAddSecurityNote,
   useAuditTrail,
+  useExportActivityLogs,
+  useExportAuditTrail,
+  useExportSecurityEvents,
   useMarkSecurityItemReviewed,
   useResolveSecurityEvent,
   useResourceTimeline,
@@ -51,6 +58,8 @@ import type {
 } from "@/features/logs-security/types/logs-security.types";
 import { logsSecuritySections } from "@/features/logs-security/utils/logs-security-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
 
 const sectionIcons: Record<LogsSecuritySection, typeof Activity> = {
   activity: Activity,
@@ -74,6 +83,9 @@ const resourceTypeOptions = [
 ] as const;
 
 export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
   const sectionMeta = logsSecuritySections[section];
   const Icon = sectionIcons[section];
 
@@ -93,15 +105,24 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const revokeSessionDisclosure = useDisclosure(false);
   const revokeAllDisclosure = useDisclosure(false);
 
-  const activityQuery = useActivityLogs(filters);
-  const auditQuery = useAuditTrail(filters);
+  const activityEnabled = section === "activity";
+  const auditEnabled = section === "audit";
+  const securityOverviewEnabled = section === "security-overview" || section === "security-events";
+  const securityEventsEnabled = ["security-events", "security-overview", "user-security-review", "reviews-notes"].includes(section);
+  const suspiciousEnabled = section === "suspicious-activity";
+  const sessionsEnabled = ["sessions", "security-overview", "user-security-review"].includes(section);
+  const reviewsEnabled = section === "reviews-notes";
+  const timelineEnabled = section === "resource-timelines" && timelineResourceId.trim() !== "";
+
+  const activityQuery = useActivityLogs(filters, activityEnabled);
+  const auditQuery = useAuditTrail(filters, auditEnabled);
   const securityOverviewQuery = useSecurityOverview();
-  const securityEventsQuery = useSecurityEvents(filters);
-  const suspiciousQuery = useSuspiciousActivity(filters);
-  const sessionsQuery = useSessions(filters);
-  const reviewsQuery = useSecurityReviews(filters);
+  const securityEventsQuery = useSecurityEvents(filters, securityEventsEnabled);
+  const suspiciousQuery = useSuspiciousActivity(filters, suspiciousEnabled);
+  const sessionsQuery = useSessions(filters, sessionsEnabled);
+  const reviewsQuery = useSecurityReviews(filters, reviewsEnabled);
   const selectedUserSummaryQuery = useUserSecuritySummary(selectedUserId);
-  const timelineQuery = useResourceTimeline(timelineResourceType, timelineResourceId, filters);
+  const timelineQuery = useResourceTimeline(timelineResourceType, timelineResourceId, filters, timelineEnabled);
 
   const acknowledgeMutation = useAcknowledgeSecurityEvent();
   const resolveMutation = useResolveSecurityEvent();
@@ -109,6 +130,9 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const addNoteMutation = useAddSecurityNote();
   const revokeSessionMutation = useRevokeSession();
   const revokeAllMutation = useRevokeAllUserSessions();
+  const exportAuditMutation = useExportAuditTrail();
+  const exportActivityMutation = useExportActivityLogs();
+  const exportSecurityMutation = useExportSecurityEvents();
 
   const openDetail = (item: LogsSecurityDetailItem) => {
     setSelectedDetail(item);
@@ -300,10 +324,14 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   };
 
   const detailItem = selectedDetail?.kind === "user-security" && selectedUserSummaryQuery.data ? { kind: "user-security" as const, item: selectedUserSummaryQuery.data } : selectedDetail;
+  const canExportLogs = can(currentUser, permissions.logsExport);
+  const canManageLogs = can(currentUser, permissions.logsManage);
+  const showAddNote = ["security-events", "suspicious-activity", "user-security-review", "reviews-notes"].includes(section);
 
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Logs, audit, and security" />
+      <Tabs tabs={[...logsSecurityTabs]} value={location.pathname} onChange={navigate} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
@@ -321,18 +349,21 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={addNoteDisclosure.onOpen} disabled={!selectedEvent && !selectedUserId}>Add note</Button>
+            {section === "audit" && canExportLogs ? <Button variant="outline" onClick={() => exportAuditMutation.mutate([filters])}>Export CSV</Button> : null}
+            {section === "activity" ? <Button variant="outline" onClick={() => exportActivityMutation.mutate([filters])}>Export CSV</Button> : null}
+            {section === "security-events" && canExportLogs ? <Button variant="outline" onClick={() => exportSecurityMutation.mutate([filters])}>Export CSV</Button> : null}
+            {showAddNote ? <Button variant="ghost" onClick={addNoteDisclosure.onOpen} disabled={!selectedEvent && !selectedUserId}>Add note</Button> : null}
             <RefreshButton
               loading={activityQuery.isFetching || auditQuery.isFetching || securityOverviewQuery.isFetching || securityEventsQuery.isFetching || suspiciousQuery.isFetching || sessionsQuery.isFetching || reviewsQuery.isFetching || timelineQuery.isFetching || selectedUserSummaryQuery.isFetching}
               onClick={() => {
-                void activityQuery.refetch();
-                void auditQuery.refetch();
-                void securityOverviewQuery.refetch();
-                void securityEventsQuery.refetch();
-                void suspiciousQuery.refetch();
-                void sessionsQuery.refetch();
-                void reviewsQuery.refetch();
-                if (timelineResourceId) void timelineQuery.refetch();
+                if (activityEnabled) void activityQuery.refetch();
+                if (auditEnabled) void auditQuery.refetch();
+                if (securityOverviewEnabled) void securityOverviewQuery.refetch();
+                if (securityEventsEnabled) void securityEventsQuery.refetch();
+                if (suspiciousEnabled) void suspiciousQuery.refetch();
+                if (sessionsEnabled) void sessionsQuery.refetch();
+                if (reviewsEnabled) void reviewsQuery.refetch();
+                if (timelineEnabled) void timelineQuery.refetch();
                 if (selectedUserId) void selectedUserSummaryQuery.refetch();
               }}
             />
@@ -341,7 +372,15 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
         <div className="mt-4 p-0 md:p-0">{renderContent()}</div>
       </Card>
 
-      <LogsSecurityDetailsModal open={detailDisclosure.open} item={detailItem} onClose={detailDisclosure.onClose} />
+      <LogsSecurityDetailsModal
+        open={detailDisclosure.open}
+        item={detailItem}
+        onClose={detailDisclosure.onClose}
+        onAcknowledge={selectedEvent ? () => { detailDisclosure.onClose(); acknowledgeDisclosure.onOpen(); } : undefined}
+        onResolve={selectedEvent && canManageLogs ? () => { detailDisclosure.onClose(); resolveDisclosure.onOpen(); } : undefined}
+        onMarkReviewed={selectedEvent ? () => { detailDisclosure.onClose(); reviewedDisclosure.onOpen(); } : undefined}
+        onAddNote={selectedEvent ? () => { detailDisclosure.onClose(); addNoteDisclosure.onOpen(); } : undefined}
+      />
 
       <LogsSecurityActionDialog open={acknowledgeDisclosure.open} title="Acknowledge security event" description="Record that this security event has been seen and triaged." confirmLabel="Acknowledge" loading={acknowledgeMutation.isPending} onClose={acknowledgeDisclosure.onClose} onConfirm={({ reason }) => selectedEvent && acknowledgeMutation.mutate([selectedEvent.eventId, reason] as never, { onSuccess: () => acknowledgeDisclosure.onClose() })} />
       <LogsSecurityActionDialog open={resolveDisclosure.open} title="Resolve security event" description="Mark the selected security event as resolved and capture context." confirmLabel="Resolve event" loading={resolveMutation.isPending} onClose={resolveDisclosure.onClose} onConfirm={({ reason }) => selectedEvent && resolveMutation.mutate([selectedEvent.eventId, reason] as never, { onSuccess: () => resolveDisclosure.onClose() })} />
@@ -349,7 +388,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
       <LogsSecurityActionDialog open={addNoteDisclosure.open} title="Add security note" description="Add investigation or follow-up context to the selected event or user." confirmLabel="Add note" requireBody loading={addNoteMutation.isPending} onClose={addNoteDisclosure.onClose} onConfirm={({ reason, body }) => addNoteMutation.mutate([{ eventId: selectedEvent?.eventId, userId: !selectedEvent ? selectedUserId || undefined : undefined }, { body: body || "", category: "review", reason }], { onSuccess: () => addNoteDisclosure.onClose() })} />
       <LogsSecurityActionDialog open={revokeSessionDisclosure.open} title="Revoke session" description="Immediately revoke the selected session and record a reason." confirmLabel="Revoke session" loading={revokeSessionMutation.isPending} onClose={revokeSessionDisclosure.onClose} onConfirm={({ reason }) => selectedSession && revokeSessionMutation.mutate([selectedSession.sessionId, reason] as never, { onSuccess: () => revokeSessionDisclosure.onClose() })} />
       <LogsSecurityActionDialog open={revokeAllDisclosure.open} title="Revoke all user sessions" description="Revoke every active session for the selected user." confirmLabel="Revoke all sessions" loading={revokeAllMutation.isPending} onClose={revokeAllDisclosure.onClose} onConfirm={({ reason }) => selectedUserId && revokeAllMutation.mutate([selectedUserId, reason] as never, { onSuccess: () => revokeAllDisclosure.onClose() })} />
-
     </section>
   );
 }

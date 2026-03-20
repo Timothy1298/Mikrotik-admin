@@ -11,6 +11,57 @@ export function MonitoringFilters({
   filters: MonitoringFilterState;
   onChange: (patch: Partial<MonitoringFilterState>) => void;
 }) {
+  const statusOptions = (() => {
+    switch (section) {
+      case "router-health":
+      case "provisioning-analytics":
+        return [
+          { label: "All statuses", value: "" },
+          { label: "Online", value: "online" },
+          { label: "Offline", value: "offline" },
+          { label: "Disabled", value: "disabled" },
+          { label: "Pending", value: "pending" },
+        ];
+      case "vpn-server-health":
+        return [
+          { label: "All statuses", value: "" },
+          { label: "Healthy", value: "healthy" },
+          { label: "Degraded", value: "degraded" },
+          { label: "Disabled", value: "disabled" },
+          { label: "Maintenance", value: "maintenance" },
+        ];
+      case "peer-health":
+        return [
+          { label: "All states", value: "" },
+          { label: "Fresh", value: "fresh" },
+          { label: "Stale", value: "stale" },
+          { label: "Never", value: "never" },
+          { label: "Disabled", value: "disabled" },
+        ];
+      default:
+        return null;
+    }
+  })();
+  const statusControl = (section === "incidents-alerts" || section === "diagnostics" || section === "activity-feed") ? (
+    <Select
+      value={filters.severity || ""}
+      onChange={(event) => onChange({ severity: event.target.value || undefined, page: 1 })}
+      options={[
+        { label: "All severities", value: "" },
+        { label: "Critical", value: "critical" },
+        { label: "High", value: "high" },
+        { label: "Medium", value: "medium" },
+        { label: "Info", value: "info" },
+      ]}
+    />
+  ) : statusOptions ? (
+    <Select
+      value={filters.status || ""}
+      onChange={(event) => onChange({ status: event.target.value || undefined, page: 1 })}
+      options={statusOptions}
+    />
+  ) : <div />;
+
   return (
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       <Input placeholder="Search incidents, resources, users, or summaries..." value={filters.q || ""} onChange={(event) => onChange({ q: event.target.value, page: 1 })} />
@@ -24,31 +75,7 @@ export function MonitoringFilters({
           { label: "Last 30 days", value: "30d" },
         ]}
       />
-      {(section === "incidents-alerts" || section === "diagnostics" || section === "activity-feed") ? (
-        <Select
-          value={filters.severity || ""}
-          onChange={(event) => onChange({ severity: event.target.value || undefined, page: 1 })}
-          options={[
-            { label: "All severities", value: "" },
-            { label: "Critical", value: "critical" },
-            { label: "High", value: "high" },
-            { label: "Medium", value: "medium" },
-            { label: "Info", value: "info" },
-          ]}
-        />
-      ) : (
-        <Select
-          value={filters.status || ""}
-          onChange={(event) => onChange({ status: event.target.value || undefined, page: 1 })}
-          options={[
-            { label: "All statuses", value: "" },
-            { label: "Healthy", value: "healthy" },
-            { label: "Degraded", value: "degraded" },
-            { label: "Offline", value: "offline" },
-            { label: "Active", value: "active" },
-          ]}
-        />
-      )}
+      {statusControl}
       <Select
         value={filters.type || filters.source || ""}
         onChange={(event) => onChange(section === "activity-feed" ? { source: event.target.value || undefined, page: 1 } : { type: event.target.value || undefined, page: 1 })}

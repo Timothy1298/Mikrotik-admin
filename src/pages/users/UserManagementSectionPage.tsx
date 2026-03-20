@@ -1,15 +1,22 @@
 import { useMemo, useState } from 'react';
-import { Flag, RefreshCw, ShieldAlert, Ticket, UserPlus2, Wallet } from 'lucide-react';
+import { Flag, Plus, RefreshCw, ShieldAlert, Ticket, UserPlus2, Wallet } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { TableLoader } from '@/components/feedback/TableLoader';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataToolbar } from '@/components/shared/DataToolbar';
 import { MetricCard } from '@/components/shared/MetricCard';
 import { RefreshButton } from '@/components/shared/RefreshButton';
+import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Tabs } from '@/components/ui/Tabs';
+import { userManagementTabs } from '@/config/module-tabs';
 import {
   AddUserFlagDialog,
   AddUserNoteDialog,
+  AddSubscriberDialog,
+  DeleteSubscriberDialog,
+  EditSubscriberProfileDialog,
   ExtendTrialDialog,
   ForceLogoutDialog,
   ReactivateUserDialog,
@@ -26,6 +33,8 @@ import {
 import {
   useAddUserFlag,
   useAddUserNote,
+  useDeleteUser,
+  useEditUserProfile,
   useExtendUserTrial,
   useForceLogoutUser,
   useReactivateUser,
@@ -43,6 +52,9 @@ import type { UserManagementSection } from '@/features/users/utils/user-manageme
 import { userManagementSections } from '@/features/users/utils/user-management-sections';
 import { useDisclosure } from '@/hooks/ui/useDisclosure';
 import { formatCurrency } from '@/lib/formatters/currency';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
+import { can } from '@/lib/permissions/can';
+import { permissions } from '@/lib/permissions/permissions';
 
 const sectionIcons: Record<UserManagementSection, typeof ShieldAlert> = {
   all: UserPlus2,
@@ -57,6 +69,9 @@ const sectionIcons: Record<UserManagementSection, typeof ShieldAlert> = {
 };
 
 export function UserManagementSectionPage({ section }: { section: UserManagementSection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
   const sectionMeta = userManagementSections[section];
   const lockedFilters = sectionMeta.lockedFilters || {};
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof UsersQuery>;
@@ -76,6 +91,9 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const noteDisclosure = useDisclosure(false);
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
+  const deleteDisclosure = useDisclosure(false);
+  const editProfileDisclosure = useDisclosure(false);
+  const addSubscriberDisclosure = useDisclosure(false);
 
   const effectiveFilters = { ...filters, ...lockedFilters };
   const usersQuery = useUsers(effectiveFilters);
@@ -92,6 +110,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const noteMutation = useAddUserNote();
   const addFlagMutation = useAddUserFlag();
   const removeFlagMutation = useRemoveUserFlag();
+  const deleteMutation = useDeleteUser();
+  const editProfileMutation = useEditUserProfile();
 
   const baseRows = usersQuery.data?.items || [];
   const rows = section === 'internal-notes'
@@ -111,6 +131,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
 
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== '').length;
   const Icon = sectionIcons[section];
+  const canManageUsers = can(currentUser, permissions.usersManage);
+  const canDeleteUsers = can(currentUser, permissions.usersDelete);
 
   const openUserContext = (user: UserRow) => {
     setSelectedUser(user);
@@ -120,6 +142,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="User management" />
+
+      <Tabs tabs={[...userManagementTabs]} value={location.pathname} onChange={navigate} />
 
       {section === 'all' && statsQuery.data ? <UsersStatsRow stats={statsQuery.data} /> : null}
 
@@ -146,6 +170,7 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
           </div>
           <div className="flex items-center gap-3">
             {usersQuery.isFetching && !usersQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
+            {section === 'all' && canManageUsers ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addSubscriberDisclosure.onOpen}>Add Subscriber</Button> : null}
             <RefreshButton loading={usersQuery.isFetching || statsQuery.isFetching} onClick={() => { void usersQuery.refetch(); void statsQuery.refetch(); }} />
           </div>
         </DataToolbar>
@@ -159,15 +184,17 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
             <UsersTable
               rows={rows}
               onOpenDetails={openUserContext}
-              onSuspend={(user) => { setSelectedUser(user); suspendDisclosure.onOpen(); }}
-              onReactivate={(user) => { setSelectedUser(user); reactivateDisclosure.onOpen(); }}
-              onVerify={(user) => { setSelectedUser(user); verifyDisclosure.onOpen(); }}
-              onResendVerification={(user) => { setSelectedUser(user); resendDisclosure.onOpen(); }}
-              onPasswordReset={(user) => { setSelectedUser(user); passwordResetDisclosure.onOpen(); }}
-              onForceLogout={(user) => { setSelectedUser(user); forceLogoutDisclosure.onOpen(); }}
-              onExtendTrial={(user) => { setSelectedUser(user); extendDisclosure.onOpen(); }}
-              onAddNote={(user) => { setSelectedUser(user); noteDisclosure.onOpen(); }}
-              onAddFlag={(user) => { setSelectedUser(user); flagDisclosure.onOpen(); }}
+              onSuspend={canManageUsers ? (user) => { setSelectedUser(user); suspendDisclosure.onOpen(); } : undefined}
+              onReactivate={canManageUsers ? (user) => { setSelectedUser(user); reactivateDisclosure.onOpen(); } : undefined}
+              onVerify={canManageUsers ? (user) => { setSelectedUser(user); verifyDisclosure.onOpen(); } : undefined}
+              onResendVerification={canManageUsers ? (user) => { setSelectedUser(user); resendDisclosure.onOpen(); } : undefined}
+              onPasswordReset={canManageUsers ? (user) => { setSelectedUser(user); passwordResetDisclosure.onOpen(); } : undefined}
+              onForceLogout={canManageUsers ? (user) => { setSelectedUser(user); forceLogoutDisclosure.onOpen(); } : undefined}
+              onExtendTrial={canManageUsers ? (user) => { setSelectedUser(user); extendDisclosure.onOpen(); } : undefined}
+              onAddNote={canManageUsers ? (user) => { setSelectedUser(user); noteDisclosure.onOpen(); } : undefined}
+              onAddFlag={canManageUsers ? (user) => { setSelectedUser(user); flagDisclosure.onOpen(); } : undefined}
+              onEditProfile={canManageUsers ? (user) => { setSelectedUser(user); editProfileDisclosure.onOpen(); } : undefined}
+              onDelete={canDeleteUsers ? (user) => { setSelectedUser(user); deleteDisclosure.onOpen(); } : undefined}
             />
           )}
         </div>
@@ -189,6 +216,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
         onAddNote={noteDisclosure.onOpen}
         onAddFlag={flagDisclosure.onOpen}
         onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
+        onDelete={deleteDisclosure.onOpen}
+        onEditProfile={editProfileDisclosure.onOpen}
       />
 
       <SuspendUserDialog open={suspendDisclosure.open} loading={suspendMutation.isPending} onClose={suspendDisclosure.onClose} onConfirm={(reason) => selectedUser && suspendMutation.mutate([selectedUser.id, reason] as never, { onSuccess: () => suspendDisclosure.onClose() })} />
@@ -204,6 +233,30 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
         if (!selectedUser || !selectedFlag?.id) return;
         removeFlagMutation.mutate([selectedUser.id, selectedFlag.id, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() });
       }} />
+      <DeleteSubscriberDialog
+        open={deleteDisclosure.open}
+        loading={deleteMutation.isPending}
+        userName={detailQuery.data?.profile.name || selectedUser?.name}
+        onClose={deleteDisclosure.onClose}
+        onConfirm={(reason) => selectedUser && deleteMutation.mutate([selectedUser.id, reason] as never, {
+          onSuccess: () => {
+            deleteDisclosure.onClose();
+            detailDisclosure.onClose();
+          },
+        })}
+      />
+      {detailQuery.data ? (
+        <EditSubscriberProfileDialog
+          open={editProfileDisclosure.open}
+          loading={editProfileMutation.isPending}
+          user={detailQuery.data}
+          onClose={editProfileDisclosure.onClose}
+          onConfirm={(payload) => selectedUser && editProfileMutation.mutate([selectedUser.id, payload] as never, {
+            onSuccess: () => editProfileDisclosure.onClose(),
+          })}
+        />
+      ) : null}
+      <AddSubscriberDialog open={addSubscriberDisclosure.open} onClose={addSubscriberDisclosure.onClose} />
     </section>
   );
 }

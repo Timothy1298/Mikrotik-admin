@@ -1,5 +1,5 @@
-import { ArrowRight, Clock3, LifeBuoy, ShieldAlert, UserCog } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight, Clock3, LifeBuoy, Plus, ShieldAlert, UserCog } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
@@ -7,12 +7,24 @@ import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { supportTabs } from "@/config/module-tabs";
 import { appRoutes } from "@/config/routes";
-import { TicketsTable } from "@/features/support/components";
+import { CreateTicketDialog, TicketsTable } from "@/features/support/components";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useAssigneeWorkload, useEscalatedQueue, useStaleQueue, useSupportOverview, useTickets } from "@/features/support/hooks/useSupport";
+import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { formatDateTime } from "@/lib/formatters/date";
+import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
 
 export function SupportOverviewPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
+  const addDisclosure = useDisclosure(false);
   const overviewQuery = useSupportOverview();
   const urgentQuery = useTickets({ limit: 5, priority: "urgent", sortBy: "updatedAt", sortOrder: "desc" });
   const staleQuery = useStaleQueue({ limit: 5 });
@@ -26,10 +38,31 @@ export function SupportOverviewPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title="Support & Tickets" description="Support operations command center for triage, ownership, escalation, queue aging, and customer-impact context." meta={overview.lastSupportSyncAt ? `Last sync ${new Date(overview.lastSupportSyncAt).toLocaleString()}` : "Support telemetry ready"} />
-      <div className="flex justify-end">
+      <PageHeader title="Support & Tickets" description="Support operations command center for triage, ownership, escalation, queue aging, and customer-impact context." meta={overview.lastSupportSyncAt ? `Last sync ${formatDateTime(overview.lastSupportSyncAt)}` : "Support telemetry ready"} />
+      <Tabs tabs={[...supportTabs]} value={location.pathname} onChange={navigate} />
+      <div className="flex flex-wrap justify-end gap-3">
+        {can(currentUser, permissions.supportManage) ? (
+          <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>
+            New Ticket
+          </Button>
+        ) : null}
         <RefreshButton loading={overviewQuery.isFetching || urgentQuery.isFetching || staleQuery.isFetching || escalatedQuery.isFetching || workloadQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void urgentQuery.refetch(); void staleQuery.refetch(); void escalatedQuery.refetch(); void workloadQuery.refetch(); }} />
       </div>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Primary actions</CardTitle>
+            <CardDescription>Most-used support actions, promoted for faster queue handling and ticket creation.</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="flex flex-wrap gap-3">
+          {can(currentUser, permissions.supportManage) ? <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>New Ticket</Button> : null}
+          <Button variant="outline" onClick={() => navigate(appRoutes.supportTickets)}>Open All Tickets</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.supportUnassigned)}>Unassigned Queue</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.supportEscalated)}>Escalated Queue</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.supportStale)}>Stale Tickets</Button>
+        </div>
+      </Card>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Open tickets" value={String(overview.openTickets)} progress={Math.min(100, overview.openTickets)} />
         <MetricCard title="Escalated" value={String(overview.escalatedTickets)} progress={Math.min(100, overview.escalatedTickets * 8)} />
@@ -106,6 +139,8 @@ export function SupportOverviewPage() {
           </div>
         </Card>
       </div>
+
+      <CreateTicketDialog open={addDisclosure.open} onClose={addDisclosure.onClose} />
     </section>
   );
 }

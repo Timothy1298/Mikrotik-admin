@@ -51,6 +51,13 @@ export const billingSections: Record<BillingSection, { title: string; descriptio
     emptyTitle: "No entitlement records found",
     emptyDescription: "No billing accounts matched the current entitlement filters.",
   },
+  reports: {
+    title: "Financial Reports",
+    description: "Revenue summaries, outstanding balances, collection efficiency, and exportable financial data.",
+    route: appRoutes.billingReports,
+    emptyTitle: "No report data available",
+    emptyDescription: "No financial data matched the selected report parameters.",
+  },
   activity: {
     title: "Billing Activity",
     description: "Billing-related event timeline across subscriptions, invoices, payments, and admin actions.",

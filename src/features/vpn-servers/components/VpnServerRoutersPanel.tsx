@@ -1,28 +1,63 @@
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Router } from "lucide-react";
+import { Link } from "react-router-dom";
+import { EmptyState } from "@/components/feedback/EmptyState";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { appRoutes } from "@/config/routes";
 import type { VpnServerRouterItem } from "@/features/vpn-servers/types/vpn-server.types";
-import { formatDateTime } from "@/lib/formatters/date";
 
-export function VpnServerRoutersPanel({ items, loading }: { items: VpnServerRouterItem[]; loading?: boolean }) {
+dayjs.extend(relativeTime);
+
+export function VpnServerRoutersPanel({ items, loading, onRefresh }: { items: VpnServerRouterItem[]; loading?: boolean; onRefresh?: () => void }) {
   return (
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>Routers preview</CardTitle>
+          <CardTitle>Routers ({items.length})</CardTitle>
           <CardDescription>Routers currently assigned to this VPN server.</CardDescription>
         </div>
+        <RefreshButton loading={loading} onClick={onRefresh} />
       </CardHeader>
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-slate-400">Loading routers…</p> : items.length ? items.map((router) => (
-          <div key={router.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-slate-100">{router.name}</p>
-                <p className="mt-1 text-xs text-slate-500">{router.customer?.name || "No customer"} • {router.vpnIp}</p>
+        {loading ? <p className="text-sm text-slate-400">Loading routers…</p> : items.length ? items.map((router) => {
+          const statusTone = router.status === "active" ? "bg-success" : router.status === "pending" ? "bg-warning" : "bg-danger";
+          const provisioningTone = router.provisioningState === "connected" ? "success" : router.provisioningState === "awaiting_connection" ? "warning" : router.provisioningState === "failed" ? "danger" : "neutral";
+          return (
+            <div key={router.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="space-y-2">
+                  <Link className="text-sm font-medium text-slate-100 transition hover:text-brand-100" to={appRoutes.routerDetail(router.id)}>
+                    {router.name}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                    <span className="inline-flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${statusTone}`} />
+                      <span>{router.status}</span>
+                    </span>
+                    <Badge tone={provisioningTone}>{router.provisioningState.replace(/_/g, " ")}</Badge>
+                    <span>{router.customer ? <Link className="transition hover:text-slate-100" to={appRoutes.userDetail(router.customer.id)}>{router.customer.name}</Link> : "No customer"}</span>
+                  </div>
+                  <p className="font-mono text-xs text-slate-500">{router.vpnIp}</p>
+                </div>
+                <p className="text-xs text-slate-500">{router.lastSeen ? dayjs(router.lastSeen).fromNow() : "No telemetry yet"}</p>
               </div>
-              <span className="font-mono text-xs text-slate-500">{formatDateTime(router.lastSeen)}</span>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  { label: "Winbox", value: router.publicPorts.winbox ?? "—" },
+                  { label: "SSH", value: router.publicPorts.ssh ?? "—" },
+                  { label: "API", value: router.publicPorts.api ?? "—" },
+                ].map((port) => (
+                  <span key={port.label} className="rounded-xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-1 text-xs text-slate-300">
+                    {port.label}: <span className="font-mono text-slate-100">{port.value}</span>
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )) : <p className="text-sm text-slate-400">No routers are currently attached to this VPN server.</p>}
+          );
+        }) : <EmptyState icon={Router} title="No routers are currently attached to this VPN server" description="Assigned routers will appear here once they are provisioned against this server node." />}
       </div>
     </Card>
   );

@@ -1,7 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/data-display/DataTable";
+import { CopyButton } from "@/components/shared/CopyButton";
+import { appRoutes } from "@/config/routes";
 import type {
   ActivityLogItem,
   AuditTrailItem,
@@ -11,6 +14,7 @@ import type {
   SuspiciousActivityItem,
   UserSecuritySummary,
 } from "@/features/logs-security/types/logs-security.types";
+import { formatDateTime } from "@/lib/formatters/date";
 
 function SeverityBadge({ value }: { value?: string | null }) {
   const tone = value === "critical" || value === "high" ? "danger" : value === "medium" ? "warning" : "info";
@@ -22,24 +26,53 @@ function StatusBadge({ value }: { value?: string | null }) {
   return <Badge tone={tone as "danger" | "success" | "info"}>{value || "unknown"}</Badge>;
 }
 
+function formatActionType(action: string) {
+  return action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ResourceLink({ resourceType, resourceId }: { resourceType?: string | null; resourceId?: string | null }) {
+  if (!resourceType || !resourceId) return <span className="text-slate-500">n/a</span>;
+
+  const path =
+    resourceType === "router" ? appRoutes.routerDetail(resourceId) :
+    resourceType === "user" ? appRoutes.userDetail(resourceId) :
+    resourceType === "vpn_server" ? appRoutes.vpnServerDetail(resourceId) :
+    resourceType === "support_ticket" ? appRoutes.supportTicket(resourceId) :
+    resourceType === "billing_account" ? appRoutes.userDetail(resourceId) :
+    null;
+
+  return (
+    <div>
+      <p className="text-sm text-slate-300">{formatActionType(resourceType)}</p>
+      {path ? (
+        <Link to={path} className="font-mono text-xs text-brand-400 hover:underline" onClick={(event) => event.stopPropagation()}>
+          {resourceId.slice(0, 8)}...
+        </Link>
+      ) : (
+        <p className="font-mono text-xs text-slate-500">{resourceId.slice(0, 12)}...</p>
+      )}
+    </div>
+  );
+}
+
 export function ActivityLogsTable({ rows, onOpen }: { rows: ActivityLogItem[]; onOpen: (item: ActivityLogItem) => void }) {
   const columns: ColumnDef<ActivityLogItem>[] = [
-    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.summary}</p><p className="text-xs text-slate-500">{row.original.eventType}</p></div> },
+    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.summary}</p><p className="text-xs text-slate-500">{formatActionType(row.original.eventType)}</p></div> },
     { header: "Actor", cell: ({ row }) => <div><p>{row.original.actor?.name || "System"}</p><p className="text-xs text-slate-500">{row.original.actor?.email || row.original.source || "system"}</p></div> },
-    { header: "Resource", cell: ({ row }) => <div><p>{row.original.resourceType || "n/a"}</p><p className="text-xs text-slate-500">{row.original.resourceId || "No resource id"}</p></div> },
+    { header: "Resource", cell: ({ row }) => <ResourceLink resourceType={row.original.resourceType} resourceId={row.original.resourceId} /> },
     { header: "Severity", cell: ({ row }) => <SeverityBadge value={row.original.severity} /> },
-    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{new Date(row.original.timestamp).toLocaleString()}</span> },
+    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{formatDateTime(row.original.timestamp)}</span> },
   ];
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No activity events found" emptyDescription="No activity events matched the current filters." />;
 }
 
 export function AuditTrailTable({ rows, onOpen }: { rows: AuditTrailItem[]; onOpen: (item: AuditTrailItem) => void }) {
   const columns: ColumnDef<AuditTrailItem>[] = [
-    { header: "Action", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.actionType}</p><p className="text-xs text-slate-500">{row.original.reason || "No reason provided"}</p></div> },
+    { header: "Action", cell: ({ row }) => <div><p className="font-medium text-slate-100">{formatActionType(row.original.actionType)}</p><p className="text-xs text-slate-500">{row.original.reason || "No reason provided"}</p></div> },
     { header: "Actor", cell: ({ row }) => <div><p>{row.original.actor?.name || "Admin"}</p><p className="text-xs text-slate-500">{row.original.actor?.email || "unknown"}</p></div> },
-    { header: "Resource", cell: ({ row }) => <div><p>{row.original.resourceType || "n/a"}</p><p className="text-xs text-slate-500">{row.original.resourceId || "No resource id"}</p></div> },
+    { header: "Resource", cell: ({ row }) => <ResourceLink resourceType={row.original.resourceType} resourceId={row.original.resourceId} /> },
     { header: "Target", cell: ({ row }) => <div><p>{row.original.targetAccount?.name || "n/a"}</p><p className="text-xs text-slate-500">{row.original.targetAccount?.email || "No target email"}</p></div> },
-    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{new Date(row.original.timestamp).toLocaleString()}</span> },
+    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{formatDateTime(row.original.timestamp)}</span> },
   ];
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No audit records found" emptyDescription="No audit records matched the current filters." />;
 }
@@ -58,7 +91,7 @@ export function SecurityEventsTable({
   onMarkReviewed?: (item: SecurityEventItem) => void;
 }) {
   const columns: ColumnDef<SecurityEventItem>[] = [
-    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.eventType}</p><p className="text-xs text-slate-500">{row.original.reason || row.original.category}</p></div> },
+    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{formatActionType(row.original.eventType)}</p><p className="text-xs text-slate-500">{row.original.reason || row.original.category}</p></div> },
     { header: "User", cell: ({ row }) => <div><p>{row.original.user?.name || "System"}</p><p className="text-xs text-slate-500">{row.original.user?.email || row.original.ipAddress || "No user context"}</p></div> },
     { header: "Severity", cell: ({ row }) => <SeverityBadge value={row.original.severity} /> },
     { header: "Status", cell: ({ row }) => <StatusBadge value={row.original.resolvedAt ? "resolved" : row.original.reviewedAt ? "reviewed" : row.original.acknowledgedAt ? "acknowledged" : row.original.success === false ? "failed" : "open"} /> },
@@ -78,10 +111,10 @@ export function SecurityEventsTable({
 
 export function SuspiciousActivityTable({ rows, onOpen }: { rows: SuspiciousActivityItem[]; onOpen: (item: SuspiciousActivityItem) => void }) {
   const columns: ColumnDef<SuspiciousActivityItem>[] = [
-    { header: "Issue", cell: ({ row }) => <div><p className="font-medium text-slate-100">{"summary" in row.original ? row.original.summary : row.original.reason || row.original.eventType}</p><p className="text-xs text-slate-500">{("eventType" in row.original ? row.original.eventType : row.original.type).replace(/_/g, " ")}</p></div> },
+    { header: "Issue", cell: ({ row }) => <div><p className="font-medium text-slate-100">{"summary" in row.original ? row.original.summary : row.original.reason || row.original.eventType}</p><p className="text-xs text-slate-500">{formatActionType(("eventType" in row.original ? row.original.eventType : row.original.type))}</p></div> },
     { header: "User", cell: ({ row }) => <div><p>{row.original.user?.name || "No user"}</p><p className="text-xs text-slate-500">{row.original.user?.email || "No email context"}</p></div> },
     { header: "Severity", cell: ({ row }) => <SeverityBadge value={row.original.severity} /> },
-    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{new Date(row.original.timestamp).toLocaleString()}</span> },
+    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{formatDateTime(row.original.timestamp)}</span> },
   ];
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No suspicious activity found" emptyDescription="No suspicious items matched the current filters." />;
 }
@@ -96,10 +129,23 @@ export function SessionsTable({
   onRevoke?: (item: SessionItem) => void;
 }) {
   const columns: ColumnDef<SessionItem>[] = [
-    { header: "Session", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.sessionId}</p><p className="text-xs text-slate-500">{row.original.user?.email || row.original.userAgent || "No device summary"}</p></div> },
+    {
+      header: "Session",
+      cell: ({ row }) => (
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-slate-100">
+              {row.original.sessionId.slice(0, 8)}...{row.original.sessionId.slice(-4)}
+            </span>
+            <CopyButton value={row.original.sessionId} />
+          </div>
+          <p className="mt-1 text-xs text-slate-500">{row.original.userAgent?.slice(0, 30) || "No device info"}</p>
+        </div>
+      ),
+    },
     { header: "User", cell: ({ row }) => <div><p>{row.original.user?.name || "Unknown user"}</p><p className="text-xs text-slate-500">{row.original.ipAddress || "No IP"}</p></div> },
     { header: "Status", cell: ({ row }) => <StatusBadge value={row.original.status} /> },
-    { header: "Last seen", cell: ({ row }) => <span className="text-xs text-slate-400">{new Date(row.original.lastSeenAt || row.original.issuedAt || Date.now()).toLocaleString()}</span> },
+    { header: "Last seen", cell: ({ row }) => <span className="text-xs text-slate-400">{formatDateTime(row.original.lastSeenAt || row.original.issuedAt || null)}</span> },
     { header: "Actions", cell: ({ row }) => onRevoke ? <div onClick={(event) => event.stopPropagation()}><Button size="sm" variant="ghost" onClick={() => onRevoke(row.original)}>Revoke</Button></div> : null },
   ];
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No sessions found" emptyDescription="No sessions matched the current filters." />;
@@ -118,10 +164,10 @@ export function UserSecurityReviewTable({ rows, onOpen, onRevokeAll }: { rows: U
 
 export function ResourceTimelineViewer({ rows, onOpen }: { rows: ResourceTimelineItem[]; onOpen?: (item: ResourceTimelineItem) => void }) {
   const columns: ColumnDef<ResourceTimelineItem>[] = [
-    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.summary}</p><p className="text-xs text-slate-500">{row.original.eventType}</p></div> },
+    { header: "Event", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.summary}</p><p className="text-xs text-slate-500">{formatActionType(row.original.eventType)}</p></div> },
     { header: "Category", cell: ({ row }) => <Badge tone="info">{row.original.category}</Badge> },
     { header: "Source", cell: ({ row }) => row.original.source || "system" },
-    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{new Date(row.original.timestamp).toLocaleString()}</span> },
+    { header: "Timestamp", cell: ({ row }) => <span className="text-xs text-slate-400">{formatDateTime(row.original.timestamp)}</span> },
   ];
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No timeline items found" emptyDescription="The selected resource did not return any timeline events." />;
 }

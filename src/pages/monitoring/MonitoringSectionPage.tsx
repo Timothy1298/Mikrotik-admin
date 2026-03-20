@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
-import { Activity, AlertTriangle, Router, Server, ShieldAlert, Users, Wrench } from "lucide-react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Activity, AlertTriangle, LifeBuoy, Router, Server, ShieldAlert, UserCog, Users, Wrench } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { TableLoader } from "@/components/feedback/TableLoader";
@@ -7,12 +10,16 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { monitoringTabs } from "@/config/module-tabs";
 import {
   AcknowledgeIncidentModal,
   AddIncidentNoteModal,
   CustomerImpactTable,
   IncidentDetailsModal,
+  IncidentSeverityBadge,
   IncidentsTable,
   MarkIncidentReviewedModal,
   MonitoringEventDetailsModal,
@@ -40,6 +47,7 @@ import {
   useOverloadedVpnServers,
   usePeerHealthSummary,
   useProvisioningFailures,
+  useProvisioningIssueRouters,
   useProvisioningSummary,
   useProvisioningTrends,
   useResolveIncident,
@@ -59,6 +67,10 @@ import {
 import type { MonitoringDetailItem, MonitoringFilterState, MonitoringIncident, MonitoringSection } from "@/features/monitoring/types/monitoring.types";
 import { monitoringSections } from "@/features/monitoring/utils/monitoring-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { formatBytes } from "@/lib/formatters/bytes";
+import { cn } from "@/lib/utils/cn";
+
+dayjs.extend(relativeTime);
 
 const sectionIcons: Record<MonitoringSection, typeof Activity> = {
   "router-health": Router,
@@ -73,6 +85,8 @@ const sectionIcons: Record<MonitoringSection, typeof Activity> = {
 };
 
 export function MonitoringSectionPage({ section }: { section: MonitoringSection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const sectionMeta = monitoringSections[section];
   const [filters, setFilters] = useState<MonitoringFilterState>({ limit: 50, window: "24h" });
   const [selectedIncident, setSelectedIncident] = useState<MonitoringIncident | null>(null);
@@ -84,31 +98,41 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   const resolveDisclosure = useDisclosure(false);
   const reviewedDisclosure = useDisclosure(false);
   const noteDisclosure = useDisclosure(false);
+  const isRouterSection = section === "router-health";
+  const isVpnSection = section === "vpn-server-health";
+  const isPeerSection = section === "peer-health";
+  const isTrafficSection = section === "traffic-bandwidth";
+  const isCustomerSection = section === "customer-impact";
+  const isProvisioningSection = section === "provisioning-analytics";
+  const isIncidentsSection = section === "incidents-alerts";
+  const isDiagnosticsSection = section === "diagnostics";
+  const isActivitySection = section === "activity-feed";
 
-  const routerSummaryQuery = useRouterHealthSummary();
-  const unhealthyRoutersQuery = useUnhealthyRouters(filters);
-  const offlineRoutersQuery = useOfflineRouters(filters);
-  const staleRoutersQuery = useStaleRouters(filters);
-  const vpnSummaryQuery = useVpnServerHealthSummary();
-  const unhealthyServersQuery = useUnhealthyVpnServers(filters);
-  const overloadedServersQuery = useOverloadedVpnServers(filters);
-  const staleServersQuery = useStaleVpnServers(filters);
-  const peerSummaryQuery = usePeerHealthSummary();
-  const stalePeersQuery = useStalePeers(filters);
-  const unhealthyPeersQuery = useUnhealthyPeers(filters);
-  const trafficSummaryQuery = useTrafficSummary();
-  const trafficTrendsQuery = useTrafficTrends(filters);
-  const topTrafficRoutersQuery = useTopTrafficRouters(filters);
-  const topTrafficServersQuery = useTopTrafficServers(filters);
-  const customerImpactQuery = useCustomerImpact();
-  const affectedCustomersQuery = useAffectedCustomers(filters);
-  const provisioningSummaryQuery = useProvisioningSummary();
-  const provisioningTrendsQuery = useProvisioningTrends(filters);
-  const provisioningFailuresQuery = useProvisioningFailures(filters);
-  const incidentsQuery = useIncidents(filters);
-  const incidentQuery = useIncident(selectedIncident?.id || "");
-  const diagnosticsQuery = useMonitoringDiagnostics();
-  const activityQuery = useMonitoringActivity(filters);
+  const routerSummaryQuery = useRouterHealthSummary(isRouterSection);
+  const unhealthyRoutersQuery = useUnhealthyRouters(filters, isRouterSection);
+  const offlineRoutersQuery = useOfflineRouters(filters, isRouterSection);
+  const provisioningIssueRoutersQuery = useProvisioningIssueRouters(filters, isRouterSection);
+  const staleRoutersQuery = useStaleRouters(filters, isRouterSection);
+  const vpnSummaryQuery = useVpnServerHealthSummary(isVpnSection);
+  const unhealthyServersQuery = useUnhealthyVpnServers(filters, isVpnSection);
+  const overloadedServersQuery = useOverloadedVpnServers(filters, isVpnSection);
+  const staleServersQuery = useStaleVpnServers(filters, isVpnSection);
+  const peerSummaryQuery = usePeerHealthSummary(isPeerSection);
+  const stalePeersQuery = useStalePeers(filters, isPeerSection);
+  const unhealthyPeersQuery = useUnhealthyPeers(filters, isPeerSection);
+  const trafficSummaryQuery = useTrafficSummary(isTrafficSection);
+  const trafficTrendsQuery = useTrafficTrends(filters, isTrafficSection);
+  const topTrafficRoutersQuery = useTopTrafficRouters(filters, isTrafficSection);
+  const topTrafficServersQuery = useTopTrafficServers(filters, isTrafficSection);
+  const customerImpactQuery = useCustomerImpact(isCustomerSection);
+  const affectedCustomersQuery = useAffectedCustomers(filters, isCustomerSection);
+  const provisioningSummaryQuery = useProvisioningSummary(isProvisioningSection);
+  const provisioningTrendsQuery = useProvisioningTrends(filters, isProvisioningSection);
+  const provisioningFailuresQuery = useProvisioningFailures(filters, isProvisioningSection);
+  const incidentsQuery = useIncidents(filters, isIncidentsSection);
+  const incidentQuery = useIncident(selectedIncident?.id || "", isIncidentsSection);
+  const diagnosticsQuery = useMonitoringDiagnostics(isDiagnosticsSection);
+  const activityQuery = useMonitoringActivity(filters, isActivitySection);
 
   const acknowledgeMutation = useAcknowledgeIncident();
   const resolveMutation = useResolveIncident();
@@ -118,13 +142,14 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   const Icon = sectionIcons[section];
 
   const routerRows = useMemo(() => {
-    const all = [
-      ...(unhealthyRoutersQuery.data?.items || []),
-      ...(offlineRoutersQuery.data?.items || []),
-      ...(staleRoutersQuery.data?.items || []),
-    ];
-    return Array.from(new Map(all.map((item) => [item.id, item])).values());
-  }, [offlineRoutersQuery.data?.items, staleRoutersQuery.data?.items, unhealthyRoutersQuery.data?.items]);
+      const all = [
+        ...(unhealthyRoutersQuery.data?.items || []),
+        ...(offlineRoutersQuery.data?.items || []),
+        ...(provisioningIssueRoutersQuery.data?.items || []),
+        ...(staleRoutersQuery.data?.items || []),
+      ];
+      return Array.from(new Map(all.map((item) => [item.id, item])).values());
+  }, [offlineRoutersQuery.data?.items, provisioningIssueRoutersQuery.data?.items, staleRoutersQuery.data?.items, unhealthyRoutersQuery.data?.items]);
 
   const vpnRows = useMemo(() => {
     const all = [
@@ -178,9 +203,9 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
         ] : [];
       case "traffic-bandwidth":
         return trafficSummaryQuery.data ? [
-          { title: "Ingress", value: trafficSummaryQuery.data.totalTransferRx.toLocaleString(), progress: 100 },
-          { title: "Egress", value: trafficSummaryQuery.data.totalTransferTx.toLocaleString(), progress: 100 },
-          { title: "Total bytes", value: trafficSummaryQuery.data.totalTransferBytes.toLocaleString(), progress: 100 },
+          { title: "Ingress", value: formatBytes(trafficSummaryQuery.data.totalTransferRx), progress: 100 },
+          { title: "Egress", value: formatBytes(trafficSummaryQuery.data.totalTransferTx), progress: 100 },
+          { title: "Total bytes", value: formatBytes(trafficSummaryQuery.data.totalTransferBytes), progress: 100 },
           { title: "Top routers", value: String(trafficSummaryQuery.data.topRouters.length), progress: Math.min(100, trafficSummaryQuery.data.topRouters.length * 20) },
         ] : [];
       case "customer-impact":
@@ -225,7 +250,7 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
 
   const renderContent = () => {
     if (section === "router-health") {
-      if (unhealthyRoutersQuery.isPending && offlineRoutersQuery.isPending && staleRoutersQuery.isPending) return <TableLoader />;
+      if (unhealthyRoutersQuery.isPending && offlineRoutersQuery.isPending && provisioningIssueRoutersQuery.isPending && staleRoutersQuery.isPending) return <TableLoader />;
       if (unhealthyRoutersQuery.isError) return <ErrorState title="Unable to load router health" description="Retry after confirming router monitoring endpoints are available." onAction={() => void unhealthyRoutersQuery.refetch()} />;
       return <RouterHealthTable rows={routerRows} onOpen={(row) => openDetail({ kind: "router", item: row })} />;
     }
@@ -244,7 +269,7 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       if (trafficSummaryQuery.isError || !trafficSummaryQuery.data || topTrafficRoutersQuery.isError || topTrafficServersQuery.isError) return <ErrorState title="Unable to load traffic analytics" description="Retry after confirming traffic monitoring endpoints are available." onAction={() => { void trafficSummaryQuery.refetch(); void topTrafficRoutersQuery.refetch(); void topTrafficServersQuery.refetch(); }} />;
       return (
         <div className="space-y-5">
-          {trafficTrendsQuery.data ? <MonitoringTrendCard title="Traffic snapshot trend" description={trafficTrendsQuery.data.supported === false ? (trafficTrendsQuery.data.reason || "Only current aggregate transfer counters are available.") : "Recent traffic series"} trends={trafficTrendsQuery.data} dataKey="totalTransferBytes" secondaryKey="totalTransferTx" /> : null}
+          {trafficTrendsQuery.data ? <MonitoringTrendCard title="Traffic snapshot trend" description={trafficTrendsQuery.data.supported === false ? (trafficTrendsQuery.data.reason || "Only current aggregate transfer counters are available.") : "Recent traffic series"} trends={trafficTrendsQuery.data} dataKey="totalTransferBytes" secondaryKey="totalTransferTx" window={filters.window} /> : null}
           <div className="grid gap-5 xl:grid-cols-2">
             <Card><div className="p-5"><TrafficTopRoutersTable rows={topTrafficRoutersQuery.data.items} onOpen={(row) => openDetail({ kind: "traffic-router", item: row })} /></div></Card>
             <Card><div className="p-5"><TrafficTopServersTable rows={topTrafficServersQuery.data.items} onOpen={(row) => openDetail({ kind: "traffic-server", item: row })} /></div></Card>
@@ -262,7 +287,7 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       if (provisioningFailuresQuery.isError) return <ErrorState title="Unable to load provisioning analytics" description="Retry after confirming provisioning monitoring endpoints are available." onAction={() => void provisioningFailuresQuery.refetch()} />;
       return (
         <div className="space-y-5">
-          {provisioningTrendsQuery.data ? <MonitoringTrendCard title="Provisioning lifecycle trend" description="Router creation, setup completion, and failure counts across the selected time window." trends={provisioningTrendsQuery.data} dataKey="setupRequested" secondaryKey="setupCompleted" /> : null}
+          {provisioningTrendsQuery.data ? <MonitoringTrendCard title="Provisioning lifecycle trend" description="Router creation, setup completion, and failure counts across the selected time window." trends={provisioningTrendsQuery.data} dataKey="setupRequested" secondaryKey="setupCompleted" window={filters.window} /> : null}
           <ProvisioningIssuesTable rows={provisioningFailuresQuery.data?.items || []} onOpen={(row) => openDetail({ kind: "router", item: row })} />
         </div>
       );
@@ -279,10 +304,13 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       return (
         <div className="grid gap-3">
           {diagnosticsQuery.data.issues.map((issue) => (
-            <button key={`${issue.code}-${issue.resourceId}`} type="button" onClick={() => openDetail({ kind: "diagnostic", item: issue })} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]">
+            <button key={`${issue.code}-${issue.resourceId}`} type="button" onClick={() => openDetail({ kind: "diagnostic", item: issue })} className={cn("rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]", issue.severity === "critical" ? "border-l-4 border-l-danger" : issue.severity === "high" ? "border-l-4 border-l-warning" : issue.severity === "medium" ? "border-l-4 border-l-brand-400" : "")}>
               <div className="flex items-center justify-between gap-3">
                 <p className="font-medium text-slate-100">{issue.resourceName}</p>
-                <span className="text-xs uppercase tracking-[0.18em] text-brand-100">{issue.severity}</span>
+                <div className="flex items-center gap-2">
+                  <Badge tone="info">{issue.resourceType}</Badge>
+                  <IncidentSeverityBadge severity={issue.severity} />
+                </div>
               </div>
               <p className="mt-2 text-sm text-slate-400">{issue.message}</p>
             </button>
@@ -296,12 +324,22 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
     return (
       <div className="grid gap-3">
         {(activityQuery.data?.items || []).map((item) => (
-          <button key={item.id} type="button" onClick={() => openDetail({ kind: "activity", item })} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]">
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-medium text-slate-100">{item.summary}</p>
-              <span className="text-xs uppercase tracking-[0.18em] text-brand-100">{item.source}</span>
+          <button key={item.id} type="button" onClick={() => openDetail({ kind: "activity", item })} className={cn("rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]", item.severity === "critical" || item.severity === "high" ? "border-l-2 border-l-danger" : item.severity === "medium" ? "border-l-2 border-l-warning" : "")}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <span className="icon-block-primary rounded-2xl p-2 text-slate-100">
+                  {item.source === "admin" ? <UserCog className="h-4 w-4" /> : item.source === "router" ? <Router className="h-4 w-4" /> : item.source === "incident" ? <AlertTriangle className="h-4 w-4" /> : item.source === "support" ? <LifeBuoy className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+                </span>
+                <div>
+                  <p className="font-medium text-slate-100">{item.summary}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Badge tone="info">{item.source}</Badge>
+                    <span className="text-sm text-slate-400">{item.type.replace(/_/g, " ")}</span>
+                  </div>
+                </div>
+              </div>
+              <span className="font-mono text-xs text-slate-500">{dayjs(item.timestamp).fromNow()}</span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">{item.type}</p>
           </button>
         ))}
       </div>
@@ -313,6 +351,8 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Monitoring operations" />
+
+      <Tabs tabs={[...monitoringTabs]} value={location.pathname} onChange={navigate} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryMetrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
@@ -329,36 +369,52 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
               <p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p>
             </div>
           </div>
-          <RefreshButton loading={routerSummaryQuery.isFetching || vpnSummaryQuery.isFetching || peerSummaryQuery.isFetching || incidentsQuery.isFetching || diagnosticsQuery.isFetching || activityQuery.isFetching} onClick={() => {
-            void routerSummaryQuery.refetch();
-            void unhealthyRoutersQuery.refetch();
-            void offlineRoutersQuery.refetch();
-            void staleRoutersQuery.refetch();
-            void vpnSummaryQuery.refetch();
-            void unhealthyServersQuery.refetch();
-            void overloadedServersQuery.refetch();
-            void staleServersQuery.refetch();
-            void peerSummaryQuery.refetch();
-            void stalePeersQuery.refetch();
-            void unhealthyPeersQuery.refetch();
-            void trafficSummaryQuery.refetch();
-            void trafficTrendsQuery.refetch();
-            void topTrafficRoutersQuery.refetch();
-            void topTrafficServersQuery.refetch();
-            void customerImpactQuery.refetch();
-            void affectedCustomersQuery.refetch();
-            void provisioningSummaryQuery.refetch();
-            void provisioningTrendsQuery.refetch();
-            void provisioningFailuresQuery.refetch();
-            void incidentsQuery.refetch();
-            void diagnosticsQuery.refetch();
-            void activityQuery.refetch();
+          <RefreshButton loading={routerSummaryQuery.isFetching || vpnSummaryQuery.isFetching || peerSummaryQuery.isFetching || trafficSummaryQuery.isFetching || customerImpactQuery.isFetching || provisioningSummaryQuery.isFetching || incidentsQuery.isFetching || diagnosticsQuery.isFetching || activityQuery.isFetching} onClick={() => {
+            if (isRouterSection) {
+              void routerSummaryQuery.refetch();
+              void unhealthyRoutersQuery.refetch();
+              void offlineRoutersQuery.refetch();
+              void provisioningIssueRoutersQuery.refetch();
+              void staleRoutersQuery.refetch();
+            }
+            if (isVpnSection) {
+              void vpnSummaryQuery.refetch();
+              void unhealthyServersQuery.refetch();
+              void overloadedServersQuery.refetch();
+              void staleServersQuery.refetch();
+            }
+            if (isPeerSection) {
+              void peerSummaryQuery.refetch();
+              void stalePeersQuery.refetch();
+              void unhealthyPeersQuery.refetch();
+            }
+            if (isTrafficSection) {
+              void trafficSummaryQuery.refetch();
+              void trafficTrendsQuery.refetch();
+              void topTrafficRoutersQuery.refetch();
+              void topTrafficServersQuery.refetch();
+            }
+            if (isCustomerSection) {
+              void customerImpactQuery.refetch();
+              void affectedCustomersQuery.refetch();
+            }
+            if (isProvisioningSection) {
+              void provisioningSummaryQuery.refetch();
+              void provisioningTrendsQuery.refetch();
+              void provisioningFailuresQuery.refetch();
+            }
+            if (isIncidentsSection) {
+              void incidentsQuery.refetch();
+              if (selectedIncident?.id) void incidentQuery.refetch();
+            }
+            if (isDiagnosticsSection) void diagnosticsQuery.refetch();
+            if (isActivitySection) void activityQuery.refetch();
           }} />
         </DataToolbar>
         <div className="mt-4">{renderContent()}</div>
       </Card>
 
-      <IncidentDetailsModal open={incidentDisclosure.open} incident={selectedIncidentDetail || null} onClose={incidentDisclosure.onClose} />
+      <IncidentDetailsModal open={incidentDisclosure.open} incident={selectedIncidentDetail || null} onClose={incidentDisclosure.onClose} onAcknowledge={() => { incidentDisclosure.onClose(); acknowledgeDisclosure.onOpen(); }} onResolve={() => { incidentDisclosure.onClose(); resolveDisclosure.onOpen(); }} onMarkReviewed={() => { incidentDisclosure.onClose(); reviewedDisclosure.onOpen(); }} onAddNote={() => { incidentDisclosure.onClose(); noteDisclosure.onOpen(); }} />
       <MonitoringEventDetailsModal open={eventDisclosure.open} detail={selectedDetail} onClose={eventDisclosure.onClose} />
 
       <AcknowledgeIncidentModal open={acknowledgeDisclosure.open} loading={acknowledgeMutation.isPending} onClose={acknowledgeDisclosure.onClose} onConfirm={(reason) => selectedIncident && acknowledgeMutation.mutate([selectedIncident.id, reason] as never, { onSuccess: () => acknowledgeDisclosure.onClose() })} />

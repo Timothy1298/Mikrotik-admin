@@ -1,5 +1,8 @@
+import { useState } from "react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { Activity, ArrowRight, Router, Server, ShieldAlert, Users } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
@@ -8,25 +11,36 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { monitoringTabs } from "@/config/module-tabs";
 import { appRoutes } from "@/config/routes";
 import {
+  AcknowledgeIncidentModal,
   IncidentSeverityBadge,
   MonitoringStatsRow,
   MonitoringTrendCard,
 } from "@/features/monitoring/components";
 import {
+  useAcknowledgeIncident,
   useAffectedCustomers,
   useIncidents,
   useMonitoringOverview,
   useMonitoringTrends,
 } from "@/features/monitoring/hooks/useMonitoring";
 import { formatDateTime } from "@/lib/formatters/date";
+import { Button } from "@/components/ui/Button";
+
+dayjs.extend(relativeTime);
 
 export function MonitoringOverviewPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
   const overviewQuery = useMonitoringOverview();
   const trendsQuery = useMonitoringTrends({ window: "24h" });
   const incidentsQuery = useIncidents({ status: "open", limit: 5 });
   const customersQuery = useAffectedCustomers({ limit: 5 });
+  const acknowledgeMutation = useAcknowledgeIncident();
 
   if (overviewQuery.isPending) return <TableLoader />;
   if (overviewQuery.isError || !overviewQuery.data) {
@@ -38,6 +52,8 @@ export function MonitoringOverviewPage() {
   return (
     <section className="space-y-6">
       <PageHeader title="Monitoring & Analytics" description="Platform-wide command center for router health, VPN infrastructure, incidents, provisioning quality, and operational customer impact." meta={`Last sync ${formatDateTime(overview.lastMonitoringSyncAt)}`} />
+
+      <Tabs tabs={[...monitoringTabs]} value={location.pathname} onChange={navigate} />
 
       <div className="flex justify-end">
         <RefreshButton loading={overviewQuery.isFetching || trendsQuery.isFetching || incidentsQuery.isFetching || customersQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void trendsQuery.refetch(); void incidentsQuery.refetch(); void customersQuery.refetch(); }} />
@@ -53,7 +69,7 @@ export function MonitoringOverviewPage() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        {trendsQuery.isPending || !trendsQuery.data ? <SectionLoader /> : <MonitoringTrendCard title="Incident and onboarding trend" description="Current monitoring trend window based on real incident and router lifecycle timestamps." trends={trendsQuery.data} dataKey="incidentsOpened" secondaryKey="routersConnected" />}
+        {trendsQuery.isPending || !trendsQuery.data ? <SectionLoader /> : <MonitoringTrendCard title="Incident and onboarding trend" description="Current monitoring trend window based on real incident and router lifecycle timestamps." trends={trendsQuery.data} dataKey="incidentsOpened" secondaryKey="routersConnected" window="24h" />}
 
         <Card>
           <CardHeader>
@@ -86,8 +102,12 @@ export function MonitoringOverviewPage() {
                   <div>
                     <p className="font-medium text-slate-100">{incident.title}</p>
                     <p className="text-sm text-slate-400">{incident.type.replace(/_/g, " ")} • {incident.status}</p>
+                    <p className="mt-1 font-mono text-xs text-slate-500">{dayjs(incident.firstDetectedAt).fromNow()}</p>
                   </div>
-                  <IncidentSeverityBadge severity={incident.severity} />
+                  <div className="flex items-center gap-2">
+                    <IncidentSeverityBadge severity={incident.severity} />
+                    {incident.status === "open" ? <Button variant="ghost" size="sm" onClick={() => setSelectedIncidentId(incident.id)}>Acknowledge →</Button> : null}
+                  </div>
                 </div>
               </div>
             )) : <EmptyState icon={ShieldAlert} title="No active incidents" description="No incidents are currently open in the monitoring subsystem." />}
@@ -116,6 +136,11 @@ export function MonitoringOverviewPage() {
           </div>
         </Card>
       </div>
+
+      <AcknowledgeIncidentModal open={Boolean(selectedIncidentId)} loading={acknowledgeMutation.isPending} onClose={() => setSelectedIncidentId(null)} onConfirm={(reason) => {
+        if (!selectedIncidentId) return;
+        acknowledgeMutation.mutate([selectedIncidentId, reason] as never, { onSuccess: () => setSelectedIncidentId(null) });
+      }} />
     </section>
   );
 }

@@ -21,6 +21,8 @@ export * from "./VpnServerHealthPanel";
 export * from "./VpnServerRoutersPanel";
 export * from "./VpnServerPeersPanel";
 export * from "./VpnServerTrafficPanel";
+export * from "./VpnServerActivityPanel";
+export * from "./VpnServerDiagnosticsPanel";
 export * from "./VpnServerNotesPanel";
 export * from "./VpnServerFlagsPanel";
 export * from "./VpnServerDetailsWorkspace";

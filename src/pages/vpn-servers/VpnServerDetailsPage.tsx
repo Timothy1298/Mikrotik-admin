@@ -30,6 +30,7 @@ import {
   useRemoveServerFlag,
   useRestartServerVpn,
   useVpnServer,
+  useVpnServerTrafficDetail,
   useVpnServerPeers,
   useVpnServerRouters,
 } from "@/features/vpn-servers/hooks/useVpnServers";
@@ -55,6 +56,7 @@ export function VpnServerDetailsPage() {
   const serverQuery = useVpnServer(id);
   const routersQuery = useVpnServerRouters(id, { limit: 8 });
   const peersQuery = useVpnServerPeers(id, { limit: 8 });
+  const trafficDetailQuery = useVpnServerTrafficDetail(id);
 
   const disableMutation = useDisableVpnServer();
   const reactivateMutation = useReactivateVpnServer();
@@ -83,8 +85,11 @@ export function VpnServerDetailsPage() {
         server={server}
         routers={routersQuery.data?.items || []}
         peers={peersQuery.data?.items || []}
+        trafficDetail={trafficDetailQuery.data}
         routersLoading={routersQuery.isPending}
         peersLoading={peersQuery.isPending}
+        onRefreshRouters={() => void routersQuery.refetch()}
+        onRefreshPeers={() => void peersQuery.refetch()}
         onDisable={disableDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}
         onEnableMaintenance={maintenanceDisclosure.onOpen}

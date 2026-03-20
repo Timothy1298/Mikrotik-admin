@@ -5,6 +5,7 @@ export type AuthUser = {
   email: string;
   name: string;
   role: Role;
+  adminRole?: string | null;
   permissions: string[];
 };
 

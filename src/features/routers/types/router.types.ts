@@ -192,3 +192,54 @@ export type RouterQuery = {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 };
+
+export type RouterLiveHealth = {
+  uptime: string | null;
+  cpuLoad: number | null;
+  freeMemory: number | null;
+  totalMemory: number | null;
+  freeHddSpace: number | null;
+  boardName: string | null;
+  routerosVersion: string | null;
+  reachable: boolean;
+  error?: string;
+};
+
+export type RouterInterface = {
+  name: string;
+  type: string;
+  running: boolean;
+  disabled: boolean;
+  comment: string | null;
+};
+
+export type RouterPingResult = {
+  reachable: boolean;
+  packetsSent?: number;
+  packetsReceived?: number;
+  packetLoss?: number;
+  avgRtt?: number;
+  error?: string;
+};
+
+export type RouterCommandResult = {
+  success: boolean;
+  output?: string;
+  error?: string;
+};
+
+export type CreateRouterPayload = {
+  userId: string;
+  name: string;
+  serverNode?: string;
+  reason?: string;
+};
+
+export type CreateRouterResponse = {
+  id: string;
+  name: string;
+  vpnIp: string;
+  ports: { winbox: number; ssh: number; api: number };
+  status: string;
+  wireguardConfig?: string;
+};

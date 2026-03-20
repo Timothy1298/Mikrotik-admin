@@ -27,3 +27,6 @@ export * from './ExtendTrialDialog';
 export * from './AddUserNoteDialog';
 export * from './AddUserFlagDialog';
 export * from './RemoveUserFlagDialog';
+export * from './AddSubscriberDialog';
+export * from './DeleteSubscriberDialog';
+export * from './EditSubscriberProfileDialog';

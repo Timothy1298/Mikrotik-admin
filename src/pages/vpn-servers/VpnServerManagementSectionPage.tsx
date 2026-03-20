@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Activity, AlertTriangle, Router, Server, ShieldAlert, Users } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -8,6 +9,8 @@ import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { vpnServerManagementTabs } from "@/config/module-tabs";
 import {
   AddServerFlagDialog,
   AddServerNoteDialog,
@@ -40,15 +43,19 @@ import {
   useRemoveServerFlag,
   useRestartServerVpn,
   useVpnServer,
+  useVpnServerTrafficDetail,
   useVpnServerPeers,
   useVpnServerRouters,
   useVpnServers,
   useVpnServerStats,
 } from "@/features/vpn-servers/hooks/useVpnServers";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import type { VpnServerQuery, VpnServerRow } from "@/features/vpn-servers/types/vpn-server.types";
 import type { VpnServerManagementSection } from "@/features/vpn-servers/utils/vpn-server-management-sections";
 import { vpnServerManagementSections } from "@/features/vpn-servers/utils/vpn-server-management-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
 
 const sectionIcons: Record<VpnServerManagementSection, typeof Server> = {
   all: Server,
@@ -78,6 +85,8 @@ function filterRowsForSection(section: VpnServerManagementSection, rows: VpnServ
 }
 
 export function VpnServerManagementSectionPage({ section }: { section: VpnServerManagementSection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const sectionMeta = vpnServerManagementSections[section];
   const lockedFilters = sectionMeta.lockedFilters || {};
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof VpnServerQuery>;
@@ -106,6 +115,8 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const detailQuery = useVpnServer(selectedServer?.id || "");
   const routersQuery = useVpnServerRouters(selectedServer?.id || "", { limit: 8 });
   const peersQuery = useVpnServerPeers(selectedServer?.id || "", { limit: 8 });
+  const trafficDetailQuery = useVpnServerTrafficDetail(selectedServer?.id || "");
+  const { data: user } = useCurrentUser(true);
 
   const addMutation = useAddVpnServer();
   const disableMutation = useDisableVpnServer();
@@ -128,12 +139,30 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const routerCount = rows.reduce((sum, row) => sum + row.routerCount, 0);
   const peerCount = rows.reduce((sum, row) => sum + row.activePeerCount, 0);
 
-  const metrics = useMemo(() => [
-    { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
-    { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 12) },
-    { title: "Overloaded", value: String(overloadedCount), progress: Math.min(100, overloadedCount * 18) },
-    { title: "Peers in scope", value: String(peerCount || routerCount), progress: Math.min(100, Math.max(peerCount, routerCount)) },
-  ], [overloadedCount, peerCount, routerCount, total, unhealthyCount]);
+  const metrics = useMemo(() => {
+    if (section === "router-distribution") {
+      return [
+        { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
+        { title: "Routers attached", value: String(routerCount), progress: Math.min(100, routerCount) },
+        { title: "Peers in scope", value: String(peerCount), progress: Math.min(100, peerCount) },
+        { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 12) },
+      ];
+    }
+    if (section === "traffic-load") {
+      return [
+        { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
+        { title: "Traffic nodes", value: String(rows.filter((row) => row.bandwidthSummary.totalTransferBytes > 0).length), progress: Math.min(100, rows.filter((row) => row.bandwidthSummary.totalTransferBytes > 0).length * 12) },
+        { title: "Overloaded", value: String(overloadedCount), progress: Math.min(100, overloadedCount * 18) },
+        { title: "Peers in scope", value: String(peerCount || routerCount), progress: Math.min(100, Math.max(peerCount, routerCount)) },
+      ];
+    }
+    return [
+      { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
+      { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 12) },
+      { title: "Overloaded", value: String(overloadedCount), progress: Math.min(100, overloadedCount * 18) },
+      { title: "Peers in scope", value: String(peerCount || routerCount), progress: Math.min(100, Math.max(peerCount, routerCount)) },
+    ];
+  }, [overloadedCount, peerCount, routerCount, rows, section, total, unhealthyCount]);
 
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== "").length;
   const Icon = sectionIcons[section];
@@ -146,6 +175,8 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="VPN server management" />
+
+      <Tabs tabs={[...vpnServerManagementTabs]} value={location.pathname} onChange={navigate} />
 
       {section === "all" && statsQuery.data ? <VpnServerStatsRow stats={statsQuery.data} /> : null}
 
@@ -165,7 +196,7 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={addDisclosure.onOpen}>Add server</Button>
+            {can(user, permissions.vpnServersManage) ? <Button onClick={addDisclosure.onOpen}>Add server</Button> : null}
             {serversQuery.isFetching && !serversQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
             <RefreshButton loading={serversQuery.isFetching || statsQuery.isFetching} onClick={() => { void serversQuery.refetch(); void statsQuery.refetch(); }} />
           </div>
@@ -198,8 +229,11 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
         error={detailQuery.isError}
         routers={routersQuery.data?.items || []}
         peers={peersQuery.data?.items || []}
+        trafficDetail={trafficDetailQuery.data}
         routersLoading={routersQuery.isPending}
         peersLoading={peersQuery.isPending}
+        onRefreshRouters={() => void routersQuery.refetch()}
+        onRefreshPeers={() => void peersQuery.refetch()}
         onClose={detailDisclosure.onClose}
         onDisable={disableDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}
@@ -214,7 +248,7 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
         onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
       />
 
-      <AddVpnServerDialog open={addDisclosure.open} loading={addMutation.isPending} onClose={addDisclosure.onClose} onConfirm={(payload) => addMutation.mutate([payload] as never, { onSuccess: () => addDisclosure.onClose() })} />
+      <AddVpnServerDialog open={addDisclosure.open} loading={addMutation.isPending} onClose={addDisclosure.onClose} onConfirm={(payload) => addMutation.mutate(payload, { onSuccess: () => addDisclosure.onClose() })} />
       <DisableVpnServerDialog open={disableDisclosure.open} loading={disableMutation.isPending} onClose={disableDisclosure.onClose} onConfirm={(reason) => selectedServer && disableMutation.mutate([selectedServer.id, reason] as never, { onSuccess: () => disableDisclosure.onClose() })} />
       <ReactivateVpnServerDialog open={reactivateDisclosure.open} loading={reactivateMutation.isPending} onClose={reactivateDisclosure.onClose} onConfirm={(reason) => selectedServer && reactivateMutation.mutate([selectedServer.id, reason] as never, { onSuccess: () => reactivateDisclosure.onClose() })} />
       <EnableMaintenanceDialog open={maintenanceDisclosure.open} loading={maintenanceMutation.isPending} onClose={maintenanceDisclosure.onClose} onConfirm={(reason) => selectedServer && maintenanceMutation.mutate([selectedServer.id, reason] as never, { onSuccess: () => maintenanceDisclosure.onClose() })} />

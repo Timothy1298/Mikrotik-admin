@@ -11,6 +11,7 @@ import {
   DisableRouterDialog,
   MarkRouterReviewedDialog,
   MoveServerDialog,
+  RebootRouterDialog,
   ReactivateRouterDialog,
   ReassignPortsDialog,
   RegenerateSetupDialog,
@@ -26,6 +27,7 @@ import {
   useDisableRouter,
   useMarkRouterReviewed,
   useMoveRouterServer,
+  useRebootRouter,
   useReactivateRouter,
   useReassignRouterPorts,
   useRegenerateRouterSetup,
@@ -47,6 +49,7 @@ export function RouterDetailsPage() {
   const deleteDisclosure = useDisclosure(false);
   const reactivateDisclosure = useDisclosure(false);
   const reprovisionDisclosure = useDisclosure(false);
+  const rebootDisclosure = useDisclosure(false);
   const regenerateDisclosure = useDisclosure(false);
   const resetPeerDisclosure = useDisclosure(false);
   const reassignPortsDisclosure = useDisclosure(false);
@@ -60,6 +63,7 @@ export function RouterDetailsPage() {
   const deleteMutation = useDeleteRouter();
   const reactivateMutation = useReactivateRouter();
   const reprovisionMutation = useReprovisionRouter();
+  const rebootMutation = useRebootRouter();
   const regenerateMutation = useRegenerateRouterSetup();
   const resetPeerMutation = useResetRouterPeer();
   const reassignPortsMutation = useReassignRouterPorts();
@@ -86,6 +90,7 @@ export function RouterDetailsPage() {
         onDelete={deleteDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}
         onReprovision={reprovisionDisclosure.onOpen}
+        onReboot={rebootDisclosure.onOpen}
         onRegenerateSetup={regenerateDisclosure.onOpen}
         onResetPeer={resetPeerDisclosure.onOpen}
         onReassignPorts={reassignPortsDisclosure.onOpen}
@@ -100,6 +105,7 @@ export function RouterDetailsPage() {
       <DeleteRouterDialog open={deleteDisclosure.open} loading={deleteMutation.isPending} onClose={deleteDisclosure.onClose} onConfirm={(reason) => deleteMutation.mutate([router.id, reason] as never, { onSuccess: () => { deleteDisclosure.onClose(); navigate(appRoutes.routersAll); } })} />
       <ReactivateRouterDialog open={reactivateDisclosure.open} loading={reactivateMutation.isPending} onClose={reactivateDisclosure.onClose} onConfirm={(reason) => reactivateMutation.mutate([router.id, reason] as never, { onSuccess: () => reactivateDisclosure.onClose() })} />
       <ReprovisionRouterDialog open={reprovisionDisclosure.open} loading={reprovisionMutation.isPending} onClose={reprovisionDisclosure.onClose} onConfirm={(reason) => reprovisionMutation.mutate([router.id, reason] as never, { onSuccess: () => reprovisionDisclosure.onClose() })} />
+      <RebootRouterDialog open={rebootDisclosure.open} loading={rebootMutation.isPending} onClose={rebootDisclosure.onClose} onConfirm={(reason) => rebootMutation.mutate([router.id, reason] as never, { onSuccess: () => rebootDisclosure.onClose() })} />
       <RegenerateSetupDialog open={regenerateDisclosure.open} loading={regenerateMutation.isPending} onClose={regenerateDisclosure.onClose} onConfirm={(reason) => regenerateMutation.mutate([router.id, reason] as never, { onSuccess: () => regenerateDisclosure.onClose() })} />
       <ResetPeerDialog open={resetPeerDisclosure.open} loading={resetPeerMutation.isPending} onClose={resetPeerDisclosure.onClose} onConfirm={(reason) => resetPeerMutation.mutate([router.id, reason] as never, { onSuccess: () => resetPeerDisclosure.onClose() })} />
       <ReassignPortsDialog open={reassignPortsDisclosure.open} loading={reassignPortsMutation.isPending} onClose={reassignPortsDisclosure.onClose} onConfirm={(payload) => reassignPortsMutation.mutate([router.id, payload] as never, { onSuccess: () => reassignPortsDisclosure.onClose() })} />

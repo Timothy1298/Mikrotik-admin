@@ -8,12 +8,17 @@ import type {
   BillingFilterState,
   BillingFlag,
   BillingNote,
+  BillingOutstandingReport,
   BillingOverview,
   BillingPaginationMeta,
+  BillingRevenueReport,
   BillingRisk,
   BillingSubscriptionRow,
   BillingTransaction,
   BillingTrialRow,
+  CreateInvoicePayload,
+  IssueRefundPayload,
+  RecordPaymentPayload,
 } from "@/features/billing/types/billing.types";
 
 export async function getBillingOverview() {
@@ -99,6 +104,36 @@ export async function getAccountPayments(accountId: string, params?: BillingFilt
 export async function getTrials(params?: BillingFilterState) {
   const { data } = await apiClient.get<{ success: boolean; items: BillingTrialRow[]; pagination: BillingPaginationMeta }>(endpoints.admin.billingTrials, { params });
   return { items: data.items, pagination: data.pagination };
+}
+
+export async function recordPayment(payload: RecordPaymentPayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; transaction: { id: string; transactionId: string; amount: number; currency: string; status: string; createdAt: string } }>(endpoints.admin.recordPayment, payload);
+  return data;
+}
+
+export async function createInvoice(payload: CreateInvoicePayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; invoice: { id: string; transactionId: string; amount: number; currency: string; status: string; dueDate: string | null; createdAt: string } }>(endpoints.admin.createInvoice, payload);
+  return data;
+}
+
+export async function issueRefund(payload: IssueRefundPayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; refund: { id: string; transactionId: string; amount: number; currency: string; status: string; createdAt: string } }>(endpoints.admin.issueRefund, payload);
+  return data;
+}
+
+export async function downloadInvoicePdf(invoiceId: string) {
+  const { data } = await apiClient.get<{ success: boolean; invoiceData?: Record<string, unknown> }>(endpoints.admin.downloadInvoicePdf(invoiceId));
+  return data;
+}
+
+export async function getBillingRevenueReport(params?: { window?: string; groupBy?: string }) {
+  const { data } = await apiClient.get<{ success: boolean; report: BillingRevenueReport }>(endpoints.admin.billingRevenueReport, { params });
+  return data.report;
+}
+
+export async function getBillingOutstandingReport() {
+  const { data } = await apiClient.get<{ success: boolean; report: BillingOutstandingReport }>(endpoints.admin.billingOutstandingReport);
+  return data.report;
 }
 
 export async function getBillingNotes(accountId: string) {

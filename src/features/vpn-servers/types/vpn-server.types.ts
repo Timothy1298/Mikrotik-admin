@@ -146,3 +146,40 @@ export type VpnServerQuery = {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 };
+
+export type VpnServerActivityItem = {
+  id: string;
+  type: string;
+  source: string;
+  actor: string;
+  action?: string;
+  summary: string;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+};
+
+export type VpnServerTrafficDetail = {
+  serverId: string;
+  totalTransferRx?: number;
+  totalTransferTx?: number;
+  totalTransferBytes?: number;
+  activePeerCount?: number;
+  totalPeerCount?: number;
+  peerUtilization?: number | null;
+  routerUtilization?: number | null;
+  trafficByPeer?: Array<{
+    peerId: string;
+    reference: string;
+    transferRx: number;
+    transferTx: number;
+    lastHandshake: string | null;
+  }>;
+};
+
+export type VpnServerDiagnosticsResult = {
+  serverId: string;
+  issues: Array<{ code: string; severity: string; message: string; context?: Record<string, unknown> }>;
+  recommendedActions: string[];
+  healthChecks: Array<{ check: string; passed: boolean; detail?: string }>;
+  generatedAt: string;
+};

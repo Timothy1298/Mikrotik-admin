@@ -13,4 +13,7 @@ export const queryKeys = {
   logs: ["logs"] as const,
   support: ["support"] as const,
   settings: ["settings"] as const,
+  servicePlans: ["service-plans"] as const,
+  servicePlanDetail: (id: string) => ["service-plans", id] as const,
+  vouchers: (planId: string) => ["service-plans", planId, "vouchers"] as const,
 };

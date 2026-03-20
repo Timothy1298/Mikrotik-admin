@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { EmptyState } from "@/components/feedback/EmptyState";
@@ -5,15 +6,36 @@ import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { LifeBuoy, MessageSquare, StickyNote } from "lucide-react";
 import { TicketCategoryBadge, TicketEscalationBadge, TicketPriorityBadge, TicketStatusBadge } from "@/features/support/components/SupportBadges";
 import { useTicket, useTicketActivity, useTicketFlags, useTicketMessages, useTicketNotes } from "@/features/support/hooks/useSupport";
+import { formatDateTime } from "@/lib/formatters/date";
 
 export function TicketDetailsModal({
   open,
   ticketId,
   onClose,
+  onReply,
+  onAssign,
+  onReassign,
+  onEscalate,
+  onDeEscalate,
+  onResolve,
+  onCloseTicket,
+  onReopen,
+  onAddNote,
+  onAddFlag,
 }: {
   open: boolean;
   ticketId: string;
   onClose: () => void;
+  onReply?: () => void;
+  onAssign?: () => void;
+  onReassign?: () => void;
+  onEscalate?: () => void;
+  onDeEscalate?: () => void;
+  onResolve?: () => void;
+  onCloseTicket?: () => void;
+  onReopen?: () => void;
+  onAddNote?: () => void;
+  onAddFlag?: () => void;
 }) {
   const detailQuery = useTicket(ticketId);
   const messagesQuery = useTicketMessages(ticketId, { limit: 100 });
@@ -31,7 +53,7 @@ export function TicketDetailsModal({
             <CardHeader>
               <div>
                 <CardTitle>{detail.ticket.ticketReference}</CardTitle>
-                <CardDescription>{detail.ticket.customer?.email || "No customer email"} · {new Date(detail.ticket.createdAt).toLocaleString()}</CardDescription>
+                <CardDescription>{detail.ticket.customer?.email || "No customer email"} · {formatDateTime(detail.ticket.createdAt)}</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
                 <TicketStatusBadge status={detail.ticket.status} />
@@ -47,6 +69,19 @@ export function TicketDetailsModal({
               <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Linked resources: {[detail.context.router, detail.context.vpnServer, detail.context.incident, detail.context.subscription, detail.context.transaction].filter(Boolean).length}</div>
             </div>
           </Card>
+
+          <div className="flex flex-wrap gap-2 border-b border-brand-500/15 pb-3">
+            {onReply ? <Button variant="ghost" size="sm" onClick={onReply}>Reply</Button> : null}
+            {!detail.ticket.assignee && onAssign ? <Button variant="ghost" size="sm" onClick={onAssign}>Assign</Button> : null}
+            {detail.ticket.assignee && onReassign ? <Button variant="ghost" size="sm" onClick={onReassign}>Reassign</Button> : null}
+            {!detail.ticket.escalated && onEscalate ? <Button variant="ghost" size="sm" onClick={onEscalate}>Escalate</Button> : null}
+            {detail.ticket.escalated && onDeEscalate ? <Button variant="ghost" size="sm" onClick={onDeEscalate}>De-escalate</Button> : null}
+            {detail.ticket.status !== "resolved" && detail.ticket.status !== "closed" && onResolve ? <Button variant="ghost" size="sm" onClick={onResolve}>Resolve</Button> : null}
+            {detail.ticket.status !== "closed" && onCloseTicket ? <Button variant="ghost" size="sm" onClick={onCloseTicket}>Close</Button> : null}
+            {(detail.ticket.status === "resolved" || detail.ticket.status === "closed") && onReopen ? <Button variant="ghost" size="sm" onClick={onReopen}>Reopen</Button> : null}
+            {onAddNote ? <Button variant="ghost" size="sm" onClick={onAddNote}>Add Note</Button> : null}
+            {onAddFlag ? <Button variant="ghost" size="sm" onClick={onAddFlag}>Add Flag</Button> : null}
+          </div>
 
           <Card>
             <CardHeader><div><CardTitle>Customer & context</CardTitle><CardDescription>Customer summary and related operational context for this ticket.</CardDescription></div></CardHeader>
@@ -65,7 +100,7 @@ export function TicketDetailsModal({
                 <div key={message.id} className={`rounded-2xl border p-4 ${message.direction === "admin" ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)]"}`}>
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-medium text-slate-100">{message.author?.email || message.source}</p>
-                    <p className="text-xs text-slate-500">{new Date(message.createdAt).toLocaleString()}</p>
+                    <p className="text-xs text-slate-500">{formatDateTime(message.createdAt)}</p>
                   </div>
                   <p className="mt-2 text-sm text-slate-300">{message.body}</p>
                   {message.attachments.length ? <div className="mt-3 flex flex-wrap gap-2">{message.attachments.map((attachment) => <span key={attachment.url} className="rounded-full border border-brand-500/15 px-3 py-1 text-xs text-slate-400">{attachment.filename}</span>)}</div> : null}
@@ -81,7 +116,7 @@ export function TicketDetailsModal({
                 {notesQuery.isPending ? <SectionLoader /> : (notesQuery.data || []).length ? notesQuery.data?.map((note) => (
                   <div key={note.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
                     <p className="text-sm text-slate-100">{note.body}</p>
-                    <p className="mt-2 text-xs text-slate-500">{note.category} · {note.author} · {new Date(note.createdAt).toLocaleString()}</p>
+                    <p className="mt-2 text-xs text-slate-500">{note.category} · {note.author} · {formatDateTime(note.createdAt)}</p>
                   </div>
                 )) : <EmptyState icon={StickyNote} title="No internal notes" description="No internal support notes have been added to this ticket yet." />}
               </div>
@@ -98,10 +133,10 @@ export function TicketDetailsModal({
                 )) : <EmptyState icon={LifeBuoy} title="No flags" description="This ticket does not currently have any internal workflow flags." />}
                 <div className="border-t border-brand-500/15 pt-3">
                   {(activityQuery.data?.items || []).slice(0, 6).map((item) => (
-                    <div key={item.id} className="py-2">
-                      <p className="text-sm text-slate-100">{item.summary}</p>
-                      <p className="text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p>
-                    </div>
+                  <div key={item.id} className="py-2">
+                    <p className="text-sm text-slate-100">{item.summary}</p>
+                    <p className="text-xs text-slate-500">{formatDateTime(item.timestamp)}</p>
+                  </div>
                   ))}
                 </div>
               </div>

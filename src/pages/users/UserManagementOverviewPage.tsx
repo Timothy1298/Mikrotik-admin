@@ -1,5 +1,5 @@
-import { ArrowRight, Clock3, ShieldAlert, Ticket, UserPlus2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Clock3, Plus, ShieldAlert, Ticket, UserPlus2 } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { SectionLoader } from '@/components/feedback/SectionLoader';
@@ -9,13 +9,22 @@ import { MetricCard } from '@/components/shared/MetricCard';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Tabs } from '@/components/ui/Tabs';
+import { userManagementTabs } from '@/config/module-tabs';
 import { appRoutes } from '@/config/routes';
-import { UsersStatsRow } from '@/features/users/components';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
+import { AddSubscriberDialog, UsersStatsRow } from '@/features/users/components';
 import { useUsers, useUsersStats } from '@/features/users/hooks';
+import { useDisclosure } from '@/hooks/ui/useDisclosure';
 import { formatDateTime } from '@/lib/formatters/date';
+import { can } from '@/lib/permissions/can';
+import { permissions } from '@/lib/permissions/permissions';
 
 export function UserManagementOverviewPage() {
+  const location = useLocation();
   const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
+  const addDisclosure = useDisclosure(false);
   const statsQuery = useUsersStats();
   const recentUsersQuery = useUsers({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' });
   const reviewUsersQuery = useUsers({ riskStatus: 'flagged', limit: 5 });
@@ -33,6 +42,25 @@ export function UserManagementOverviewPage() {
   return (
     <section className="space-y-6">
       <PageHeader title="User Management" description="Command-center overview for customer identity, trial pressure, billing risk, support impact, verification, and security review." meta="Sidebar-driven user operations" />
+      {can(currentUser, permissions.usersManage) ? <div className="flex justify-end"><Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Subscriber</Button></div> : null}
+
+      <Tabs tabs={[...userManagementTabs]} value={location.pathname} onChange={navigate} />
+
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Primary actions</CardTitle>
+            <CardDescription>Most-used subscriber operations, promoted for faster lookup during onboarding and account review.</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="flex flex-wrap gap-3">
+          {can(currentUser, permissions.usersManage) ? <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Subscriber</Button> : null}
+          <Button variant="outline" onClick={() => navigate(appRoutes.usersAll)}>Open All Subscribers</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.usersSuspended)}>Suspended Accounts</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.usersBillingRisk)}>Billing Risk Queue</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.usersSupportImpact)}>Support Impact Queue</Button>
+        </div>
+      </Card>
 
       <UsersStatsRow stats={stats} />
 
@@ -119,6 +147,8 @@ export function UserManagementOverviewPage() {
           </div>
         </Card>
       </div>
+
+      <AddSubscriberDialog open={addDisclosure.open} onClose={addDisclosure.onClose} />
     </section>
   );
 }

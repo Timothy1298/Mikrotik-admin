@@ -1,17 +1,45 @@
+import { Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { InlineError } from '@/components/feedback/InlineError';
+import { SectionLoader } from '@/components/feedback/SectionLoader';
+import { RefreshButton } from '@/components/shared/RefreshButton';
+import { Button } from '@/components/ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { appRoutes } from '@/config/routes';
+import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 import { formatDateTime } from '@/lib/formatters/date';
+import { formatBytes } from '@/lib/formatters/bytes';
+import { can } from '@/lib/permissions/can';
+import { permissions } from '@/lib/permissions/permissions';
+import { useUserRouters } from '@/features/users/hooks';
 import { UserStatusBadge } from '@/features/users/components/UserStatusBadge';
 import type { UserDetail } from '@/features/users/types/user.types';
 
-export function UserRoutersTable({ user }: { user: UserDetail }) {
+export function UserRoutersTable({ user, onAddRouter }: { user: UserDetail; onAddRouter?: () => void }) {
+  const { data: currentUser } = useCurrentUser(true);
+  const routersQuery = useUserRouters(user.id);
+  const routers = routersQuery.data?.items || user.routers;
+
   return (
     <Card>
       <CardHeader>
-        <div>
-          <CardTitle>Routers</CardTitle>
-          <CardDescription>Every router tied to this account, with tunnel and port context.</CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>Routers</CardTitle>
+            <CardDescription>Every router tied to this account, with tunnel and port context.</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {can(currentUser, permissions.routersManage) && onAddRouter ? (
+              <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={onAddRouter}>
+                Add Router
+              </Button>
+            ) : null}
+            <RefreshButton loading={routersQuery.isFetching} onClick={() => void routersQuery.refetch()} />
+          </div>
         </div>
       </CardHeader>
+      {routersQuery.isPending ? <SectionLoader /> : null}
+      {routersQuery.isError ? <InlineError message="Router data could not be refreshed. Showing the last loaded account snapshot." /> : null}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="font-mono text-slate-500">
@@ -20,14 +48,14 @@ export function UserRoutersTable({ user }: { user: UserDetail }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-500/15">
-            {user.routers.map((router) => (
+            {routers.map((router) => (
               <tr key={router.id}>
-                <td className="py-4"><div><p className="font-medium text-slate-100">{router.name}</p><p className="font-mono text-xs text-slate-500">{formatDateTime(router.createdAt)}</p></div></td>
+                <td className="py-4"><div><Link className="font-medium text-brand-100 hover:underline" to={appRoutes.routerDetail(router.id)}>{router.name}</Link><p className="font-mono text-xs text-slate-500">{formatDateTime(router.createdAt)}</p></div></td>
                 <td className="py-4"><UserStatusBadge status={router.status} /></td>
                 <td className="py-4 font-mono text-slate-300">{router.vpnIp}</td>
                 <td className="py-4 font-mono text-slate-300">W {router.ports.winbox} / S {router.ports.ssh} / A {router.ports.api}</td>
                 <td className="py-4 font-mono text-slate-300">{formatDateTime(router.lastSeen)}</td>
-                <td className="py-4 font-mono text-slate-300">RX {Math.round(router.transferRx / 1024)} KB / TX {Math.round(router.transferTx / 1024)} KB</td>
+                <td className="py-4 font-mono text-slate-300">↓ {formatBytes(router.transferRx)} / ↑ {formatBytes(router.transferTx)}</td>
               </tr>
             ))}
           </tbody>

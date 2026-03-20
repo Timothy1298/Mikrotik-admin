@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/Button";
 import { DataTable } from "@/components/data-display/DataTable";
-import { TicketCategoryBadge, TicketEscalationBadge, TicketPriorityBadge, TicketStatusBadge } from "@/features/support/components/SupportBadges";
+import { SLABadge, TicketAgeBadge, TicketCategoryBadge, TicketEscalationBadge, TicketPriorityBadge, TicketStatusBadge } from "@/features/support/components/SupportBadges";
 import type { SupportTicketRow } from "@/features/support/types/support.types";
 
 export function TicketsTable({
@@ -32,7 +32,19 @@ export function TicketsTable({
     { header: "Escalation", cell: ({ row }) => <TicketEscalationBadge escalated={row.original.escalated} /> },
     { header: "Assignee", cell: ({ row }) => <div><p>{row.original.assignee?.name || "Unassigned"}</p><p className="text-xs text-slate-500">{row.original.assignee?.supportTeam || row.original.assignedTeam}</p></div> },
     { header: "Awaiting", cell: ({ row }) => <span className="text-xs text-slate-400">{row.original.lastReplySummary.awaiting.replace(/_/g, " ")}</span> },
-    { header: "Age", cell: ({ row }) => <div><p>{row.original.age.ageHours}h</p><p className="text-xs text-slate-500">{row.original.age.idleHours}h idle</p></div> },
+    {
+      header: "Age",
+      cell: ({ row }) => (
+        <div>
+          <div className="flex items-center gap-2">
+            <p>{row.original.age.ageHours}h</p>
+            <TicketAgeBadge stale={row.original.age.stale} />
+          </div>
+          <p className="text-xs text-slate-500">{row.original.age.idleHours}h idle</p>
+        </div>
+      ),
+    },
+    { header: "SLA", cell: ({ row }) => <SLABadge breached={row.original.sla.breached} remaining={row.original.sla.resolutionRemainingHours} /> },
     {
       header: "Actions",
       cell: ({ row }) => (

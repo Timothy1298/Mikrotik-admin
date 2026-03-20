@@ -1,3 +1,6 @@
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
@@ -6,14 +9,24 @@ import { IncidentSeverityBadge } from "@/features/monitoring/components/Incident
 import type { MonitoringIncident } from "@/features/monitoring/types/monitoring.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
+dayjs.extend(relativeTime);
+
 export function IncidentDetailsModal({
   open,
   incident,
   onClose,
+  onAcknowledge,
+  onResolve,
+  onMarkReviewed,
+  onAddNote,
 }: {
   open: boolean;
   incident: MonitoringIncident | null;
   onClose: () => void;
+  onAcknowledge?: () => void;
+  onResolve?: () => void;
+  onMarkReviewed?: () => void;
+  onAddNote?: () => void;
 }) {
   if (!open || !incident) return null;
 
@@ -65,15 +78,22 @@ export function IncidentDetailsModal({
               <div key={note.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Badge tone="info">{note.category}</Badge>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(note.createdAt)}</span>
+                  <span className="font-mono text-xs text-slate-500">{dayjs(note.createdAt).fromNow()}</span>
                 </div>
-                <p className="mt-3 text-sm text-slate-200">{note.body}</p>
-                <p className="mt-2 text-xs text-slate-500">{note.author}</p>
+                <p className="mt-3 text-slate-100">{note.body}</p>
+                <p className="mt-2 text-xs text-slate-500">by {note.author} • {formatDateTime(note.createdAt)}</p>
               </div>
             ))}
           </div>
         </Card>
       ) : null}
+
+      <div className="mt-2 flex flex-wrap gap-2 border-t border-brand-500/15 pt-2">
+        {incident.status === "open" && onAcknowledge ? <Button variant="outline" onClick={onAcknowledge}>Acknowledge</Button> : null}
+        {incident.status !== "resolved" && onResolve ? <Button variant="danger" onClick={onResolve}>Resolve</Button> : null}
+        {incident.status === "resolved" && onMarkReviewed ? <Button variant="outline" onClick={onMarkReviewed}>Mark reviewed</Button> : null}
+        {onAddNote ? <Button variant="outline" onClick={onAddNote}>Add note</Button> : null}
+      </div>
     </Modal>
   );
 }

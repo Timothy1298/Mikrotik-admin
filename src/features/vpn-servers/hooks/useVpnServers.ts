@@ -7,12 +7,15 @@ import {
   addVpnServer,
   clearServerMaintenance,
   disableVpnServer,
+  getVpnServerActivity,
   enableServerMaintenance,
   getVpnServerById,
+  getVpnServerDiagnostics,
   getVpnServerPeers,
   getVpnServerRouters,
   getVpnServers,
   getVpnServerStats,
+  getVpnServerTrafficDetail,
   markVpnServerReviewed,
   migrateServerRouters,
   reactivateVpnServer,
@@ -66,6 +69,37 @@ export function useVpnServerPeers(id: string, params?: { page?: number; limit?: 
     queryFn: () => getVpnServerPeers(id, params),
     enabled: Boolean(id),
     staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useVpnServerActivity(id: string, params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "activity", params],
+    queryFn: () => getVpnServerActivity(id, params),
+    enabled: Boolean(id),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useVpnServerTrafficDetail(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "traffic-detail"],
+    queryFn: () => getVpnServerTrafficDetail(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useVpnServerDiagnostics(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "diagnostics"],
+    queryFn: () => getVpnServerDiagnostics(id),
+    enabled: Boolean(id),
+    staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 }

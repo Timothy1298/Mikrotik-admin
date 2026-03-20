@@ -1,5 +1,5 @@
-import { AlertTriangle, ArrowRight, Clock3, CreditCard, Receipt, ShieldAlert } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertTriangle, ArrowRight, Clock3, CreditCard, PlusCircle, Receipt, ShieldAlert } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
@@ -7,12 +7,18 @@ import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { billingTabs } from "@/config/module-tabs";
 import { appRoutes } from "@/config/routes";
 import { BillingStatsRow } from "@/features/billing/components";
 import { useBillingActivity, useBillingAnalytics, useBillingOverview, useBillingRisk, useSubscriptions } from "@/features/billing/hooks/useBilling";
+import { formatCurrency } from "@/lib/formatters/currency";
 
 export function BillingOverviewPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const overviewQuery = useBillingOverview();
   const analyticsQuery = useBillingAnalytics({ window: "30d" });
   const riskQuery = useBillingRisk();
@@ -27,12 +33,27 @@ export function BillingOverviewPage() {
   return (
     <section className="space-y-6">
       <PageHeader title="Billing & Subscriptions" description="Platform-wide command center for subscription health, invoice/payment state, trial pressure, grace-period operations, and revenue risk." meta={overview.lastBillingSyncAt ? `Last sync ${overview.lastBillingSyncAt}` : "Billing telemetry ready"} />
+      <Tabs tabs={[...billingTabs]} value={location.pathname} onChange={navigate} />
       <div className="flex justify-end">
         <RefreshButton loading={overviewQuery.isFetching || analyticsQuery.isFetching || riskQuery.isFetching || activityQuery.isFetching || overdueQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void analyticsQuery.refetch(); void riskQuery.refetch(); void activityQuery.refetch(); void overdueQuery.refetch(); }} />
       </div>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Primary actions</CardTitle>
+            <CardDescription>Most-used billing workflows, promoted for quick operator access.</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="flex flex-wrap gap-3">
+          <Button leftIcon={<CreditCard className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingPayments)}>Record or review payments</Button>
+          <Button variant="outline" leftIcon={<Receipt className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingInvoices)}>Open invoices</Button>
+          <Button variant="outline" leftIcon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingOverdueRisk)}>Overdue risk queue</Button>
+          <Button variant="outline" leftIcon={<PlusCircle className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingReports)}>Financial reports</Button>
+        </div>
+      </Card>
       <BillingStatsRow overview={overview} />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Estimated MRR" value={`$${overview.estimatedMRR.toFixed(2)}`} progress={100} />
+        <MetricCard title="Estimated MRR" value={formatCurrency(overview.estimatedMRR, "USD")} progress={100} />
         <MetricCard title="Failed payments" value={String(overview.failedPaymentCount)} progress={Math.min(100, overview.failedPaymentCount * 10)} />
         <MetricCard title="Trials ending soon" value={String(overview.trialsEndingSoon)} progress={Math.min(100, overview.trialsEndingSoon * 12)} />
         <MetricCard title="Grace period accounts" value={String(overview.accountsInGracePeriod)} progress={Math.min(100, overview.accountsInGracePeriod * 12)} />

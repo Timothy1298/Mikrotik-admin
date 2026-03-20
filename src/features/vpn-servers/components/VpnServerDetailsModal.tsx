@@ -3,7 +3,7 @@ import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { Button } from "@/components/ui/Button";
 import { VpnServerDetailsWorkspace } from "@/features/vpn-servers/components/VpnServerDetailsWorkspace";
-import type { VpnServerDetail, VpnServerPeerItem, VpnServerRouterItem } from "@/features/vpn-servers/types/vpn-server.types";
+import type { VpnServerDetail, VpnServerPeerItem, VpnServerRouterItem, VpnServerTrafficDetail } from "@/features/vpn-servers/types/vpn-server.types";
 
 export function VpnServerDetailsModal({
   open,
@@ -12,6 +12,7 @@ export function VpnServerDetailsModal({
   error,
   routers,
   peers,
+  trafficDetail,
   routersLoading,
   peersLoading,
   onClose,
@@ -23,6 +24,7 @@ export function VpnServerDetailsModal({
   error?: boolean;
   routers: VpnServerRouterItem[];
   peers: VpnServerPeerItem[];
+  trafficDetail?: VpnServerTrafficDetail;
   routersLoading?: boolean;
   peersLoading?: boolean;
   onClose: () => void;
@@ -33,6 +35,8 @@ export function VpnServerDetailsModal({
   onMigrateRouters: () => void;
   onRestartVpn: () => void;
   onReconcile: () => void;
+  onRefreshRouters?: () => void;
+  onRefreshPeers?: () => void;
   onMarkReviewed: () => void;
   onAddNote: () => void;
   onAddFlag: () => void;
@@ -51,7 +55,7 @@ export function VpnServerDetailsModal({
           <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
-          {loading ? <PageLoader /> : error || !server ? <ErrorState title="Unable to load VPN server details" description="The VPN server workspace could not be loaded. Retry after checking the admin VPN server API." /> : <VpnServerDetailsWorkspace server={server} routers={routers} peers={peers} routersLoading={routersLoading} peersLoading={peersLoading} showRouteLink {...workspaceProps} />}
+          {loading ? <PageLoader /> : error || !server ? <ErrorState title="Unable to load VPN server details" description="The VPN server workspace could not be loaded. Retry after checking the admin VPN server API." /> : <VpnServerDetailsWorkspace server={server} routers={routers} peers={peers} trafficDetail={trafficDetail} routersLoading={routersLoading} peersLoading={peersLoading} showRouteLink {...workspaceProps} />}
         </div>
       </div>
     </div>

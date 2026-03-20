@@ -257,6 +257,7 @@ export type BillingSection =
   | "invoices"
   | "payments"
   | "entitlements"
+  | "reports"
   | "activity"
   | "notes-flags";
 
@@ -270,4 +271,49 @@ export type BillingFilterState = {
   window?: string;
   page?: number;
   limit?: number;
+};
+
+export type RecordPaymentPayload = {
+  accountId: string;
+  amount: number;
+  currency?: string;
+  description: string;
+  paymentMethod: "manual" | "mpesa" | "airtel_money" | "bank_transfer" | "cash";
+  reference?: string;
+  reason?: string;
+};
+
+export type CreateInvoicePayload = {
+  accountId: string;
+  amount: number;
+  currency?: string;
+  description: string;
+  dueDate?: string;
+  reason?: string;
+};
+
+export type IssueRefundPayload = {
+  accountId: string;
+  originalTransactionId?: string;
+  amount: number;
+  currency?: string;
+  description: string;
+  reason: string;
+};
+
+export type BillingRevenueReport = {
+  window: string;
+  groupBy: string;
+  totalRevenue: number;
+  totalInvoiced: number;
+  failedPayments: number;
+  refundTotal: number;
+  series: Array<{ date: string; revenue: number; invoices: number; failedPayments: number }>;
+  topAccounts: Array<{ accountId: string; name: string; email: string; revenue: number }>;
+};
+
+export type BillingOutstandingReport = {
+  totalOutstanding: number;
+  accountCount: number;
+  accounts: Array<{ accountId: string; name: string; email: string; totalOutstanding: number; invoiceCount: number; oldestInvoiceDate: string | null }>;
 };

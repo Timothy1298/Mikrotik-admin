@@ -1,8 +1,11 @@
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { HealthStatusBadge } from "@/features/monitoring/components/HealthStatusBadge";
 import type { MonitoringDetailItem } from "@/features/monitoring/types/monitoring.types";
+import { appRoutes } from "@/config/routes";
+import { formatBytes } from "@/lib/formatters/bytes";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: boolean; detail: MonitoringDetailItem | null; onClose: () => void }) {
@@ -35,27 +38,108 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
             <CardDescription>Real monitoring metadata associated with the selected item.</CardDescription>
           </div>
         </CardHeader>
-        <div className="space-y-3 text-sm text-slate-200">
+        <div className="space-y-4 text-sm text-slate-200">
           {detail.kind === "diagnostic" ? (
             <>
-              <div className="flex items-center gap-3"><HealthStatusBadge status={detail.item.severity} /><Badge tone="info">{detail.item.resourceType}</Badge></div>
+              <div className="flex items-center gap-3">
+                <HealthStatusBadge status={detail.item.severity} />
+                <Badge tone="info">{detail.item.resourceType}</Badge>
+              </div>
               <p>{detail.item.message}</p>
               <p className="font-mono text-xs text-slate-500">{detail.item.resourceId}</p>
             </>
           ) : null}
+
           {detail.kind === "activity" ? (
             <>
-              <div className="flex items-center gap-3"><HealthStatusBadge status={detail.item.severity} /><Badge tone="info">{detail.item.source}</Badge></div>
+              <div className="flex items-center gap-3">
+                <HealthStatusBadge status={detail.item.severity} />
+                <Badge tone="info">{detail.item.source}</Badge>
+                {detail.item.resource?.type ? <Badge tone="neutral">{detail.item.resource.type}</Badge> : null}
+              </div>
               <p>{detail.item.summary}</p>
+              {detail.item.actor ? <p className="text-slate-400">Actor: {detail.item.actor.name || detail.item.actor.email || detail.item.actor.id}</p> : null}
+              {detail.item.resource ? <p className="text-slate-400">Resource: {detail.item.resource.name || detail.item.resource.type} ({detail.item.resource.id})</p> : null}
               <p className="font-mono text-xs text-slate-500">{formatDateTime(detail.item.timestamp)}</p>
             </>
           ) : null}
-          {detail.kind === "router" ? <p>{detail.item.customer?.name || "Unassigned customer"} • {detail.item.serverNode} • {detail.item.healthSummary.issues.join(", ") || "No issue list provided"}</p> : null}
-          {detail.kind === "vpn-server" ? <p>{detail.item.region} • {detail.item.healthSummary.status} • {detail.item.routerCount} routers</p> : null}
-          {detail.kind === "peer" ? <p>{detail.item.router.name} • {detail.item.handshakeState} • {formatDateTime(detail.item.lastHandshake)}</p> : null}
-          {detail.kind === "customer" ? <p>{detail.item.offlineRouters} offline routers • {detail.item.unhealthyRouters} unhealthy routers</p> : null}
-          {detail.kind === "traffic-router" ? <p>Total transfer: {detail.item.totalTransferBytes.toLocaleString()} bytes</p> : null}
-          {detail.kind === "traffic-server" ? <p>Total server transfer: {detail.item.totalTransferBytes.toLocaleString()} bytes</p> : null}
+
+          {detail.kind === "router" ? (
+            <div className="space-y-2">
+              <p>{detail.item.customer?.name || "Unassigned customer"} • {detail.item.serverNode}</p>
+              <p className="font-mono text-xs text-slate-500">{detail.item.vpnIp}</p>
+              <p>Connection: <span className="text-slate-100">{detail.item.connectionStatus}</span> • Setup: <span className="text-slate-100">{detail.item.setupStatus}</span></p>
+              <div className="flex flex-wrap gap-2">
+                {(detail.item.healthSummary.issues || []).length ? detail.item.healthSummary.issues.map((issue) => <Badge key={issue} tone="warning">{issue.replace(/_/g, " ")}</Badge>) : <Badge tone="success">No active issues</Badge>}
+              </div>
+              <p className="text-slate-400">Last seen: {formatDateTime(detail.item.lastSeen)} • Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
+            </div>
+          ) : null}
+
+          {detail.kind === "vpn-server" ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <HealthStatusBadge status={detail.item.healthSummary.status} />
+                {detail.item.loadCapacitySummary.overloaded ? <Badge tone="danger">Overloaded</Badge> : detail.item.loadCapacitySummary.nearCapacity ? <Badge tone="warning">Near capacity</Badge> : <Badge tone="success">Stable load</Badge>}
+              </div>
+              <p>{detail.item.region} • {detail.item.nodeId}</p>
+              <p>{detail.item.routerCount} routers • {detail.item.activePeerCount} peers</p>
+              <p className="text-slate-400">Last heartbeat: {formatDateTime(detail.item.lastHeartbeatAt)}</p>
+            </div>
+          ) : null}
+
+          {detail.kind === "peer" ? (
+            <div className="space-y-2">
+              <p>Peer: {detail.item.peerName || "Unknown peer"}</p>
+              <p>
+                Linked router:{" "}
+                <Link className="text-brand-100 transition hover:text-white" to={appRoutes.routerDetail(detail.item.router.id)}>
+                  {detail.item.router.name}
+                </Link>
+              </p>
+              {detail.item.user ? <p>User: {detail.item.user.name || detail.item.user.email || detail.item.user.id}</p> : null}
+              <div className="flex items-center gap-3">
+                <HealthStatusBadge status={detail.item.handshakeState} />
+                <HealthStatusBadge status={detail.item.enabled ? "enabled" : "disabled"} />
+              </div>
+              <p>RX: {formatBytes(detail.item.transferRx)} • TX: {formatBytes(detail.item.transferTx)}</p>
+              <p className="text-slate-400">Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
+            </div>
+          ) : null}
+
+          {detail.kind === "customer" ? (
+            <div className="space-y-2">
+              <p>{detail.item.user.name || detail.item.user.email || detail.item.user.id}</p>
+              <div className="flex items-center gap-2">
+                <Badge tone={detail.item.user.isActive ? "success" : "warning"}>{detail.item.user.isActive ? "Active" : "Inactive"}</Badge>
+                <Badge tone={detail.item.affectedByServer ? "danger" : "info"}>{detail.item.affectedByServer ? "Server issue linked" : "No server issue linked"}</Badge>
+              </div>
+              <p>Offline routers: {detail.item.offlineRouters}</p>
+              <p>Unhealthy routers: {detail.item.unhealthyRouters}</p>
+              <p>Provisioning failures: {detail.item.failedProvisioningRouters}</p>
+              <p>Stale routers: {detail.item.staleRouters}</p>
+            </div>
+          ) : null}
+
+          {detail.kind === "traffic-router" ? (
+            <div className="space-y-2">
+              <p>{detail.item.name}</p>
+              <p>Server: {detail.item.serverNode}</p>
+              <p>Customer: {detail.item.user?.name || detail.item.user?.email || "Unknown"}</p>
+              <p>Ingress: {formatBytes(detail.item.transferRx)}</p>
+              <p>Egress: {formatBytes(detail.item.transferTx)}</p>
+              <p>Total: {formatBytes(detail.item.totalTransferBytes)}</p>
+            </div>
+          ) : null}
+
+          {detail.kind === "traffic-server" ? (
+            <div className="space-y-2">
+              <p>Node ID: {detail.item.nodeId}</p>
+              <p>Ingress: {formatBytes(detail.item.transferRx)}</p>
+              <p>Egress: {formatBytes(detail.item.transferTx)}</p>
+              <p>Total: {formatBytes(detail.item.totalTransferBytes)}</p>
+            </div>
+          ) : null}
         </div>
       </Card>
     </Modal>

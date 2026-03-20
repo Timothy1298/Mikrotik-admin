@@ -1,23 +1,30 @@
+import { Link } from 'react-router-dom';
+import { InlineError } from '@/components/feedback/InlineError';
+import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { appRoutes } from '@/config/routes';
+import { useUserSupport } from '@/features/users/hooks';
 import { UserStatusBadge } from '@/features/users/components/UserStatusBadge';
 import type { UserDetail } from '@/features/users/types/user.types';
 import { formatDateTime } from '@/lib/formatters/date';
 
 export function UserSupportPanel({ user }: { user: UserDetail }) {
-  const tickets = user.support?.tickets || [];
+  const supportQuery = useUserSupport(user.id);
+  const tickets = supportQuery.data?.tickets || user.support?.tickets || [];
 
   return (
     <Card>
       <CardHeader>
-        <div><CardTitle>Support history</CardTitle><CardDescription>Ticket burden, support state, and issue history tied to this account.</CardDescription></div>
+        <div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>Support history</CardTitle><CardDescription>Ticket burden, support state, and issue history tied to this account.</CardDescription></div><RefreshButton loading={supportQuery.isFetching} onClick={() => void supportQuery.refetch()} /></div>
       </CardHeader>
+      {supportQuery.isError ? <InlineError message="Support data could not be refreshed. Showing the last loaded account snapshot." /> : null}
         <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="font-mono text-slate-500"><tr><th className="pb-3">Subject</th><th className="pb-3">Category</th><th className="pb-3">Priority</th><th className="pb-3">Status</th><th className="pb-3">Created</th></tr></thead>
           <tbody className="divide-y divide-brand-500/15">
             {tickets.length ? tickets.map((ticket) => (
               <tr key={String(ticket._id)}>
-                <td className="py-4 text-slate-100">{String(ticket.subject || '-')}</td>
+                <td className="py-4 text-slate-100"><Link className="text-brand-100 hover:underline" to={appRoutes.supportTicket(String(ticket._id))}>{String(ticket.subject || '-')}</Link></td>
                 <td className="py-4 text-slate-300">{String(ticket.category || '-')}</td>
                 <td className="py-4"><UserStatusBadge status={String(ticket.priority || 'warning')} /></td>
                 <td className="py-4"><UserStatusBadge status={String(ticket.status || 'open')} /></td>

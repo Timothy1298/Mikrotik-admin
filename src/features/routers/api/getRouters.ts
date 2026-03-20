@@ -1,6 +1,17 @@
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { RouterDetail, RouterDirectoryResponse, RouterDirectoryStats, RouterQuery } from "@/features/routers/types/router.types";
+import type {
+  CreateRouterPayload,
+  CreateRouterResponse,
+  RouterCommandResult,
+  RouterDetail,
+  RouterDirectoryResponse,
+  RouterDirectoryStats,
+  RouterInterface,
+  RouterLiveHealth,
+  RouterPingResult,
+  RouterQuery,
+} from "@/features/routers/types/router.types";
 
 export async function getRouters(params: RouterQuery) {
   const { data } = await apiClient.get<{ success: boolean; items: RouterDirectoryResponse["items"]; pagination: RouterDirectoryResponse["pagination"] }>(endpoints.admin.routers, { params });
@@ -20,6 +31,11 @@ export async function getRouterById(id: string) {
 export async function getRouterActivity(id: string, params?: { page?: number; limit?: number }) {
   const { data } = await apiClient.get<{ success: boolean; items: RouterDetail["recentActivity"]; pagination: RouterDirectoryResponse["pagination"] }>(endpoints.admin.routerActivity(id), { params });
   return { items: data.items, pagination: data.pagination };
+}
+
+export async function createRouterAdmin(payload: CreateRouterPayload) {
+  const { data } = await apiClient.post<{ success: boolean; data: CreateRouterResponse }>(endpoints.admin.createRouter, payload);
+  return data.data;
 }
 
 export async function disableRouter(id: string, reason?: string) {
@@ -60,6 +76,34 @@ export async function moveRouterServer(id: string, payload: { targetServerNode: 
 export async function markRouterReviewed(id: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.markRouterReviewed(id), { reason });
   return data;
+}
+
+export async function rebootRouter(id: string, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.rebootRouter(id), { reason });
+  return data;
+}
+
+export async function pingRouter(id: string) {
+  const { data } = await apiClient.post<{ success: boolean; result?: RouterPingResult; reachable?: boolean; error?: string }>(endpoints.admin.pingRouter(id));
+  if (!data.success) {
+    return { reachable: Boolean(data.reachable), error: data.error || "Ping failed" } satisfies RouterPingResult;
+  }
+  return data.result || { reachable: false, error: "No ping result returned" };
+}
+
+export async function runRouterCommand(id: string, payload: { command: string; reason: string }) {
+  const { data } = await apiClient.post<RouterCommandResult>(endpoints.admin.runRouterCommand(id), payload);
+  return data;
+}
+
+export async function getRouterInterfaces(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; interfaces: RouterInterface[] }>(endpoints.admin.routerInterfaces(id));
+  return { interfaces: data.interfaces || [] };
+}
+
+export async function getRouterLiveHealth(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; health: RouterLiveHealth }>(endpoints.admin.routerLiveHealth(id));
+  return data.health;
 }
 
 export async function addRouterNote(id: string, payload: { body: string; category: string; pinned?: boolean; reason?: string }) {

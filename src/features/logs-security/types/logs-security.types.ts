@@ -187,3 +187,14 @@ export type LogsSecurityDetailItem =
   | { kind: "session"; item: SessionItem }
   | { kind: "user-security"; item: UserSecuritySummary }
   | { kind: "timeline"; item: ResourceTimelineItem };
+
+export type LogsExportParams = {
+  q?: string;
+  from?: string;
+  to?: string;
+  actorAdmin?: string;
+  resourceType?: string;
+  eventType?: string;
+  severity?: string;
+  limit?: number;
+};

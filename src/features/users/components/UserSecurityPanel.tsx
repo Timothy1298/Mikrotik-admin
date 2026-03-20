@@ -1,21 +1,27 @@
+import { InlineError } from '@/components/feedback/InlineError';
+import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { useUserSecurity } from '@/features/users/hooks';
 import { UserStatusBadge } from '@/features/users/components/UserStatusBadge';
 import type { UserDetail } from '@/features/users/types/user.types';
 import { formatDateTime } from '@/lib/formatters/date';
 
 export function UserSecurityPanel({ user }: { user: UserDetail }) {
-  const flags = user.security?.flags || [];
+  const securityQuery = useUserSecurity(user.id);
+  const security = securityQuery.data || user.security;
+  const flags = security?.flags || [];
 
   return (
     <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
       <Card>
-        <CardHeader><div><CardTitle>Security summary</CardTitle><CardDescription>Login history, failed attempts, and risk posture.</CardDescription></div></CardHeader>
+        <CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>Security summary</CardTitle><CardDescription>Login history, failed attempts, and risk posture.</CardDescription></div><RefreshButton loading={securityQuery.isFetching} onClick={() => void securityQuery.refetch()} /></div></CardHeader>
+        {securityQuery.isError ? <InlineError message="Security data could not be refreshed. Showing the last loaded account snapshot." /> : null}
         <div className="space-y-4 text-sm text-slate-300">
-          <div className="flex items-center justify-between"><span>Risk status</span><UserStatusBadge status={user.security.riskStatus} /></div>
-          <div className="flex items-center justify-between"><span>Failed logins 24h</span><span>{user.security.failedLogins24h}</span></div>
-          <div className="flex items-center justify-between"><span>Failed logins 7d</span><span>{user.security.failedLogins7d}</span></div>
-          <div className="flex items-center justify-between"><span>Last successful login</span><span>{formatDateTime(user.security.lastSuccessfulLogin)}</span></div>
-          <div className="flex items-center justify-between"><span>Last failed login</span><span>{formatDateTime(user.security.lastFailedLogin)}</span></div>
+          <div className="flex items-center justify-between"><span>Risk status</span><UserStatusBadge status={security.riskStatus} /></div>
+          <div className="flex items-center justify-between"><span>Failed logins 24h</span><span>{security.failedLogins24h}</span></div>
+          <div className="flex items-center justify-between"><span>Failed logins 7d</span><span>{security.failedLogins7d}</span></div>
+          <div className="flex items-center justify-between"><span>Last successful login</span><span>{formatDateTime(security.lastSuccessfulLogin)}</span></div>
+          <div className="flex items-center justify-between"><span>Last failed login</span><span>{formatDateTime(security.lastFailedLogin)}</span></div>
         </div>
       </Card>
       <Card>

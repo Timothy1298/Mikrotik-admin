@@ -1,15 +1,19 @@
 import { useMemo, useState } from "react";
-import { Clock3, LifeBuoy, Link2, MessageSquare, ShieldAlert, UserCog } from "lucide-react";
+import { Clock3, LifeBuoy, Link2, MessageSquare, Plus, ShieldAlert, UserCog } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
-import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Select } from "@/components/ui/Select";
-import { SupportActionDialog, SupportFilters, TicketDetailsModal, TicketsTable } from "@/features/support/components";
+import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { supportTabs } from "@/config/module-tabs";
+import { cannedResponses } from "@/features/support/config/cannedResponses";
+import { CreateTicketDialog, SupportActionDialog, SupportFilters, TicketDetailsModal, TicketsTable } from "@/features/support/components";
 import {
   useAddTicketFlag,
   useAddTicketNote,
@@ -20,8 +24,8 @@ import {
   useChangeTicketStatus,
   useCloseTicket,
   useDeEscalateTicket,
-  useEscalateTicket,
   useEscalatedQueue,
+  useEscalateTicket,
   useMarkTicketReviewed,
   useReassignTicket,
   useRemoveTicketFlag,
@@ -33,12 +37,14 @@ import {
   useTicket,
   useTickets,
   useTicketsByAssignee,
-  useUnassignTicket,
   useUnassignedQueue,
+  useUnassignTicket,
 } from "@/features/support/hooks/useSupport";
 import type { SupportFilterState, SupportSection, SupportTicketRow } from "@/features/support/types/support.types";
 import { supportSections } from "@/features/support/utils/support-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
 
 const sectionIcons: Record<SupportSection, typeof LifeBuoy> = {
   tickets: LifeBuoy,
@@ -52,7 +58,21 @@ const sectionIcons: Record<SupportSection, typeof LifeBuoy> = {
   "notes-flags": LifeBuoy,
 };
 
+const flagOptions = [
+  { label: "VIP customer", value: "vip_customer" },
+  { label: "Outage related", value: "outage_related" },
+  { label: "Billing related", value: "billing_related" },
+  { label: "Security related", value: "security_related" },
+  { label: "Provisioning issue", value: "provisioning_issue" },
+  { label: "Repeated issue", value: "repeated_issue" },
+  { label: "Manual review", value: "manual_review" },
+  { label: "Urgent follow up", value: "urgent_follow_up" },
+] as const;
+
 export function SupportSectionPage({ section }: { section: SupportSection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser(true);
   const sectionMeta = supportSections[section];
   const Icon = sectionIcons[section];
   const [filters, setFilters] = useState<SupportFilterState>({ limit: 50, sortBy: "updatedAt", sortOrder: "desc" });
@@ -81,14 +101,21 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const noteDisclosure = useDisclosure(false);
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
+  const addDisclosure = useDisclosure(false);
 
-  const ticketsQuery = useTickets(filters);
-  const unassignedQuery = useUnassignedQueue(filters);
-  const escalatedQuery = useEscalatedQueue(filters);
-  const staleQuery = useStaleQueue(filters);
-  const workloadQuery = useAssigneeWorkload();
+  const ticketsEnabled = !["unassigned", "escalated", "stale", "by-assignee"].includes(section);
+  const unassignedEnabled = section === "unassigned";
+  const escalatedEnabled = section === "escalated";
+  const staleEnabled = section === "stale";
+  const byAssigneeEnabled = section === "by-assignee";
+
+  const ticketsQuery = useTickets(filters, ticketsEnabled);
+  const unassignedQuery = useUnassignedQueue(filters, unassignedEnabled);
+  const escalatedQuery = useEscalatedQueue(filters, escalatedEnabled);
+  const staleQuery = useStaleQueue(filters, staleEnabled);
+  const workloadQuery = useAssigneeWorkload(byAssigneeEnabled);
   const agentsQuery = useSupportAgents();
-  const assigneeTicketsQuery = useTicketsByAssignee(selectedAssigneeId, filters);
+  const assigneeTicketsQuery = useTicketsByAssignee(selectedAssigneeId, filters, byAssigneeEnabled && Boolean(selectedAssigneeId));
   const selectedTicketDetailQuery = useTicket(selectedTicket?.id || "");
 
   const assignMutation = useAssignTicket();
@@ -108,7 +135,10 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const flagMutation = useAddTicketFlag();
   const removeFlagMutation = useRemoveTicketFlag();
 
-  const baseRows = useMemo(() => {
+  const showManageActions = can(currentUser, permissions.supportManage);
+  const showReplyActions = can(currentUser, permissions.supportReply);
+
+  const rows = useMemo(() => {
     if (section === "unassigned") return unassignedQuery.data?.items || [];
     if (section === "escalated") return escalatedQuery.data?.items || [];
     if (section === "stale") return staleQuery.data?.items || [];
@@ -119,8 +149,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     if (section === "by-assignee") return assigneeTicketsQuery.data?.items || [];
     return ticketsQuery.data?.items || [];
   }, [section, unassignedQuery.data?.items, escalatedQuery.data?.items, staleQuery.data?.items, ticketsQuery.data?.items, assigneeTicketsQuery.data?.items]);
-
-  const rows = baseRows;
 
   const metrics = useMemo(() => {
     if (section === "by-assignee") {
@@ -139,8 +167,21 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     ];
   }, [rows, section, workloadQuery.data]);
 
-  const isPending = ticketsQuery.isPending || (section === "unassigned" && unassignedQuery.isPending) || (section === "escalated" && escalatedQuery.isPending) || (section === "stale" && staleQuery.isPending) || (section === "by-assignee" && selectedAssigneeId && assigneeTicketsQuery.isPending);
-  const isError = ticketsQuery.isError || (section === "unassigned" && unassignedQuery.isError) || (section === "escalated" && escalatedQuery.isError) || (section === "stale" && staleQuery.isError) || (section === "by-assignee" && selectedAssigneeId && assigneeTicketsQuery.isError);
+  const isPending =
+    (ticketsEnabled && ticketsQuery.isPending)
+    || (unassignedEnabled && unassignedQuery.isPending)
+    || (escalatedEnabled && escalatedQuery.isPending)
+    || (staleEnabled && staleQuery.isPending)
+    || (byAssigneeEnabled && selectedAssigneeId !== "" && assigneeTicketsQuery.isPending);
+
+  const isError =
+    (ticketsEnabled && ticketsQuery.isError)
+    || (unassignedEnabled && unassignedQuery.isError)
+    || (escalatedEnabled && escalatedQuery.isError)
+    || (staleEnabled && staleQuery.isError)
+    || (byAssigneeEnabled && selectedAssigneeId !== "" && assigneeTicketsQuery.isError);
+
+  const filteredCannedResponses = cannedResponses.filter((item) => item.category === selectedTicket?.category || item.category === "general");
 
   const openTicket = (ticket: SupportTicketRow) => {
     setSelectedTicket(ticket);
@@ -152,9 +193,22 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     detailDisclosure.onOpen();
   };
 
+  const refreshCurrentSection = () => {
+    if (ticketsEnabled) void ticketsQuery.refetch();
+    if (unassignedEnabled) void unassignedQuery.refetch();
+    if (escalatedEnabled) void escalatedQuery.refetch();
+    if (staleEnabled) void staleQuery.refetch();
+    if (byAssigneeEnabled) void workloadQuery.refetch();
+    void agentsQuery.refetch();
+    if (byAssigneeEnabled && selectedAssigneeId) void assigneeTicketsQuery.refetch();
+    if (selectedTicket) void selectedTicketDetailQuery.refetch();
+  };
+
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Support operations" />
+      <Tabs tabs={[...supportTabs]} value={location.pathname} onChange={navigate} />
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
       </div>
@@ -166,7 +220,12 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
           <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">
             <div className="space-y-3">
               {(workloadQuery.data || []).map((item) => (
-                <button key={item.assignee?.id || "unassigned"} type="button" onClick={() => setSelectedAssigneeId(item.assignee?.id || "")} className={`w-full rounded-2xl border p-4 text-left transition ${selectedAssigneeId === (item.assignee?.id || "") ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]"}`}>
+                <button
+                  key={item.assignee?.id || "unassigned"}
+                  type="button"
+                  onClick={() => setSelectedAssigneeId(item.assignee?.id || "")}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${selectedAssigneeId === (item.assignee?.id || "") ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]"}`}
+                >
                   <p className="font-medium text-slate-100">{item.assignee?.name || "Unassigned"}</p>
                   <p className="mt-1 text-sm text-slate-400">{item.openTickets} open · {item.escalatedTickets} escalated · {item.staleTickets} stale</p>
                 </button>
@@ -174,7 +233,21 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
             </div>
             <div>
               {!selectedAssigneeId ? <ErrorState title="Choose an assignee" description="Select a support agent to load their ticket queue." /> : null}
-              {selectedAssigneeId ? (isPending ? <TableLoader /> : isError ? <ErrorState title="Unable to load assignee tickets" description="Retry after confirming the assignee ticket endpoint is available." onAction={() => void assigneeTicketsQuery.refetch()} /> : <TicketsTable rows={rows} onOpen={openTicket} onReassign={(row) => { setSelectedTicket(row); setAssigneeValue(row.assignee?.id || ""); reassignDisclosure.onOpen(); }} onUnassign={(row) => { setSelectedTicket(row); unassignDisclosure.onOpen(); }} onReply={(row) => { setSelectedTicket(row); replyDisclosure.onOpen(); }} onResolve={(row) => { setSelectedTicket(row); resolveDisclosure.onOpen(); }} onEscalate={(row) => { setSelectedTicket(row); escalateDisclosure.onOpen(); }} />) : null}
+              {selectedAssigneeId ? (
+                isPending ? <TableLoader /> : isError ? (
+                  <ErrorState title="Unable to load assignee tickets" description="Retry after confirming the assignee ticket endpoint is available." onAction={() => void assigneeTicketsQuery.refetch()} />
+                ) : (
+                  <TicketsTable
+                    rows={rows}
+                    onOpen={openTicket}
+                    onReassign={showManageActions ? (row) => { setSelectedTicket(row); setAssigneeValue(row.assignee?.id || ""); reassignDisclosure.onOpen(); } : undefined}
+                    onUnassign={showManageActions ? (row) => { setSelectedTicket(row); unassignDisclosure.onOpen(); } : undefined}
+                    onReply={showReplyActions ? (row) => { setSelectedTicket(row); replyDisclosure.onOpen(); } : undefined}
+                    onResolve={showManageActions ? (row) => { setSelectedTicket(row); resolveDisclosure.onOpen(); } : undefined}
+                    onEscalate={showManageActions ? (row) => { setSelectedTicket(row); escalateDisclosure.onOpen(); } : undefined}
+                  />
+                )
+              ) : null}
             </div>
           </div>
         </Card>
@@ -183,29 +256,75 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
           <DataToolbar>
             <div className="flex items-center gap-3">
               <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
-              <div><p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p><p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p></div>
+              <div>
+                <p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p>
+                <p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="ghost" onClick={statusDisclosure.onOpen} disabled={!selectedTicket}>Status</Button>
-              <Button variant="ghost" onClick={priorityDisclosure.onOpen} disabled={!selectedTicket}>Priority</Button>
-              <Button variant="ghost" onClick={categoryDisclosure.onOpen} disabled={!selectedTicket}>Category</Button>
-              <Button variant="ghost" onClick={reviewedDisclosure.onOpen} disabled={!selectedTicket}>Review</Button>
-              <Button variant="ghost" onClick={noteDisclosure.onOpen} disabled={!selectedTicket}>Note</Button>
-              <Button variant="ghost" onClick={flagDisclosure.onOpen} disabled={!selectedTicket}>Flag</Button>
-              {selectedTicket?.escalated ? <Button variant="ghost" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
-              {selectedTicket?.status === "resolved" || selectedTicket?.status === "closed" ? <Button variant="ghost" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
-              {selectedTicket?.status !== "closed" ? <Button variant="ghost" onClick={closeDisclosure.onOpen} disabled={!selectedTicket}>Close</Button> : null}
-              {selectedTicket?.flags?.length ? <Button variant="ghost" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }} disabled={!selectedTicket}>Unflag</Button> : null}
-              <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={() => { void ticketsQuery.refetch(); void unassignedQuery.refetch(); void escalatedQuery.refetch(); void staleQuery.refetch(); void workloadQuery.refetch(); void agentsQuery.refetch(); if (selectedAssigneeId) void assigneeTicketsQuery.refetch(); }} />
+              {section === "tickets" && showManageActions ? (
+                <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>
+                  New Ticket
+                </Button>
+              ) : null}
+              {selectedTicket ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  {showReplyActions ? <Button variant="ghost" size="sm" onClick={replyDisclosure.onOpen}>Reply</Button> : null}
+                  {showManageActions ? <Button variant="ghost" size="sm" onClick={statusDisclosure.onOpen}>Status</Button> : null}
+                  {showManageActions ? <Button variant="ghost" size="sm" onClick={priorityDisclosure.onOpen}>Priority</Button> : null}
+                  {showManageActions ? <Button variant="ghost" size="sm" onClick={categoryDisclosure.onOpen}>Category</Button> : null}
+                  {showManageActions ? <Button variant="ghost" size="sm" onClick={reviewedDisclosure.onOpen}>Review</Button> : null}
+                  {showReplyActions ? <Button variant="ghost" size="sm" onClick={noteDisclosure.onOpen}>Note</Button> : null}
+                  {showManageActions ? <Button variant="ghost" size="sm" onClick={flagDisclosure.onOpen}>Flag</Button> : null}
+                  {selectedTicket.escalated && showManageActions ? <Button variant="ghost" size="sm" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
+                  {(selectedTicket.status === "resolved" || selectedTicket.status === "closed") && showManageActions ? <Button variant="ghost" size="sm" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
+                  {selectedTicket.status !== "closed" && showManageActions ? <Button variant="ghost" size="sm" onClick={closeDisclosure.onOpen}>Close</Button> : null}
+                  {selectedTicket.flags.length && showManageActions ? <Button variant="ghost" size="sm" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }}>Unflag</Button> : null}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">Select a ticket to take action</p>
+              )}
+              <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={refreshCurrentSection} />
             </div>
           </DataToolbar>
           <div className="mt-4">
-            {isPending ? <TableLoader /> : isError ? <ErrorState title={`Unable to load ${sectionMeta.title.toLowerCase()}`} description="Retry after confirming the support endpoints are reachable." onAction={() => void ticketsQuery.refetch()} /> : <TicketsTable rows={rows} onOpen={openTicket} onAssign={(row) => { setSelectedTicket(row); assignDisclosure.onOpen(); }} onReassign={(row) => { setSelectedTicket(row); setAssigneeValue(row.assignee?.id || ""); reassignDisclosure.onOpen(); }} onUnassign={(row) => { setSelectedTicket(row); unassignDisclosure.onOpen(); }} onReply={(row) => { setSelectedTicket(row); replyDisclosure.onOpen(); }} onResolve={(row) => { setSelectedTicket(row); resolveDisclosure.onOpen(); }} onEscalate={(row) => { setSelectedTicket(row); escalateDisclosure.onOpen(); }} />}
+            {isPending ? (
+              <TableLoader />
+            ) : isError ? (
+              <ErrorState title={`Unable to load ${sectionMeta.title.toLowerCase()}`} description="Retry after confirming the support endpoints are reachable." onAction={refreshCurrentSection} />
+            ) : (
+              <TicketsTable
+                rows={rows}
+                onOpen={openTicket}
+                onAssign={showManageActions ? (row) => { setSelectedTicket(row); assignDisclosure.onOpen(); } : undefined}
+                onReassign={showManageActions ? (row) => { setSelectedTicket(row); setAssigneeValue(row.assignee?.id || ""); reassignDisclosure.onOpen(); } : undefined}
+                onUnassign={showManageActions ? (row) => { setSelectedTicket(row); unassignDisclosure.onOpen(); } : undefined}
+                onReply={showReplyActions ? (row) => { setSelectedTicket(row); replyDisclosure.onOpen(); } : undefined}
+                onResolve={showManageActions ? (row) => { setSelectedTicket(row); resolveDisclosure.onOpen(); } : undefined}
+                onEscalate={showManageActions ? (row) => { setSelectedTicket(row); escalateDisclosure.onOpen(); } : undefined}
+              />
+            )}
           </div>
         </Card>
       )}
 
-      <TicketDetailsModal open={detailDisclosure.open} ticketId={selectedTicket?.id || ""} onClose={detailDisclosure.onClose} />
+      <TicketDetailsModal
+        open={detailDisclosure.open}
+        ticketId={selectedTicket?.id || ""}
+        onClose={detailDisclosure.onClose}
+        onReply={showReplyActions && selectedTicket ? () => { detailDisclosure.onClose(); replyDisclosure.onOpen(); } : undefined}
+        onAssign={showManageActions && selectedTicket && !selectedTicket.assignee ? () => { detailDisclosure.onClose(); assignDisclosure.onOpen(); } : undefined}
+        onReassign={showManageActions && selectedTicket?.assignee ? () => { detailDisclosure.onClose(); reassignDisclosure.onOpen(); } : undefined}
+        onEscalate={showManageActions && selectedTicket && !selectedTicket.escalated ? () => { detailDisclosure.onClose(); escalateDisclosure.onOpen(); } : undefined}
+        onDeEscalate={showManageActions && selectedTicket?.escalated ? () => { detailDisclosure.onClose(); deEscalateDisclosure.onOpen(); } : undefined}
+        onResolve={showManageActions && selectedTicket && selectedTicket.status !== "resolved" && selectedTicket.status !== "closed" ? () => { detailDisclosure.onClose(); resolveDisclosure.onOpen(); } : undefined}
+        onCloseTicket={showManageActions && selectedTicket && selectedTicket.status !== "closed" ? () => { detailDisclosure.onClose(); closeDisclosure.onOpen(); } : undefined}
+        onReopen={showManageActions && selectedTicket && (selectedTicket.status === "resolved" || selectedTicket.status === "closed") ? () => { detailDisclosure.onClose(); reopenDisclosure.onOpen(); } : undefined}
+        onAddNote={showReplyActions && selectedTicket ? () => { detailDisclosure.onClose(); noteDisclosure.onOpen(); } : undefined}
+        onAddFlag={showManageActions && selectedTicket ? () => { detailDisclosure.onClose(); flagDisclosure.onOpen(); } : undefined}
+      />
+
+      <CreateTicketDialog open={addDisclosure.open} onClose={addDisclosure.onClose} />
 
       <SupportActionDialog open={assignDisclosure.open} title="Assign ticket" description="Assign the selected ticket to a support agent." confirmLabel="Assign ticket" loading={assignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={assignDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && assigneeValue && assignMutation.mutate([selectedTicket.id, assigneeValue, reason] as never, { onSuccess: () => assignDisclosure.onClose() })} />
       <SupportActionDialog open={reassignDisclosure.open} title="Reassign ticket" description="Move ticket ownership to another support agent." confirmLabel="Reassign ticket" loading={reassignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={reassignDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && assigneeValue && reassignMutation.mutate([selectedTicket.id, assigneeValue, reason] as never, { onSuccess: () => reassignDisclosure.onClose() })} />
@@ -218,10 +337,10 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
       <SupportActionDialog open={resolveDisclosure.open} title="Resolve ticket" description="Mark the ticket as resolved and notify the customer workflow." confirmLabel="Resolve ticket" loading={resolveMutation.isPending} onClose={resolveDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && resolveMutation.mutate([selectedTicket.id, reason] as never, { onSuccess: () => resolveDisclosure.onClose() })} />
       <SupportActionDialog open={closeDisclosure.open} title="Close ticket" description="Close the selected support ticket." confirmLabel="Close ticket" loading={closeMutation.isPending} onClose={closeDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && closeMutation.mutate([selectedTicket.id, reason] as never, { onSuccess: () => closeDisclosure.onClose() })} />
       <SupportActionDialog open={reopenDisclosure.open} title="Reopen ticket" description="Reopen the selected ticket and return it to active handling." confirmLabel="Reopen ticket" loading={reopenMutation.isPending} onClose={reopenDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && reopenMutation.mutate([selectedTicket.id, reason] as never, { onSuccess: () => reopenDisclosure.onClose() })} />
-      <SupportActionDialog open={replyDisclosure.open} title="Reply to ticket" description="Send an admin reply into the customer-visible support conversation." confirmLabel="Send reply" loading={replyMutation.isPending} textarea reasonOnly={false} onClose={replyDisclosure.onClose} onConfirm={({ reason, body }) => selectedTicket && replyMutation.mutate([selectedTicket.id, { message: body || "", reason }] as never, { onSuccess: () => replyDisclosure.onClose() })} />
+      <SupportActionDialog open={replyDisclosure.open} title="Reply to ticket" description="Send an admin reply into the customer-visible support conversation." confirmLabel="Send reply" loading={replyMutation.isPending} textarea reasonOnly={false} cannedResponses={filteredCannedResponses} onClose={replyDisclosure.onClose} onConfirm={({ reason, body }) => selectedTicket && replyMutation.mutate([selectedTicket.id, { message: body || "", reason }] as never, { onSuccess: () => replyDisclosure.onClose() })} />
       <SupportActionDialog open={reviewedDisclosure.open} title="Mark reviewed" description="Record that the current ticket has been reviewed by support staff." confirmLabel="Mark reviewed" loading={reviewedMutation.isPending} onClose={reviewedDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && reviewedMutation.mutate([selectedTicket.id, reason] as never, { onSuccess: () => reviewedDisclosure.onClose() })} />
       <SupportActionDialog open={noteDisclosure.open} title="Add internal note" description="Add admin-only support context for follow-up and coordination." confirmLabel="Add note" loading={noteMutation.isPending} textarea reasonOnly={false} onClose={noteDisclosure.onClose} onConfirm={({ reason, body }) => selectedTicket && noteMutation.mutate([selectedTicket.id, { body: body || "", category: "support", reason }] as never, { onSuccess: () => noteDisclosure.onClose() })} />
-      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add a workflow flag such as VIP, billing-related, outage-related, or manual review." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: categoryValue, options: [{ label: "VIP customer", value: "vip_customer" }, { label: "Outage related", value: "outage_related" }, { label: "Billing related", value: "billing_related" }, { label: "Security related", value: "security_related" }, { label: "Provisioning issue", value: "provisioning_issue" }, { label: "Repeated issue", value: "repeated_issue" }, { label: "Manual review", value: "manual_review" }, { label: "Urgent follow up", value: "urgent_follow_up" }], onValueChange: setCategoryValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && flagMutation.mutate([selectedTicket.id, { flag: categoryValue, severity: "medium", reason }] as never, { onSuccess: () => flagDisclosure.onClose() })} />
+      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add a workflow flag such as VIP, billing-related, outage-related, or manual review." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: categoryValue, options: [...flagOptions], onValueChange: setCategoryValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && flagMutation.mutate([selectedTicket.id, { flag: categoryValue, severity: "medium", reason }] as never, { onSuccess: () => flagDisclosure.onClose() })} />
       <SupportActionDialog open={removeFlagDisclosure.open} title="Remove ticket flag" description="Remove the currently selected internal support flag." confirmLabel="Remove flag" loading={removeFlagMutation.isPending} onClose={removeFlagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && selectedFlagId && removeFlagMutation.mutate([selectedTicket.id, selectedFlagId, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() })} />
     </section>
   );

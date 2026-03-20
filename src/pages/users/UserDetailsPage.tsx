@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageLoader } from '@/components/feedback/PageLoader';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AddUserFlagDialog,
   AddUserNoteDialog,
+  DeleteSubscriberDialog,
+  EditSubscriberProfileDialog,
   ExtendTrialDialog,
   ForceLogoutDialog,
   ReactivateUserDialog,
@@ -19,6 +21,8 @@ import {
 import {
   useAddUserFlag,
   useAddUserNote,
+  useDeleteUser,
+  useEditUserProfile,
   useExtendUserTrial,
   useForceLogoutUser,
   useReactivateUser,
@@ -31,9 +35,11 @@ import {
 } from '@/features/users/hooks';
 import type { UserDetail } from '@/features/users/types/user.types';
 import { useDisclosure } from '@/hooks/ui/useDisclosure';
+import { appRoutes } from '@/config/routes';
 
 export function UserDetailsPage() {
   const { id = '' } = useParams();
+  const navigate = useNavigate();
   const [selectedFlag, setSelectedFlag] = useState<UserDetail['flags'][number] | null>(null);
 
   const suspendDisclosure = useDisclosure(false);
@@ -46,6 +52,8 @@ export function UserDetailsPage() {
   const noteDisclosure = useDisclosure(false);
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
+  const deleteDisclosure = useDisclosure(false);
+  const editProfileDisclosure = useDisclosure(false);
 
   const userQuery = useUser(id);
   const suspendMutation = useSuspendUser();
@@ -58,6 +66,8 @@ export function UserDetailsPage() {
   const noteMutation = useAddUserNote();
   const addFlagMutation = useAddUserFlag();
   const removeFlagMutation = useRemoveUserFlag();
+  const deleteMutation = useDeleteUser();
+  const editProfileMutation = useEditUserProfile();
 
   if (userQuery.isPending) return <PageLoader />;
   if (userQuery.isError || !userQuery.data) {
@@ -82,6 +92,8 @@ export function UserDetailsPage() {
         onAddNote={noteDisclosure.onOpen}
         onAddFlag={flagDisclosure.onOpen}
         onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
+        onDelete={deleteDisclosure.onOpen}
+        onEditProfile={editProfileDisclosure.onOpen}
       />
 
       <SuspendUserDialog open={suspendDisclosure.open} loading={suspendMutation.isPending} onClose={suspendDisclosure.onClose} onConfirm={(reason) => suspendMutation.mutate([user.id, reason] as never, { onSuccess: () => suspendDisclosure.onClose() })} />
@@ -97,6 +109,27 @@ export function UserDetailsPage() {
         if (!selectedFlag?.id) return;
         removeFlagMutation.mutate([user.id, selectedFlag.id, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() });
       }} />
+      <DeleteSubscriberDialog
+        open={deleteDisclosure.open}
+        loading={deleteMutation.isPending}
+        userName={user.profile.name}
+        onClose={deleteDisclosure.onClose}
+        onConfirm={(reason) => deleteMutation.mutate([user.id, reason] as never, {
+          onSuccess: () => {
+            deleteDisclosure.onClose();
+            navigate(appRoutes.usersAll);
+          },
+        })}
+      />
+      <EditSubscriberProfileDialog
+        open={editProfileDisclosure.open}
+        loading={editProfileMutation.isPending}
+        user={user}
+        onClose={editProfileDisclosure.onClose}
+        onConfirm={(payload) => editProfileMutation.mutate([user.id, payload] as never, {
+          onSuccess: () => editProfileDisclosure.onClose(),
+        })}
+      />
     </section>
   );
 }

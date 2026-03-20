@@ -5,6 +5,7 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { BillingRiskBadge } from "@/features/billing/components/BillingRiskBadge";
 import { SubscriptionStatusBadge } from "@/features/billing/components/SubscriptionStatusBadge";
 import type { BillingSubscriptionRow } from "@/features/billing/types/billing.types";
+import { formatCurrency } from "@/lib/formatters/currency";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function SubscriptionsTable({
@@ -17,6 +18,9 @@ export function SubscriptionsTable({
   onResendInvoice,
   onApplyGrace,
   onRemoveGrace,
+  onRecordPayment,
+  onCreateInvoice,
+  onIssueRefund,
   onAddNote,
   onAddFlag,
 }: {
@@ -29,6 +33,9 @@ export function SubscriptionsTable({
   onResendInvoice: (row: BillingSubscriptionRow) => void;
   onApplyGrace: (row: BillingSubscriptionRow) => void;
   onRemoveGrace: (row: BillingSubscriptionRow) => void;
+  onRecordPayment?: (row: BillingSubscriptionRow) => void;
+  onCreateInvoice?: (row: BillingSubscriptionRow) => void;
+  onIssueRefund?: (row: BillingSubscriptionRow) => void;
   onAddNote: (row: BillingSubscriptionRow) => void;
   onAddFlag: (row: BillingSubscriptionRow) => void;
 }) {
@@ -38,7 +45,7 @@ export function SubscriptionsTable({
     { header: "Subscription", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.subscriptionStatus} /> },
     { header: "Trial", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.trialStatus} /> },
     { header: "Billable routers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.billableRouterCount}</span> },
-    { header: "Recurring", cell: ({ row }) => <span className="text-sm text-slate-200">${row.original.priceSummary.toFixed(2)}</span> },
+    { header: "Recurring", cell: ({ row }) => <span className="text-sm text-slate-200">{formatCurrency(row.original.priceSummary, row.original.account?.currency || "USD")}</span> },
     { header: "Next billing", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.nextBillingDate)}</span> },
     { header: "Risk", cell: ({ row }) => <BillingRiskBadge overdue={row.original.overdue} /> },
     {
@@ -53,12 +60,15 @@ export function SubscriptionsTable({
           { label: "Resend invoice", onClick: () => onResendInvoice(row.original) },
           { label: "Apply grace period", onClick: () => onApplyGrace(row.original) },
           { label: "Remove grace period", onClick: () => onRemoveGrace(row.original) },
+          ...(onRecordPayment ? [{ label: "Record payment", onClick: () => onRecordPayment(row.original) }] : []),
+          ...(onCreateInvoice ? [{ label: "Create invoice", onClick: () => onCreateInvoice(row.original) }] : []),
+          ...(onIssueRefund ? [{ label: "Issue refund", onClick: () => onIssueRefund(row.original) }] : []),
           { label: "Add note", onClick: () => onAddNote(row.original) },
           { label: "Flag account", onClick: () => onAddFlag(row.original) },
         ]} />
       ),
     },
-  ], [onAddFlag, onAddNote, onApplyGrace, onExtendTrial, onMarkReviewed, onOpen, onReactivate, onRemoveGrace, onResendInvoice, onSuspend]);
+  ], [onAddFlag, onAddNote, onApplyGrace, onCreateInvoice, onExtendTrial, onIssueRefund, onMarkReviewed, onOpen, onReactivate, onRecordPayment, onRemoveGrace, onResendInvoice, onSuspend]);
 
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No subscriptions found" emptyDescription="No subscriptions matched the current filters." />;
 }

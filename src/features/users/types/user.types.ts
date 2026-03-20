@@ -211,3 +211,50 @@ export type UsersQuery = {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 };
+
+export type CreateUserPayload = {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  company?: string;
+  country?: string;
+  reason?: string;
+};
+
+export type CreateUserResponse = {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: string;
+};
+
+export type EditUserProfilePayload = {
+  name?: string;
+  phone?: string;
+  company?: string;
+  country?: string;
+  reason?: string;
+};
+
+export type UserSubResourceBilling = {
+  summary: UserDetail["billing"]["summary"];
+  subscriptions: Array<{
+    id: string;
+    status: string;
+    planType: string;
+    pricePerMonth: number;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    nextBillingDate: string | null;
+  }>;
+  transactions: Array<{
+    id: string;
+    transactionId: string;
+    type: string;
+    amount: number;
+    currency: string;
+    status: string;
+    createdAt: string;
+  }>;
+};

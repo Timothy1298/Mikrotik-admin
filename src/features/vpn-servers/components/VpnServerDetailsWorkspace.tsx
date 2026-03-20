@@ -2,6 +2,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { appRoutes } from "@/config/routes";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { VpnServerActivityPanel } from "@/features/vpn-servers/components/VpnServerActivityPanel";
+import { VpnServerDiagnosticsPanel } from "@/features/vpn-servers/components/VpnServerDiagnosticsPanel";
 import { VpnServerFlagsPanel } from "@/features/vpn-servers/components/VpnServerFlagsPanel";
 import { VpnServerHealthBadge } from "@/features/vpn-servers/components/VpnServerHealthBadge";
 import { VpnServerHealthPanel } from "@/features/vpn-servers/components/VpnServerHealthPanel";
@@ -12,17 +15,22 @@ import { VpnServerPeersPanel } from "@/features/vpn-servers/components/VpnServer
 import { VpnServerRoutersPanel } from "@/features/vpn-servers/components/VpnServerRoutersPanel";
 import { VpnServerStatusBadge } from "@/features/vpn-servers/components/VpnServerStatusBadge";
 import { VpnServerTrafficPanel } from "@/features/vpn-servers/components/VpnServerTrafficPanel";
-import type { VpnServerDetail, VpnServerPeerItem, VpnServerRouterItem } from "@/features/vpn-servers/types/vpn-server.types";
+import type { VpnServerDetail, VpnServerPeerItem, VpnServerRouterItem, VpnServerTrafficDetail } from "@/features/vpn-servers/types/vpn-server.types";
 import { formatDateTime } from "@/lib/formatters/date";
+import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
 import { useNavigate } from "react-router-dom";
 
 export function VpnServerDetailsWorkspace({
   server,
   routers,
   peers,
+  trafficDetail,
   routersLoading,
   peersLoading,
   showRouteLink = false,
+  onRefreshRouters,
+  onRefreshPeers,
   onDisable,
   onReactivate,
   onEnableMaintenance,
@@ -38,9 +46,12 @@ export function VpnServerDetailsWorkspace({
   server: VpnServerDetail;
   routers: VpnServerRouterItem[];
   peers: VpnServerPeerItem[];
+  trafficDetail?: VpnServerTrafficDetail;
   routersLoading?: boolean;
   peersLoading?: boolean;
   showRouteLink?: boolean;
+  onRefreshRouters?: () => void;
+  onRefreshPeers?: () => void;
   onDisable: () => void;
   onReactivate: () => void;
   onEnableMaintenance: () => void;
@@ -54,6 +65,8 @@ export function VpnServerDetailsWorkspace({
   onRemoveFlag: (flag: VpnServerDetail["flags"][number]) => void;
 }) {
   const navigate = useNavigate();
+  const { data: user } = useCurrentUser(true);
+  const canManageServers = can(user, permissions.vpnServersManage);
 
   return (
     <div className="space-y-6">
@@ -72,9 +85,9 @@ export function VpnServerDetailsWorkspace({
           </div>
           <div className="flex flex-wrap gap-2">
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.vpnServerDetail(server.id))}>Open full page</Button> : null}
-            <Button variant="outline" onClick={onRestartVpn}>Restart VPN</Button>
-            <Button variant="outline" onClick={onReconcile}>Reconcile</Button>
-            <Button variant="outline" onClick={onMigrateRouters}>Migrate routers</Button>
+            {canManageServers ? <Button variant="outline" onClick={onRestartVpn}>Restart VPN</Button> : null}
+            {canManageServers ? <Button variant="outline" onClick={onReconcile}>Reconcile</Button> : null}
+            {canManageServers ? <Button variant="outline" onClick={onMigrateRouters}>Migrate routers</Button> : null}
             <Button onClick={onAddFlag}>Add flag</Button>
           </div>
         </div>
@@ -85,17 +98,19 @@ export function VpnServerDetailsWorkspace({
           <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Created</p><p className="mt-3 text-sm text-slate-100">{formatDateTime(server.profile.createdAt)}</p></div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!server.profile.enabled ? <Button variant="outline" onClick={onReactivate}>Reactivate server</Button> : <Button variant="danger" onClick={onDisable}>Disable server</Button>}
-          {server.profile.maintenanceMode ? <Button variant="outline" onClick={onClearMaintenance}>Clear maintenance</Button> : <Button variant="outline" onClick={onEnableMaintenance}>Enter maintenance</Button>}
+          {canManageServers ? (!server.profile.enabled ? <Button variant="outline" onClick={onReactivate}>Reactivate server</Button> : <Button variant="danger" onClick={onDisable}>Disable server</Button>) : null}
+          {canManageServers ? (server.profile.maintenanceMode ? <Button variant="outline" onClick={onClearMaintenance}>Clear maintenance</Button> : <Button variant="outline" onClick={onEnableMaintenance}>Enter maintenance</Button>) : null}
           <Button variant="outline" onClick={onMarkReviewed}>Mark reviewed</Button>
           <Button variant="outline" onClick={onAddNote}>Add note</Button>
         </div>
       </Card>
 
       <VpnServerHealthPanel server={server} />
-      <VpnServerTrafficPanel server={server} />
-      <VpnServerRoutersPanel items={routers} loading={routersLoading} />
-      <VpnServerPeersPanel items={peers} loading={peersLoading} />
+      <VpnServerTrafficPanel server={server} trafficDetail={trafficDetail} />
+      <VpnServerDiagnosticsPanel serverId={server.profile.id} />
+      <VpnServerRoutersPanel items={routers} loading={routersLoading} onRefresh={onRefreshRouters} />
+      <VpnServerPeersPanel items={peers} loading={peersLoading} onRefresh={onRefreshPeers} />
+      <VpnServerActivityPanel serverId={server.profile.id} />
       <VpnServerFlagsPanel server={server} onRemoveFlag={onRemoveFlag} />
       <VpnServerNotesPanel server={server} />
     </div>

@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, Fingerprint, LockKeyhole, ShieldAlert, UserCog } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { logsSecurityTabs } from "@/config/module-tabs";
 import { LogsSecurityDetailsModal } from "@/features/logs-security/components";
 import {
   useActivityLogs,
@@ -20,6 +23,8 @@ import type { LogsSecurityDetailItem } from "@/features/logs-security/types/logs
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
 
 export function LogsSecurityOverviewPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedDetail, setSelectedDetail] = useState<LogsSecurityDetailItem | null>(null);
   const detailDisclosure = useDisclosure(false);
 
@@ -59,6 +64,7 @@ export function LogsSecurityOverviewPage() {
   return (
     <section className="space-y-6">
       <PageHeader title="Logs, Audit & Security" description="Platform-wide command center for traceability, suspicious activity, session risk, and sensitive admin action visibility." meta="Security operations" />
+      <Tabs tabs={[...logsSecurityTabs]} value={location.pathname} onChange={navigate} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}

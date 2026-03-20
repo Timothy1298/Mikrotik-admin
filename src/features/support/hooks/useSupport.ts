@@ -9,6 +9,7 @@ import {
   changeTicketPriority,
   changeTicketStatus,
   closeTicket,
+  createTicket,
   deEscalateTicket,
   escalateTicket,
   getAssigneeWorkload,
@@ -41,17 +42,17 @@ const supportBase = [...queryKeys.support] as const;
 
 export const useSupportOverview = () => useQuery({ queryKey: [...supportBase, "overview"], queryFn: getSupportOverview, staleTime: 30_000, refetchOnWindowFocus: false });
 export const useSupportAnalytics = (params?: SupportFilterState & { window?: string }) => useQuery({ queryKey: [...supportBase, "analytics", params], queryFn: () => getSupportAnalytics(params), staleTime: 30_000, refetchOnWindowFocus: false });
-export const useTickets = (params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "tickets", params], queryFn: () => getTickets(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export const useTickets = (params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "tickets", params], queryFn: () => getTickets(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 export const useTicket = (id: string) => useQuery({ queryKey: [...supportBase, "ticket", id], queryFn: () => getTicketById(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketActivity = (id: string, params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "activity", id, params], queryFn: () => getTicketActivity(id, params), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketMessages = (id: string, params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "messages", id, params], queryFn: () => getTicketMessages(id, params), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketContext = (id: string) => useQuery({ queryKey: [...supportBase, "context", id], queryFn: () => getTicketContext(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
-export const useUnassignedQueue = (params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "unassigned", params], queryFn: () => getUnassignedQueue(params), staleTime: 20_000, refetchOnWindowFocus: false });
-export const useEscalatedQueue = (params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "escalated", params], queryFn: () => getEscalatedQueue(params), staleTime: 20_000, refetchOnWindowFocus: false });
-export const useStaleQueue = (params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "stale", params], queryFn: () => getStaleQueue(params), staleTime: 20_000, refetchOnWindowFocus: false });
-export const useAssigneeWorkload = () => useQuery({ queryKey: [...supportBase, "assignee-workload"], queryFn: getAssigneeWorkload, staleTime: 20_000, refetchOnWindowFocus: false });
+export const useUnassignedQueue = (params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "unassigned", params], queryFn: () => getUnassignedQueue(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
+export const useEscalatedQueue = (params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "escalated", params], queryFn: () => getEscalatedQueue(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
+export const useStaleQueue = (params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "stale", params], queryFn: () => getStaleQueue(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
+export const useAssigneeWorkload = (enabled = true) => useQuery({ queryKey: [...supportBase, "assignee-workload"], queryFn: getAssigneeWorkload, staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 export const useTeamWorkload = () => useQuery({ queryKey: [...supportBase, "team-workload"], queryFn: getTeamWorkload, staleTime: 20_000, refetchOnWindowFocus: false });
-export const useTicketsByAssignee = (id: string, params?: SupportFilterState) => useQuery({ queryKey: [...supportBase, "assignee-tickets", id, params], queryFn: () => getTicketsByAssignee(id, params), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
+export const useTicketsByAssignee = (id: string, params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "assignee-tickets", id, params], queryFn: () => getTicketsByAssignee(id, params), enabled: Boolean(id) && enabled, staleTime: 20_000, refetchOnWindowFocus: false });
 export const useSupportAgents = () => useQuery({ queryKey: [...supportBase, "agents"], queryFn: getSupportAgents, staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketNotes = (id: string) => useQuery({ queryKey: [...supportBase, "notes", id], queryFn: () => getTicketNotes(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketFlags = (id: string) => useQuery({ queryKey: [...supportBase, "flags", id], queryFn: () => getTicketFlags(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
@@ -79,6 +80,20 @@ function useSupportMutation<TArgs extends unknown[], TResult>(mutationFn: (...ar
 }
 
 export const useAssignTicket = () => useSupportMutation(assignTicket, "Ticket assigned successfully");
+export function useCreateTicket() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createTicket,
+    onSuccess: async () => {
+      toast.success("Ticket created successfully");
+      await queryClient.invalidateQueries({ queryKey: supportBase });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Support action failed");
+    },
+  });
+}
 export const useReassignTicket = () => useSupportMutation(reassignTicket, "Ticket reassigned successfully");
 export const useUnassignTicket = () => useSupportMutation(unassignTicket, "Ticket unassigned successfully");
 export const useChangeTicketStatus = () => useSupportMutation(changeTicketStatus, "Ticket status updated successfully");

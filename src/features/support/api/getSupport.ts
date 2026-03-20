@@ -5,6 +5,8 @@ import type {
   SupportAgent,
   SupportAgentWorkload,
   SupportAnalytics,
+  CreateTicketPayload,
+  CreateTicketResponse,
   SupportFilterState,
   SupportFlag,
   SupportListResponse,
@@ -19,6 +21,11 @@ import type {
 export async function getSupportOverview() {
   const { data } = await apiClient.get<{ success: boolean; overview: SupportOverview }>(endpoints.admin.supportOverview);
   return data.overview;
+}
+
+export async function createTicket(payload: CreateTicketPayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; ticket: CreateTicketResponse }>(endpoints.admin.createTicket, payload);
+  return data;
 }
 
 export async function getSupportAnalytics(params?: SupportFilterState & { window?: string }) {

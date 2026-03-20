@@ -23,18 +23,22 @@ export function UsersTable({
   onExtendTrial,
   onAddNote,
   onAddFlag,
+  onEditProfile,
+  onDelete,
 }: {
   rows: UserRow[];
   onOpenDetails: (row: UserRow) => void;
-  onSuspend: (row: UserRow) => void;
-  onReactivate: (row: UserRow) => void;
-  onVerify: (row: UserRow) => void;
-  onResendVerification: (row: UserRow) => void;
-  onPasswordReset: (row: UserRow) => void;
-  onForceLogout: (row: UserRow) => void;
-  onExtendTrial: (row: UserRow) => void;
-  onAddNote: (row: UserRow) => void;
-  onAddFlag: (row: UserRow) => void;
+  onSuspend?: (row: UserRow) => void;
+  onReactivate?: (row: UserRow) => void;
+  onVerify?: (row: UserRow) => void;
+  onResendVerification?: (row: UserRow) => void;
+  onPasswordReset?: (row: UserRow) => void;
+  onForceLogout?: (row: UserRow) => void;
+  onExtendTrial?: (row: UserRow) => void;
+  onAddNote?: (row: UserRow) => void;
+  onAddFlag?: (row: UserRow) => void;
+  onEditProfile?: (row: UserRow) => void;
+  onDelete?: (row: UserRow) => void;
 }) {
   const navigate = useNavigate();
   const [navigatingUserId, setNavigatingUserId] = useState<string | null>(null);
@@ -86,23 +90,25 @@ export function UsersTable({
           items={[
             { label: 'Open full page', onClick: () => openFullPage(row.original) },
             { label: 'Open workspace', onClick: () => onOpenDetails(row.original) },
-            row.original.verificationStatus !== 'verified'
+            onEditProfile ? { label: 'Edit profile', onClick: () => onEditProfile(row.original) } : null,
+            row.original.verificationStatus !== 'verified' && onVerify
               ? { label: 'Verify user', onClick: () => onVerify(row.original) }
-              : { label: 'Extend trial', onClick: () => onExtendTrial(row.original) },
-            row.original.verificationStatus !== 'verified'
+              : onExtendTrial ? { label: 'Extend trial', onClick: () => onExtendTrial(row.original) } : null,
+            row.original.verificationStatus !== 'verified' && onResendVerification
               ? { label: 'Resend verification', onClick: () => onResendVerification(row.original) }
-              : { label: 'Add note', onClick: () => onAddNote(row.original) },
-            { label: 'Send password reset', onClick: () => onPasswordReset(row.original) },
-            { label: 'Force logout', onClick: () => onForceLogout(row.original) },
-            { label: 'Flag account', onClick: () => onAddFlag(row.original) },
+              : onAddNote ? { label: 'Add note', onClick: () => onAddNote(row.original) } : null,
+            onPasswordReset ? { label: 'Send password reset', onClick: () => onPasswordReset(row.original) } : null,
+            onForceLogout ? { label: 'Force logout', onClick: () => onForceLogout(row.original) } : null,
+            onAddFlag ? { label: 'Flag account', onClick: () => onAddFlag(row.original) } : null,
             row.original.accountStatus === 'suspended'
-              ? { label: 'Reactivate account', onClick: () => onReactivate(row.original) }
-              : { label: 'Suspend account', onClick: () => onSuspend(row.original), danger: true },
-          ]}
+              ? (onReactivate ? { label: 'Reactivate account', onClick: () => onReactivate(row.original) } : null)
+              : (onSuspend ? { label: 'Suspend account', onClick: () => onSuspend(row.original), danger: true } : null),
+            onDelete ? { label: 'Delete subscriber', onClick: () => onDelete(row.original), danger: true } : null,
+          ].filter(Boolean) as Array<{ label: string; onClick: () => void; danger?: boolean }>}
         />
       ),
     },
-  ], [navigatingUserId, navigate, onAddFlag, onAddNote, onExtendTrial, onForceLogout, onOpenDetails, onPasswordReset, onReactivate, onResendVerification, onSuspend, onVerify]);
+  ], [navigatingUserId, navigate, onAddFlag, onAddNote, onDelete, onEditProfile, onExtendTrial, onForceLogout, onOpenDetails, onPasswordReset, onReactivate, onResendVerification, onSuspend, onVerify]);
 
   return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle="No users found" emptyDescription="Adjust your filters or onboard a new customer to populate the directory." />;
 }

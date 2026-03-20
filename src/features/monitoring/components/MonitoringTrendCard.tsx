@@ -8,12 +8,14 @@ export function MonitoringTrendCard({
   trends,
   dataKey,
   secondaryKey,
+  window,
 }: {
   title: string;
   description: string;
   trends: MonitoringTrends;
   dataKey: string;
   secondaryKey?: string;
+  window?: string;
 }) {
   return (
     <AnalyticsChartCard title={title} description={description}>
@@ -30,7 +32,14 @@ export function MonitoringTrendCard({
             </linearGradient>
           </defs>
           <CartesianGrid stroke="rgba(37,99,235,0.12)" vertical={false} />
-          <XAxis dataKey="timestamp" tick={{ fill: "#94a3b8", fontSize: 11 }} tickFormatter={(value) => new Date(value).toLocaleDateString()} />
+          <XAxis dataKey="timestamp" tick={{ fill: "#94a3b8", fontSize: 11 }} tickFormatter={(value) => {
+            const d = new Date(value);
+            if (!value || Number.isNaN(d.getTime())) return "";
+            if (window === "1h" || window === "24h") {
+              return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            }
+            return d.toLocaleDateString([], { month: "short", day: "numeric" });
+          }} />
           <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} />
           <Tooltip
             contentStyle={{ background: "rgba(8,14,31,0.9)", border: "1px solid rgba(37,99,235,0.2)", borderRadius: 16, color: "#e2e8f0" }}

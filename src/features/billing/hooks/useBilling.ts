@@ -5,11 +5,15 @@ import {
   addBillingFlag,
   addBillingNote,
   applyGracePeriod,
+  createInvoice,
+  downloadInvoicePdf,
   extendTrial,
+  getBillingOutstandingReport,
   getAccountBillingActivity,
   getAccountBillingOverview,
   getAccountBillableRouters,
   getAccountEntitlements,
+  getBillingRevenueReport,
   getAccountInvoices,
   getAccountPayments,
   getBillingActivity,
@@ -25,8 +29,10 @@ import {
   getSubscriptionById,
   getSubscriptions,
   getTrials,
+  issueRefund,
   markBillingReviewed,
   reactivateBillingAccount,
+  recordPayment,
   removeBillingFlag,
   removeGracePeriod,
   resendInvoice,
@@ -44,16 +50,16 @@ export function useBillingAnalytics(params?: BillingFilterState) {
   return useQuery({ queryKey: [...billingBase, "analytics", params], queryFn: () => getBillingAnalytics(params), staleTime: 30_000, refetchOnWindowFocus: false });
 }
 
-export function useBillingActivity(params?: BillingFilterState & { accountId?: string }) {
-  return useQuery({ queryKey: [...billingBase, "activity", params], queryFn: () => getBillingActivity(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useBillingActivity(params?: BillingFilterState & { accountId?: string }, enabled = true) {
+  return useQuery({ queryKey: [...billingBase, "activity", params], queryFn: () => getBillingActivity(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useBillingRisk() {
   return useQuery({ queryKey: [...billingBase, "risk"], queryFn: getBillingRisk, staleTime: 30_000, refetchOnWindowFocus: false });
 }
 
-export function useSubscriptions(params?: BillingFilterState & Record<string, unknown>) {
-  return useQuery({ queryKey: [...billingBase, "subscriptions", params], queryFn: () => getSubscriptions(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useSubscriptions(params?: BillingFilterState & Record<string, unknown>, enabled = true) {
+  return useQuery({ queryKey: [...billingBase, "subscriptions", params], queryFn: () => getSubscriptions(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useSubscription(id: string) {
@@ -76,8 +82,8 @@ export function useAccountBillingActivity(accountId: string, params?: BillingFil
   return useQuery({ queryKey: [...billingBase, "account-activity", accountId, params], queryFn: () => getAccountBillingActivity(accountId, params), enabled: Boolean(accountId), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useInvoices(params?: BillingFilterState) {
-  return useQuery({ queryKey: [...billingBase, "invoices", params], queryFn: () => getInvoices(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useInvoices(params?: BillingFilterState, enabled = true) {
+  return useQuery({ queryKey: [...billingBase, "invoices", params], queryFn: () => getInvoices(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useInvoice(id: string) {
@@ -88,8 +94,8 @@ export function useAccountInvoices(accountId: string, params?: BillingFilterStat
   return useQuery({ queryKey: [...billingBase, "account-invoices", accountId, params], queryFn: () => getAccountInvoices(accountId, params), enabled: Boolean(accountId), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function usePayments(params?: BillingFilterState) {
-  return useQuery({ queryKey: [...billingBase, "payments", params], queryFn: () => getPayments(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function usePayments(params?: BillingFilterState, enabled = true) {
+  return useQuery({ queryKey: [...billingBase, "payments", params], queryFn: () => getPayments(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function usePayment(id: string) {
@@ -100,8 +106,16 @@ export function useAccountPayments(accountId: string, params?: BillingFilterStat
   return useQuery({ queryKey: [...billingBase, "account-payments", accountId, params], queryFn: () => getAccountPayments(accountId, params), enabled: Boolean(accountId), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useTrials(params?: BillingFilterState) {
-  return useQuery({ queryKey: [...billingBase, "trials", params], queryFn: () => getTrials(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useTrials(params?: BillingFilterState, enabled = true) {
+  return useQuery({ queryKey: [...billingBase, "trials", params], queryFn: () => getTrials(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
+}
+
+export function useBillingRevenueReport(params?: { window?: string; groupBy?: string }) {
+  return useQuery({ queryKey: [...billingBase, "revenue-report", params], queryFn: () => getBillingRevenueReport(params), staleTime: 60_000, refetchOnWindowFocus: false });
+}
+
+export function useBillingOutstandingReport() {
+  return useQuery({ queryKey: [...billingBase, "outstanding-report"], queryFn: getBillingOutstandingReport, staleTime: 60_000, refetchOnWindowFocus: false });
 }
 
 export function useBillingNotes(accountId: string) {
@@ -142,3 +156,57 @@ export const useRemoveGracePeriod = () => useBillingMutation(removeGracePeriod, 
 export const useAddBillingNote = () => useBillingMutation(addBillingNote, "Billing note added successfully");
 export const useAddBillingFlag = () => useBillingMutation(addBillingFlag, "Billing flag added successfully");
 export const useRemoveBillingFlag = () => useBillingMutation(removeBillingFlag, "Billing flag removed successfully");
+
+export function useRecordPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: [import("@/features/billing/types/billing.types").RecordPaymentPayload]) => recordPayment(variables[0]),
+    onSuccess: async () => {
+      toast.success("Payment recorded successfully");
+      await queryClient.invalidateQueries({ queryKey: billingBase });
+    },
+    onError: (error: Error) => toast.error(error.message || "Billing action failed"),
+  });
+}
+
+export function useCreateInvoice() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: [import("@/features/billing/types/billing.types").CreateInvoicePayload]) => createInvoice(variables[0]),
+    onSuccess: async () => {
+      toast.success("Invoice created successfully");
+      await queryClient.invalidateQueries({ queryKey: billingBase });
+    },
+    onError: (error: Error) => toast.error(error.message || "Billing action failed"),
+  });
+}
+
+export function useIssueRefund() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: [import("@/features/billing/types/billing.types").IssueRefundPayload]) => issueRefund(variables[0]),
+    onSuccess: async () => {
+      toast.success("Refund recorded successfully");
+      await queryClient.invalidateQueries({ queryKey: billingBase });
+    },
+    onError: (error: Error) => toast.error(error.message || "Billing action failed"),
+  });
+}
+
+export function useDownloadInvoicePdf() {
+  return useMutation({
+    mutationFn: (invoiceId: string) => downloadInvoicePdf(invoiceId),
+    onSuccess: (data) => {
+      if (data.invoiceData) {
+        const win = window.open("", "_blank", "width=900,height=700");
+        if (win) {
+          win.document.write(`<html><head><title>Invoice</title></head><body><pre>${JSON.stringify(data.invoiceData, null, 2)}</pre></body></html>`);
+          win.document.close();
+          win.print();
+        }
+      }
+      toast.success("Invoice downloaded");
+    },
+    onError: (error: Error) => toast.error(error.message || "Invoice download failed"),
+  });
+}

@@ -4,17 +4,23 @@ import { queryKeys } from "@/config/queryKeys";
 import {
   addRouterFlag,
   addRouterNote,
+  createRouterAdmin,
   deleteRouter,
   disableRouter,
   getRouterActivity,
   getRouterById,
+  getRouterInterfaces,
+  getRouterLiveHealth,
   markRouterReviewed,
   moveRouterServer,
+  pingRouter,
   reactivateRouter,
+  rebootRouter,
   regenerateRouterSetup,
   reassignRouterPorts,
   removeRouterFlag,
   reprovisionRouter,
+  runRouterCommand,
   resetRouterPeer,
 } from "@/features/routers/api/getRouters";
 
@@ -34,6 +40,27 @@ export function useRouterActivity(id: string, params?: { page?: number; limit?: 
     queryFn: () => getRouterActivity(id, params),
     enabled: Boolean(id),
     staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterLiveHealth(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "live-health"],
+    queryFn: () => getRouterLiveHealth(id),
+    enabled: Boolean(id),
+    staleTime: 0,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterInterfaces(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "interfaces"],
+    queryFn: () => getRouterInterfaces(id),
+    enabled: Boolean(id),
+    staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
 }
@@ -83,6 +110,10 @@ export function useMoveRouterServer() {
   return useRouterMutation(moveRouterServer, "Router move request submitted");
 }
 
+export function useRebootRouter() {
+  return useRouterMutation(rebootRouter, "Reboot command sent to router");
+}
+
 export function useMarkRouterReviewed() {
   return useRouterMutation(markRouterReviewed, "Router marked as reviewed");
 }
@@ -101,4 +132,40 @@ export function useRemoveRouterFlag() {
 
 export function useDeleteRouter() {
   return useRouterMutation(deleteRouter, "Router deleted successfully");
+}
+
+export function usePingRouter() {
+  return useMutation({
+    mutationFn: (id: string) => pingRouter(id),
+    onSuccess: (result) => {
+      toast[result.reachable ? "success" : "error"](result.reachable ? "Ping successful" : "Ping failed - router unreachable");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Ping failed");
+    },
+  });
+}
+
+export function useRunRouterCommand() {
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { command: string; reason: string } }) => runRouterCommand(id, payload),
+    onError: (error: Error) => {
+      toast.error(error.message || "Command execution failed");
+    },
+  });
+}
+
+export function useCreateRouterAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRouterAdmin,
+    onSuccess: async () => {
+      toast.success("Router created successfully");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create router");
+    },
+  });
 }

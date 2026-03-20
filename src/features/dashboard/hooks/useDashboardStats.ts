@@ -6,8 +6,9 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: queryKeys.dashboard,
     queryFn: getDashboardStats,
-    staleTime: 30_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
     retry: 1,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 }

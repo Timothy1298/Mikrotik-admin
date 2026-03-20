@@ -1,19 +1,25 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Router, Server, ShieldAlert, WifiOff, Wrench } from "lucide-react";
+import { AlertTriangle, Plus, Router, Server, ShieldAlert, WifiOff, Wrench } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { routerManagementTabs } from "@/config/module-tabs";
 import {
   AddRouterFlagDialog,
+  AddRouterAdminDialog,
   AddRouterNoteDialog,
   DeleteRouterDialog,
   DisableRouterDialog,
   MarkRouterReviewedDialog,
   MoveServerDialog,
+  RebootRouterDialog,
   ReactivateRouterDialog,
   ReassignPortsDialog,
   RegenerateSetupDialog,
@@ -32,6 +38,7 @@ import {
   useDisableRouter,
   useMarkRouterReviewed,
   useMoveRouterServer,
+  useRebootRouter,
   useReactivateRouter,
   useReassignRouterPorts,
   useRegenerateRouterSetup,
@@ -45,6 +52,9 @@ import type { RouterQuery, RouterRow } from "@/features/routers/types/router.typ
 import type { RouterManagementSection } from "@/features/routers/utils/router-management-sections";
 import { routerManagementSections } from "@/features/routers/utils/router-management-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { permissions } from "@/lib/permissions/permissions";
+import { can } from "@/lib/permissions/can";
 
 const sectionIcons: Record<RouterManagementSection, typeof Router> = {
   all: Router,
@@ -70,6 +80,8 @@ function filterRowsForSection(section: RouterManagementSection, rows: RouterRow[
 }
 
 export function RouterManagementSectionPage({ section }: { section: RouterManagementSection }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const sectionMeta = routerManagementSections[section];
   const lockedFilters = sectionMeta.lockedFilters || {};
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof RouterQuery>;
@@ -87,15 +99,18 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const resetPeerDisclosure = useDisclosure(false);
   const reassignPortsDisclosure = useDisclosure(false);
   const moveServerDisclosure = useDisclosure(false);
+  const rebootDisclosure = useDisclosure(false);
   const reviewedDisclosure = useDisclosure(false);
   const noteDisclosure = useDisclosure(false);
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
+  const addRouterDisclosure = useDisclosure(false);
 
   const effectiveFilters = { ...filters, ...lockedFilters };
   const routersQuery = useRouters(effectiveFilters);
   const statsQuery = useRouterStats();
   const detailQuery = useRouter(selectedRouter?.id || "");
+  const { data: user } = useCurrentUser(true);
 
   const disableMutation = useDisableRouter();
   const deleteMutation = useDeleteRouter();
@@ -105,6 +120,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const resetPeerMutation = useResetRouterPeer();
   const reassignPortsMutation = useReassignRouterPorts();
   const moveServerMutation = useMoveRouterServer();
+  const rebootMutation = useRebootRouter();
   const markReviewedMutation = useMarkRouterReviewed();
   const noteMutation = useAddRouterNote();
   const addFlagMutation = useAddRouterFlag();
@@ -137,6 +153,8 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Router management" />
 
+      <Tabs tabs={[...routerManagementTabs]} value={location.pathname} onChange={navigate} />
+
       {section === "all" && statsQuery.data ? <RouterStatsRow stats={statsQuery.data} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -157,6 +175,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {section === "all" && can(user, permissions.routersManage) ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>Add Router</Button> : null}
             {routersQuery.isFetching && !routersQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
             <RefreshButton loading={routersQuery.isFetching || statsQuery.isFetching} onClick={() => { void routersQuery.refetch(); void statsQuery.refetch(); }} />
           </div>
@@ -197,6 +216,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
         onDelete={deleteDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}
         onReprovision={reprovisionDisclosure.onOpen}
+        onReboot={rebootDisclosure.onOpen}
         onRegenerateSetup={regenerateDisclosure.onOpen}
         onResetPeer={resetPeerDisclosure.onOpen}
         onReassignPorts={reassignPortsDisclosure.onOpen}
@@ -211,6 +231,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
       <DeleteRouterDialog open={deleteDisclosure.open} loading={deleteMutation.isPending} onClose={deleteDisclosure.onClose} onConfirm={(reason) => selectedRouter && deleteMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => { deleteDisclosure.onClose(); detailDisclosure.onClose(); } })} />
       <ReactivateRouterDialog open={reactivateDisclosure.open} loading={reactivateMutation.isPending} onClose={reactivateDisclosure.onClose} onConfirm={(reason) => selectedRouter && reactivateMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => reactivateDisclosure.onClose() })} />
       <ReprovisionRouterDialog open={reprovisionDisclosure.open} loading={reprovisionMutation.isPending} onClose={reprovisionDisclosure.onClose} onConfirm={(reason) => selectedRouter && reprovisionMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => reprovisionDisclosure.onClose() })} />
+      <RebootRouterDialog open={rebootDisclosure.open} loading={rebootMutation.isPending} onClose={rebootDisclosure.onClose} onConfirm={(reason) => selectedRouter && rebootMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => rebootDisclosure.onClose() })} />
       <RegenerateSetupDialog open={regenerateDisclosure.open} loading={regenerateMutation.isPending} onClose={regenerateDisclosure.onClose} onConfirm={(reason) => selectedRouter && regenerateMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => regenerateDisclosure.onClose() })} />
       <ResetPeerDialog open={resetPeerDisclosure.open} loading={resetPeerMutation.isPending} onClose={resetPeerDisclosure.onClose} onConfirm={(reason) => selectedRouter && resetPeerMutation.mutate([selectedRouter.id, reason] as never, { onSuccess: () => resetPeerDisclosure.onClose() })} />
       <ReassignPortsDialog open={reassignPortsDisclosure.open} loading={reassignPortsMutation.isPending} onClose={reassignPortsDisclosure.onClose} onConfirm={(payload) => selectedRouter && reassignPortsMutation.mutate([selectedRouter.id, payload] as never, { onSuccess: () => reassignPortsDisclosure.onClose() })} />
@@ -222,6 +243,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
         if (!selectedRouter || !selectedFlag?.id) return;
         removeFlagMutation.mutate([selectedRouter.id, selectedFlag.id, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() });
       }} />
+      <AddRouterAdminDialog open={addRouterDisclosure.open} onClose={addRouterDisclosure.onClose} />
     </section>
   );
 }

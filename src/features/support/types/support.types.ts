@@ -245,3 +245,21 @@ export type SupportSection =
   | "linked-issues"
   | "conversations"
   | "notes-flags";
+
+export type CreateTicketPayload = {
+  userId: string;
+  subject: string;
+  description: string;
+  category?: string;
+  priority?: string;
+  assigneeId?: string;
+  reason?: string;
+};
+
+export type CreateTicketResponse = {
+  id: string;
+  ticketReference: string;
+  subject: string;
+  status: string;
+  createdAt: string;
+};

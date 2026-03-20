@@ -41,23 +41,21 @@ export function AppSidebar() {
 
   useEffect(() => {
     const matchedItem = visibleItems.find((item) => "children" in item && item.children?.some((child) => child.path === location.pathname));
-    if (!matchedItem || !("children" in matchedItem) || !matchedItem.children) return;
-    if (lastVisitedSidebarSubmenu[matchedItem.path] !== location.pathname) {
-      rememberSidebarSubmenu(matchedItem.path, location.pathname);
-    }
-    if (expandedSidebarSection !== matchedItem.path) {
-      setExpandedSidebarSection(matchedItem.path);
-    }
-  }, [expandedSidebarSection, lastVisitedSidebarSubmenu, location.pathname, rememberSidebarSubmenu, setExpandedSidebarSection, visibleItems]);
-
-  useEffect(() => {
-    if (!expandedSidebarSection) {
-      const activeItem = visibleItems.find((item) => "children" in item && item.children && pathBelongsToItem(location.pathname, item.path));
-      if (activeItem) {
-        setExpandedSidebarSection(activeItem.path);
+    if (matchedItem && "children" in matchedItem && matchedItem.children) {
+      if (lastVisitedSidebarSubmenu[matchedItem.path] !== location.pathname) {
+        rememberSidebarSubmenu(matchedItem.path, location.pathname);
       }
+      if (expandedSidebarSection !== matchedItem.path) {
+        setExpandedSidebarSection(matchedItem.path);
+      }
+      return;
     }
-  }, [expandedSidebarSection, location.pathname, setExpandedSidebarSection, visibleItems]);
+
+    const activeItem = visibleItems.find((item) => "children" in item && item.children && pathBelongsToItem(location.pathname, item.path));
+    if (activeItem && expandedSidebarSection !== activeItem.path) {
+      setExpandedSidebarSection(activeItem.path);
+    }
+  }, [location.pathname, rememberSidebarSubmenu, setExpandedSidebarSection, visibleItems]);
 
   return (
     <aside
@@ -119,7 +117,7 @@ export function AppSidebar() {
                           return (
                             <SidebarNavItem
                               key={child.path}
-                              icon={"icon" in child ? child.icon : item.icon}
+                              icon={item.icon}
                               label={child.label}
                               to={child.path}
                               active={active}

@@ -4,6 +4,9 @@ import { queryKeys } from "@/config/queryKeys";
 import {
   acknowledgeSecurityEvent,
   addSecurityNote,
+  exportActivityLogs,
+  exportAuditTrail,
+  exportSecurityEvents,
   getActivityLogById,
   getActivityLogs,
   getAuditById,
@@ -28,12 +31,12 @@ import {
   revokeSession,
   searchLogs,
 } from "@/features/logs-security/api/getLogsSecurity";
-import type { LogsSecurityFilterState } from "@/features/logs-security/types/logs-security.types";
+import type { LogsExportParams, LogsSecurityFilterState } from "@/features/logs-security/types/logs-security.types";
 
 const logsSecurityBase = [...queryKeys.logs] as const;
 
-export function useActivityLogs(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "activity", params], queryFn: () => getActivityLogs(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useActivityLogs(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "activity", params], queryFn: () => getActivityLogs(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useActivityLog(id: string) {
@@ -44,8 +47,8 @@ export function useSearchLogs(params?: LogsSecurityFilterState) {
   return useQuery({ queryKey: [...logsSecurityBase, "search", params], queryFn: () => searchLogs(params), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useAuditTrail(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "audit", params], queryFn: () => getAuditTrail(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useAuditTrail(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "audit", params], queryFn: () => getAuditTrail(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useAudit(id: string) {
@@ -56,24 +59,24 @@ export function useSecurityOverview() {
   return useQuery({ queryKey: [...logsSecurityBase, "security-overview"], queryFn: getSecurityOverview, staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useSecurityEvents(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "security-events", params], queryFn: () => getSecurityEvents(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useSecurityEvents(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "security-events", params], queryFn: () => getSecurityEvents(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useSecurityEvent(id: string) {
   return useQuery({ queryKey: [...logsSecurityBase, "security-event", id], queryFn: () => getSecurityEventById(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useSuspiciousActivity(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "suspicious", params], queryFn: () => getSuspiciousActivity(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useSuspiciousActivity(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "suspicious", params], queryFn: () => getSuspiciousActivity(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
-export function useSecurityReviews(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "reviews", params], queryFn: () => getSecurityReviews(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useSecurityReviews(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "reviews", params], queryFn: () => getSecurityReviews(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
-export function useSessions(params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "sessions", params], queryFn: () => getSessions(params), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useSessions(params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "sessions", params], queryFn: () => getSessions(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 }
 
 export function useUserSessions(userId: string, params?: LogsSecurityFilterState) {
@@ -100,8 +103,8 @@ export function useEventNotes(eventId: string) {
   return useQuery({ queryKey: [...logsSecurityBase, "event-notes", eventId], queryFn: () => getEventNotes(eventId), enabled: Boolean(eventId), staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
-export function useResourceTimeline(resourceType: "user" | "router" | "vpn_server" | "billing_account" | "support_ticket" | "incident", resourceId: string, params?: LogsSecurityFilterState) {
-  return useQuery({ queryKey: [...logsSecurityBase, "timeline", resourceType, resourceId, params], queryFn: () => getResourceTimeline(resourceType, resourceId, params), enabled: Boolean(resourceId), staleTime: 20_000, refetchOnWindowFocus: false });
+export function useResourceTimeline(resourceType: "user" | "router" | "vpn_server" | "billing_account" | "support_ticket" | "incident", resourceId: string, params?: LogsSecurityFilterState, enabled = true) {
+  return useQuery({ queryKey: [...logsSecurityBase, "timeline", resourceType, resourceId, params], queryFn: () => getResourceTimeline(resourceType, resourceId, params), enabled: Boolean(resourceId) && enabled, staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
 function useLogsSecurityMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<{ message?: string }>, successMessage: string) {
@@ -155,4 +158,28 @@ export function useMarkSecurityItemReviewed() {
 
 export function useAddSecurityNote() {
   return useLogsSecurityMutation(addSecurityNote, "Security note added successfully");
+}
+
+function useExportMutation(mutationFn: (params?: LogsExportParams) => Promise<void>, successMessage: string) {
+  return useMutation({
+    mutationFn: (variables: [LogsExportParams?]) => mutationFn(variables[0]),
+    onSuccess: () => {
+      toast.success(successMessage);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Export failed");
+    },
+  });
+}
+
+export function useExportAuditTrail() {
+  return useExportMutation(exportAuditTrail, "Audit trail exported");
+}
+
+export function useExportActivityLogs() {
+  return useExportMutation(exportActivityLogs, "Activity logs exported");
+}
+
+export function useExportSecurityEvents() {
+  return useExportMutation(exportSecurityEvents, "Security events exported");
 }

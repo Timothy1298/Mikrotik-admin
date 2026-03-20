@@ -1,6 +1,17 @@
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { VpnServerDetail, VpnServerDirectoryResponse, VpnServerPeerItem, VpnServerQuery, VpnServerRouterItem, VpnServerStats } from "@/features/vpn-servers/types/vpn-server.types";
+import type {
+  VpnServerActivityItem,
+  VpnServerDetail,
+  VpnServerDiagnosticsResult,
+  VpnServerDirectoryResponse,
+  VpnServerPeerItem,
+  VpnServerPaginationMeta,
+  VpnServerQuery,
+  VpnServerRouterItem,
+  VpnServerStats,
+  VpnServerTrafficDetail,
+} from "@/features/vpn-servers/types/vpn-server.types";
 
 export async function getVpnServers(params: VpnServerQuery) {
   const { data } = await apiClient.get<{ success: boolean; items: VpnServerDirectoryResponse["items"]; pagination: VpnServerDirectoryResponse["pagination"] }>(endpoints.admin.vpnServers, { params });
@@ -25,6 +36,21 @@ export async function getVpnServerRouters(id: string, params?: { page?: number; 
 export async function getVpnServerPeers(id: string, params?: { page?: number; limit?: number }) {
   const { data } = await apiClient.get<{ success: boolean; items: VpnServerPeerItem[]; pagination: VpnServerDirectoryResponse["pagination"] }>(endpoints.admin.vpnServerPeers(id), { params });
   return { items: data.items, pagination: data.pagination };
+}
+
+export async function getVpnServerActivity(id: string, params?: { page?: number; limit?: number }) {
+  const { data } = await apiClient.get<{ success: boolean; items: VpnServerActivityItem[]; pagination: VpnServerPaginationMeta }>(endpoints.admin.vpnServerActivity(id), { params });
+  return { items: data.items, pagination: data.pagination };
+}
+
+export async function getVpnServerTrafficDetail(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; traffic: VpnServerTrafficDetail }>(endpoints.admin.vpnServerTraffic(id));
+  return data.traffic;
+}
+
+export async function getVpnServerDiagnostics(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; diagnostics: VpnServerDiagnosticsResult }>(endpoints.admin.vpnServerDiagnostics(id));
+  return data.diagnostics;
 }
 
 export async function addVpnServer(payload: { nodeId: string; name: string; region?: string; hostname?: string; endpoint?: string; maxPeers?: number; maxRouters?: number; reason?: string }) {

@@ -18,3 +18,13 @@ export function TicketCategoryBadge({ category }: { category: string }) {
 export function TicketEscalationBadge({ escalated }: { escalated: boolean }) {
   return <Badge tone={escalated ? "danger" : "neutral"}>{escalated ? "Escalated" : "Normal"}</Badge>;
 }
+
+export function SLABadge({ breached, remaining }: { breached: boolean; remaining: number | null }) {
+  if (breached) return <Badge tone="danger">SLA Breached</Badge>;
+  if (remaining !== null && remaining < 4) return <Badge tone="warning">SLA {remaining.toFixed(1)}h left</Badge>;
+  return <Badge tone="neutral">SLA OK</Badge>;
+}
+
+export function TicketAgeBadge({ stale }: { stale: boolean }) {
+  return stale ? <Badge tone="warning">Stale</Badge> : null;
+}

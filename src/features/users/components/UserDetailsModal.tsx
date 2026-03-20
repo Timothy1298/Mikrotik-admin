@@ -28,6 +28,8 @@ export function UserDetailsModal({
   onAddNote: () => void;
   onAddFlag: () => void;
   onRemoveFlag: (flag: UserDetail['flags'][number]) => void;
+  onDelete: () => void;
+  onEditProfile: () => void;
 }) {
   if (!open) return null;
 
