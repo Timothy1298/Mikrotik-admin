@@ -9,6 +9,8 @@ import { MetricCard } from '@/components/shared/MetricCard';
 import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Pagination } from '@/components/ui/Pagination';
+import { Select } from '@/components/ui/Select';
 import { Tabs } from '@/components/ui/Tabs';
 import { userManagementTabs } from '@/config/module-tabs';
 import {
@@ -76,7 +78,7 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const lockedFilters = sectionMeta.lockedFilters || {};
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof UsersQuery>;
 
-  const [filters, setFilters] = useState<UsersQuery>({ ...lockedFilters, limit: 50, sortBy: 'createdAt', sortOrder: 'desc' });
+  const [filters, setFilters] = useState<UsersQuery>({ ...lockedFilters, page: 1, limit: 50, sortBy: 'createdAt', sortOrder: 'desc' });
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<{ id?: string; flag: string; severity: string; description?: string; createdBy: string; createdAt: string } | null>(null);
 
@@ -121,6 +123,7 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const totalMrr = rows.reduce((sum, row) => sum + (row.monthlyValue || 0), 0);
   const totalFlags = rows.reduce((sum, row) => sum + (row.flagCount || 0), 0);
   const totalOpenTickets = rows.reduce((sum, row) => sum + (row.openTickets || 0), 0);
+  const pagination = usersQuery.data?.pagination;
 
   const metrics = useMemo(() => [
     { title: 'Visible users', value: String(total), progress: Math.min(100, total || 0), icon: UserPlus2 },
@@ -169,6 +172,22 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Select
+              value={`${effectiveFilters.sortBy || 'createdAt'}:${effectiveFilters.sortOrder || 'desc'}`}
+              onChange={(event) => {
+                const [sortBy, sortOrder] = event.target.value.split(':');
+                setFilters((current) => ({ ...current, sortBy, sortOrder: sortOrder as 'asc' | 'desc', page: 1, ...lockedFilters }));
+              }}
+              options={[
+                { label: 'Newest first', value: 'createdAt:desc' },
+                { label: 'Oldest first', value: 'createdAt:asc' },
+                { label: 'Name A-Z', value: 'name:asc' },
+                { label: 'Name Z-A', value: 'name:desc' },
+                { label: 'Highest MRR', value: 'monthlyValue:desc' },
+                { label: 'Most routers', value: 'routersCount:desc' },
+                { label: 'Most support tickets', value: 'openTickets:desc' },
+              ]}
+            />
             {usersQuery.isFetching && !usersQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
             {section === 'all' && canManageUsers ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addSubscriberDisclosure.onOpen}>Add Subscriber</Button> : null}
             <RefreshButton loading={usersQuery.isFetching || statsQuery.isFetching} onClick={() => { void usersQuery.refetch(); void statsQuery.refetch(); }} />
@@ -198,6 +217,15 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
             />
           )}
         </div>
+        {pagination ? (
+          <div className="mt-4">
+            <Pagination
+              page={pagination.page}
+              totalPages={pagination.pages}
+              onPageChange={(page) => setFilters((current) => ({ ...current, page, ...lockedFilters }))}
+            />
+          </div>
+        ) : null}
       </Card>
 
       <UserDetailsModal

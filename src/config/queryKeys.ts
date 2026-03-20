@@ -6,6 +6,8 @@ export const queryKeys = {
   userDetail: (id: string) => ["users", id] as const,
   routers: ["routers"] as const,
   routerDetail: (id: string) => ["routers", id] as const,
+  routerOnboardingClaims: ["routers", "onboarding-claims"] as const,
+  routerDiscoverySessions: ["routers", "discovery-sessions"] as const,
   vpnServers: ["vpn-servers"] as const,
   vpnServerDetail: (id: string) => ["vpn-servers", id] as const,
   monitoring: ["monitoring"] as const,

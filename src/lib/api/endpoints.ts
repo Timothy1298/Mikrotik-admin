@@ -1,6 +1,7 @@
 export const endpoints = {
   auth: {
     login: "/api/auth/login",
+    loginTwoFactor: "/api/auth/login/2fa",
     me: "/api/auth/me",
     forgotPassword: "/api/auth/forgot-password",
     resetPassword: "/api/auth/reset-password",
@@ -10,6 +11,9 @@ export const endpoints = {
   profile: {
     get: "/api/profile",
     update: "/api/profile",
+    twoFactorSetup: "/api/profile/2fa/setup",
+    twoFactorEnable: "/api/profile/2fa/enable",
+    twoFactorDisable: "/api/profile/2fa/disable",
   },
   admin: {
     dashboard: "/api/admin/stats",
@@ -50,6 +54,13 @@ export const endpoints = {
     routerNotes: (id: string) => `/api/admin/routers/${id}/notes`,
     routerFlags: (id: string) => `/api/admin/routers/${id}/flags`,
     createRouter: "/api/admin/routers",
+    routerOnboardingClaims: "/api/admin/routers/onboarding/claims",
+    routerOnboardingClaimAdopt: (id: string) => `/api/admin/routers/onboarding/claims/${id}/adopt`,
+    routerOnboardingClaimCancel: (id: string) => `/api/admin/routers/onboarding/claims/${id}/cancel`,
+    routerDiscoveryScan: "/api/admin/routers/discovery/scan",
+    routerDiscoveryResults: "/api/admin/routers/discovery/results",
+    routerDiscoveryVerify: "/api/admin/routers/discovery/verify",
+    routerDiscoveryImport: "/api/admin/routers/discovery/import",
     disableRouter: (id: string) => `/api/admin/routers/${id}/disable`,
     reactivateRouter: (id: string) => `/api/admin/routers/${id}/reactivate`,
     reprovisionRouter: (id: string) => `/api/admin/routers/${id}/reprovision`,

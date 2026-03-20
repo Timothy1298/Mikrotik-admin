@@ -4,24 +4,32 @@ import { queryKeys } from "@/config/queryKeys";
 import {
   addRouterFlag,
   addRouterNote,
+  adoptRouterOnboardingClaim,
+  cancelRouterOnboardingClaim,
   createRouterAdmin,
+  getRouterDiscoveryResults,
+  createRouterOnboardingClaim,
   deleteRouter,
   disableRouter,
   getRouterActivity,
   getRouterById,
   getRouterInterfaces,
   getRouterLiveHealth,
+  getRouterOnboardingClaims,
+  importDiscoveredRouter,
   markRouterReviewed,
   moveRouterServer,
   pingRouter,
   reactivateRouter,
   rebootRouter,
+  startRouterDiscoveryScan,
   regenerateRouterSetup,
   reassignRouterPorts,
   removeRouterFlag,
   reprovisionRouter,
   runRouterCommand,
   resetRouterPeer,
+  verifyDiscoveredRouter,
 } from "@/features/routers/api/getRouters";
 
 export function useRouter(id: string) {
@@ -61,6 +69,30 @@ export function useRouterInterfaces(id: string) {
     queryFn: () => getRouterInterfaces(id),
     enabled: Boolean(id),
     staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterOnboardingClaims(params?: { status?: string }) {
+  return useQuery({
+    queryKey: [...queryKeys.routerOnboardingClaims, params],
+    queryFn: () => getRouterOnboardingClaims(params),
+    staleTime: 0,
+    refetchInterval: 10_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterDiscoveryResults(sessionId?: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDiscoverySessions, sessionId],
+    queryFn: () => getRouterDiscoveryResults(sessionId),
+    staleTime: 0,
+    refetchInterval: (query) => {
+      const items = query.state.data || [];
+      const activeSession = sessionId ? items.find((item) => item.id === sessionId) : items[0];
+      return activeSession?.status === "scanning" || activeSession?.status === "pending" ? 3000 : false;
+    },
     refetchOnWindowFocus: false,
   });
 }
@@ -166,6 +198,94 @@ export function useCreateRouterAdmin() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to create router");
+    },
+  });
+}
+
+export function useCreateRouterOnboardingClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRouterOnboardingClaim,
+    onSuccess: async () => {
+      toast.success("Router claim generated");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerOnboardingClaims });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to generate router claim");
+    },
+  });
+}
+
+export function useRouterDiscoveryScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: startRouterDiscoveryScan,
+    onSuccess: async () => {
+      toast.success("Scanning local network...");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDiscoverySessions });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to start router discovery");
+    },
+  });
+}
+
+export function useVerifyDiscoveredRouter() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: verifyDiscoveredRouter,
+    onSuccess: async () => {
+      toast.success("Router metadata fetched successfully");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDiscoverySessions });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Could not verify router credentials");
+    },
+  });
+}
+
+export function useImportDiscoveredRouter() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: importDiscoveredRouter,
+    onSuccess: async () => {
+      toast.success("Router imported successfully");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDiscoverySessions });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to import discovered router");
+    },
+  });
+}
+
+export function useAdoptRouterOnboardingClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload?: { name?: string; reason?: string } }) => adoptRouterOnboardingClaim(id, payload),
+    onSuccess: async () => {
+      toast.success("Router adopted successfully");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerOnboardingClaims });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to adopt router claim");
+    },
+  });
+}
+
+export function useCancelRouterOnboardingClaim() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => cancelRouterOnboardingClaim(id, reason),
+    onSuccess: async () => {
+      toast.success("Router claim cancelled");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerOnboardingClaims });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to cancel router claim");
     },
   });
 }

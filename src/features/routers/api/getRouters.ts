@@ -9,6 +9,13 @@ import type {
   RouterDirectoryStats,
   RouterInterface,
   RouterLiveHealth,
+  RouterDiscoveryImportPayload,
+  RouterDiscoveryScanPayload,
+  RouterDiscoverySession,
+  RouterDiscoveryVerifyPayload,
+  RouterOnboardingClaim,
+  RouterOnboardingClaimCreateResponse,
+  RouterOnboardingClaimPayload,
   RouterPingResult,
   RouterQuery,
 } from "@/features/routers/types/router.types";
@@ -36,6 +43,51 @@ export async function getRouterActivity(id: string, params?: { page?: number; li
 export async function createRouterAdmin(payload: CreateRouterPayload) {
   const { data } = await apiClient.post<{ success: boolean; data: CreateRouterResponse }>(endpoints.admin.createRouter, payload);
   return data.data;
+}
+
+export async function getRouterOnboardingClaims(params?: { status?: string }) {
+  const { data } = await apiClient.get<{ success: boolean; items: RouterOnboardingClaim[] }>(endpoints.admin.routerOnboardingClaims, { params });
+  return data.items || [];
+}
+
+export async function createRouterOnboardingClaim(payload: RouterOnboardingClaimPayload) {
+  const { data } = await apiClient.post<{ success: boolean } & RouterOnboardingClaimCreateResponse>(endpoints.admin.routerOnboardingClaims, payload);
+  return {
+    claim: data.claim,
+    token: data.token,
+    callbackUrl: data.callbackUrl,
+    bootstrapScript: data.bootstrapScript,
+  };
+}
+
+export async function startRouterDiscoveryScan(payload?: RouterDiscoveryScanPayload) {
+  const { data } = await apiClient.post<{ success: boolean; session: RouterDiscoverySession }>(endpoints.admin.routerDiscoveryScan, payload || {});
+  return data.session;
+}
+
+export async function getRouterDiscoveryResults(sessionId?: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: RouterDiscoverySession[] }>(endpoints.admin.routerDiscoveryResults, { params: sessionId ? { sessionId } : undefined });
+  return data.items || [];
+}
+
+export async function verifyDiscoveredRouter(payload: RouterDiscoveryVerifyPayload) {
+  const { data } = await apiClient.post<{ success: boolean; session: RouterDiscoverySession; candidate: RouterDiscoverySession["candidates"][number] }>(endpoints.admin.routerDiscoveryVerify, payload);
+  return data;
+}
+
+export async function importDiscoveredRouter(payload: RouterDiscoveryImportPayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; router: CreateRouterResponse; session: RouterDiscoverySession; candidate: RouterDiscoverySession["candidates"][number] }>(endpoints.admin.routerDiscoveryImport, payload);
+  return data;
+}
+
+export async function adoptRouterOnboardingClaim(id: string, payload?: { name?: string; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; router: CreateRouterResponse; claim: RouterOnboardingClaim }>(endpoints.admin.routerOnboardingClaimAdopt(id), payload || {});
+  return data;
+}
+
+export async function cancelRouterOnboardingClaim(id: string, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; claim: RouterOnboardingClaim }>(endpoints.admin.routerOnboardingClaimCancel(id), { reason });
+  return data;
 }
 
 export async function disableRouter(id: string, reason?: string) {

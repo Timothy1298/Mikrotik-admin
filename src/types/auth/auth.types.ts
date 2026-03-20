@@ -6,6 +6,7 @@ export type AuthUser = {
   name: string;
   role: Role;
   adminRole?: string | null;
+  twoFactorEnabled?: boolean;
   permissions: string[];
 };
 
@@ -14,7 +15,18 @@ export type LoginPayload = {
   password: string;
 };
 
+export type TwoFactorLoginPayload = {
+  challengeToken: string;
+  code: string;
+};
+
 export type AuthSession = {
   token: string;
+  user: AuthUser;
+};
+
+export type TwoFactorChallenge = {
+  requiresTwoFactor: true;
+  challengeToken: string;
   user: AuthUser;
 };

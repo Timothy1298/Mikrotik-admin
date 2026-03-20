@@ -108,7 +108,7 @@ export function UserDetailsWorkspace({
       <UserSummaryCards user={user} />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <UserProfileCard user={user} />
+        <UserProfileCard user={user} onEdit={canManageUsers ? onEditProfile : undefined} />
         <UserAccountHealthCard user={user} />
       </div>
 
@@ -117,8 +117,8 @@ export function UserDetailsWorkspace({
       <UserBillingPanel user={user} />
       <UserSecurityPanel user={user} />
       <UserSupportPanel user={user} />
-      <UserFlagsPanel user={user} onRemoveFlag={onRemoveFlag} />
-      <UserInternalNotesPanel user={user} />
+      <UserFlagsPanel user={user} onAddFlag={canManageUsers ? onAddFlag : undefined} onRemoveFlag={onRemoveFlag} />
+      <UserInternalNotesPanel user={user} onAddNote={canManageUsers ? onAddNote : undefined} />
       <UserActivityTimeline user={user} />
       <AddRouterAdminDialog open={addRouterDisclosure.open} onClose={addRouterDisclosure.onClose} initialUserId={user.id} />
     </div>

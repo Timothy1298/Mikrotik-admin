@@ -143,7 +143,7 @@ export type UserDetail = {
     source: string;
     timestamp: string;
     summary: string;
-    metadata?: string;
+    metadata?: string | Record<string, unknown> | null;
   }>;
   security: {
     failedLogins24h: number;
@@ -206,6 +206,8 @@ export type UsersQuery = {
   supportState?: string;
   billingState?: string;
   routerOwnershipState?: string;
+  createdFrom?: string;
+  createdTo?: string;
   page?: number;
   limit?: number;
   sortBy?: string;

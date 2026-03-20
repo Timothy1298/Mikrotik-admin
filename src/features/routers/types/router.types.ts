@@ -243,3 +243,147 @@ export type CreateRouterResponse = {
   status: string;
   wireguardConfig?: string;
 };
+
+export type RouterOnboardingClaim = {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  requestedName: string;
+  serverNode: string;
+  reason: string;
+  expectedAddressHint: string | null;
+  status: "pending" | "claimed" | "adopted" | "cancelled" | "expired";
+  expiresAt: string;
+  claimedAt: string | null;
+  adoptedAt: string | null;
+  cancelledAt: string | null;
+  provisionedRouterId: string | null;
+  detected: {
+    sourceIp: string | null;
+    userAgent: string | null;
+    identity: string | null;
+    boardName: string | null;
+    serialNumber: string | null;
+    routerosVersion: string | null;
+    wanIp: string | null;
+    lanIp: string | null;
+    lastSeenAt: string | null;
+    matchedExpectedAddress: boolean | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RouterOnboardingClaimPayload = {
+  userId: string;
+  name: string;
+  serverNode?: string;
+  reason?: string;
+  expectedAddressHint?: string;
+  expiresInHours?: number;
+};
+
+export type RouterOnboardingClaimCreateResponse = {
+  claim: RouterOnboardingClaim;
+  token: string;
+  callbackUrl: string;
+  bootstrapScript: string;
+};
+
+export type RouterDiscoveryCandidateVerification = {
+  status: "unverified" | "verified" | "failed" | "unsupported" | "duplicate" | "imported";
+  method: string | null;
+  verifiedAt: string | null;
+  expiresAt: string | null;
+  metadata: {
+    identity: string | null;
+    boardName: string | null;
+    serialNumber: string | null;
+    routerosVersion: string | null;
+    firmware: string | null;
+    model: string | null;
+    macAddress: string | null;
+    interfaceCount: number;
+    interfaces: Array<{
+      name: string;
+      type: string;
+      running: boolean;
+      disabled: boolean;
+      comment: string;
+    }>;
+    raw?: Record<string, unknown> | null;
+  } | null;
+  readiness: {
+    status: "ready" | "warning" | "blocked";
+    reasons: string[];
+    apiReachable: boolean;
+    sshReachable: boolean;
+    winboxReachable: boolean;
+    wireGuardReady: boolean;
+    duplicateRouterId: string | null;
+  } | null;
+  error: string | null;
+};
+
+export type RouterDiscoveryCandidate = {
+  id: string;
+  ipAddress: string;
+  subnet: string | null;
+  hostname: string | null;
+  macAddress: string | null;
+  vendor: string | null;
+  openPorts: number[];
+  detectedServices: string[];
+  isLikelyMikrotik: boolean;
+  confidence: number;
+  discoverySource: string;
+  scannedAt: string;
+  verification: RouterDiscoveryCandidateVerification | null;
+  importedRouterId: string | null;
+  importedAt: string | null;
+};
+
+export type RouterDiscoverySession = {
+  id: string;
+  source: "server" | "agent";
+  status: "pending" | "scanning" | "completed" | "failed" | "expired";
+  requestedSubnet: string | null;
+  scannedSubnets: string[];
+  hostCountScanned: number;
+  candidateCount: number;
+  truncatedReason: string | null;
+  reason: string;
+  error: string | null;
+  truncated: boolean;
+  scanStartedAt: string;
+  scanCompletedAt: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  candidates: RouterDiscoveryCandidate[];
+};
+
+export type RouterDiscoveryScanPayload = {
+  subnet?: string;
+  reason?: string;
+};
+
+export type RouterDiscoveryVerifyPayload = {
+  sessionId: string;
+  candidateId: string;
+  username: string;
+  password: string;
+  method?: "auto" | "ssh" | "api";
+};
+
+export type RouterDiscoveryImportPayload = {
+  sessionId: string;
+  candidateId: string;
+  userId: string;
+  name?: string;
+  serverNode?: string;
+  reason?: string;
+};

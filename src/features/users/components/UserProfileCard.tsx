@@ -1,15 +1,19 @@
+import { Button } from '@/components/ui/Button';
 import { KeyValueGrid } from '@/components/data-display/KeyValueGrid';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatDateTime } from '@/lib/formatters/date';
 import type { UserDetail } from '@/features/users/types/user.types';
 
-export function UserProfileCard({ user }: { user: UserDetail }) {
+export function UserProfileCard({ user, onEdit }: { user: UserDetail; onEdit?: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <div>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Identity, onboarding, and customer organization context.</CardDescription>
+        <div className="flex w-full items-start justify-between gap-3">
+          <div>
+            <CardTitle>Profile</CardTitle>
+            <CardDescription>Identity, onboarding, and customer organization context.</CardDescription>
+          </div>
+          {onEdit ? <Button variant="outline" onClick={onEdit}>Edit</Button> : null}
         </div>
       </CardHeader>
       <KeyValueGrid items={[

@@ -3,7 +3,14 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/app/store/auth.store";
 import { queryKeys } from "@/config/queryKeys";
 import { getSettings } from "@/features/settings/api/getSettings";
-import { getAdminProfile, getPlatformConfig, updateAdminProfile } from "@/features/settings/api/updateProfile";
+import {
+  disableTwoFactor,
+  enableTwoFactor,
+  getAdminProfile,
+  getPlatformConfig,
+  startTwoFactorSetup,
+  updateAdminProfile,
+} from "@/features/settings/api/updateProfile";
 
 export function useSettings() {
   return useQuery({
@@ -51,5 +58,64 @@ export function usePlatformConfig() {
     queryFn: getPlatformConfig,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnWindowFocus: false,
+  });
+}
+
+export function useStartTwoFactorSetup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: startTwoFactorSetup,
+    onSuccess: async () => {
+      toast.success("Authenticator setup secret generated");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to start 2FA setup");
+    },
+  });
+}
+
+export function useEnableTwoFactor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: enableTwoFactor,
+    onSuccess: async (data) => {
+      const auth = useAuthStore.getState();
+      if (auth.token && auth.user) {
+        auth.setSession(auth.token, {
+          ...auth.user,
+          twoFactorEnabled: true,
+        });
+      }
+      toast.success(data.message || "Two-factor authentication enabled");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to enable 2FA");
+    },
+  });
+}
+
+export function useDisableTwoFactor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: disableTwoFactor,
+    onSuccess: async (data) => {
+      const auth = useAuthStore.getState();
+      if (auth.token && auth.user) {
+        auth.setSession(auth.token, {
+          ...auth.user,
+          twoFactorEnabled: false,
+        });
+      }
+      toast.success(data.message || "Two-factor authentication disabled");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.me });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to disable 2FA");
+    },
   });
 }

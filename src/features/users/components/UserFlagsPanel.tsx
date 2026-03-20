@@ -6,9 +6,11 @@ import { formatDateTime } from '@/lib/formatters/date';
 
 export function UserFlagsPanel({
   user,
+  onAddFlag,
   onRemoveFlag,
 }: {
   user: UserDetail;
+  onAddFlag?: () => void;
   onRemoveFlag?: (flag: UserDetail['flags'][number]) => void;
 }) {
   const flags = user.flags || [];
@@ -16,9 +18,12 @@ export function UserFlagsPanel({
   return (
     <Card>
       <CardHeader>
-        <div>
-          <CardTitle>Flags and review context</CardTitle>
-          <CardDescription>Manual review markers, billing risk flags, and internal operational context.</CardDescription>
+        <div className="flex w-full items-start justify-between gap-3">
+          <div>
+            <CardTitle>Flags and review context</CardTitle>
+            <CardDescription>Manual review markers, billing risk flags, and internal operational context.</CardDescription>
+          </div>
+          {onAddFlag ? <Button variant="outline" onClick={onAddFlag}>Add Flag</Button> : null}
         </div>
       </CardHeader>
       <div className="space-y-4">

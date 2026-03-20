@@ -1,14 +1,18 @@
+import { Button } from '@/components/ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import type { UserDetail } from '@/features/users/types/user.types';
 import { formatDateTime } from '@/lib/formatters/date';
 
-export function UserInternalNotesPanel({ user }: { user: UserDetail }) {
+export function UserInternalNotesPanel({ user, onAddNote }: { user: UserDetail; onAddNote?: () => void }) {
   const notes = user.notes || [];
 
   return (
     <Card>
       <CardHeader>
-        <div><CardTitle>Internal notes</CardTitle><CardDescription>Private operational context for support, billing, and network teams.</CardDescription></div>
+        <div className="flex w-full items-start justify-between gap-3">
+          <div><CardTitle>Internal notes</CardTitle><CardDescription>Private operational context for support, billing, and network teams.</CardDescription></div>
+          {onAddNote ? <Button variant="outline" onClick={onAddNote}>Add Note</Button> : null}
+        </div>
       </CardHeader>
       <div className="space-y-4">
         {notes.length ? notes.map((note, index) => (
