@@ -8,13 +8,13 @@ export function SidebarSection({
   collapsed?: boolean;
 }) {
   return (
-    <section className="space-y-2">
+    <section className="space-y-1.5">
       {!collapsed ? (
-        <p className="px-3 font-mono text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+        <p className="px-3 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
           {title}
         </p>
       ) : null}
-      <div className="space-y-1">{children}</div>
+      <div className="space-y-0.5">{children}</div>
     </section>
   );
 }
