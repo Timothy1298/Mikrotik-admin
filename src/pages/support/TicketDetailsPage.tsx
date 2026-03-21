@@ -164,10 +164,10 @@ export function TicketDetailsPage() {
           </div>
         </CardHeader>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Assignee: {detail.ticket.assignee?.name || "Unassigned"}</div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Team: {detail.ticket.assignedTeam}</div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Awaiting: {formatAwaiting(detail.ticket.awaitingState)}</div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Age: {detail.ticket.age.ageHours}h old · {detail.ticket.age.idleHours}h idle</div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Assignee: {detail.ticket.assignee?.name || "Unassigned"}</div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Team: {detail.ticket.assignedTeam}</div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Awaiting: {formatAwaiting(detail.ticket.awaitingState)}</div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Age: {detail.ticket.age.ageHours}h old · {detail.ticket.age.idleHours}h idle</div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           {showReplyActions ? <Button variant="outline" onClick={() => document.getElementById("ticket-inline-reply")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Reply</Button> : null}
@@ -184,13 +184,13 @@ export function TicketDetailsPage() {
           {showManageActions ? <Button variant="ghost" onClick={reviewedDisclosure.onOpen}>Mark Reviewed</Button> : null}
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.responseBreached ? "border-danger/30 bg-danger/10 text-danger" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] text-slate-200"}`}>
+          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.responseBreached ? "border-danger/30 bg-danger/10 text-danger" : "border-background-border bg-background-panel text-text-primary"}`}>
             Response due: {formatDateTime(detail.ticket.sla.firstResponseDueAt)}
           </div>
-          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.resolutionBreached ? "border-danger/30 bg-danger/10 text-danger" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] text-slate-200"}`}>
+          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.resolutionBreached ? "border-danger/30 bg-danger/10 text-danger" : "border-background-border bg-background-panel text-text-primary"}`}>
             Resolution due: {formatDateTime(detail.ticket.sla.resolutionDueAt)}
           </div>
-          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.breached ? "border-danger/30 bg-danger/10 text-danger" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] text-slate-200"}`}>
+          <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.breached ? "border-danger/30 bg-danger/10 text-danger" : "border-background-border bg-background-panel text-text-primary"}`}>
             SLA status: {detail.ticket.sla.breached ? "Breached" : "Within target"}
           </div>
         </div>
@@ -204,24 +204,24 @@ export function TicketDetailsPage() {
           </div>
         </CardHeader>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
             Customer: {detail.context.customer?.name || "Unknown"} · {detail.context.customer?.email || "No email"}
-            {detail.context.customer?.vip ? <span className="ml-2 text-warning">VIP</span> : null}
+            {detail.context.customer?.vip ? <span className="ml-2 text-primary">VIP</span> : null}
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Support tier: {detail.context.customer?.supportTier || "standard"}</div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
-            Router: {detail.context.router ? <Link className="text-brand-100 hover:underline" to={appRoutes.routerDetail(detail.context.router.id)}>{detail.context.router.name}</Link> : "None linked"}
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Support tier: {detail.context.customer?.supportTier || "standard"}</div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            Router: {detail.context.router ? <Link className="text-primary hover:underline" to={appRoutes.routerDetail(detail.context.router.id)}>{detail.context.router.name}</Link> : "None linked"}
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
-            VPN server: {detail.context.vpnServer ? <Link className="text-brand-100 hover:underline" to={appRoutes.vpnServerDetail(detail.context.vpnServer.id)}>{detail.context.vpnServer.name}</Link> : "None linked"}
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            VPN server: {detail.context.vpnServer ? <Link className="text-primary hover:underline" to={appRoutes.vpnServerDetail(detail.context.vpnServer.id)}>{detail.context.vpnServer.name}</Link> : "None linked"}
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
-            Incident: {detail.context.incident ? <Link className="text-brand-100 hover:underline" to={appRoutes.monitoringIncidentsAlerts}>{detail.context.incident.title}</Link> : "None linked"}
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            Incident: {detail.context.incident ? <Link className="text-primary hover:underline" to={appRoutes.monitoringIncidentsAlerts}>{detail.context.incident.title}</Link> : "None linked"}
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
             Subscription: {detail.context.subscription ? `${detail.context.subscription.status} · next billing ${formatDateTime(detail.context.subscription.nextBillingDate)}` : "No subscription context"}
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
             Transaction: {detail.context.transaction ? `${detail.context.transaction.transactionId} · ${detail.context.transaction.amount} · ${detail.context.transaction.status}` : "No transaction context"}
           </div>
         </div>
@@ -236,18 +236,18 @@ export function TicketDetailsPage() {
         </CardHeader>
         <div className="space-y-3">
           {messagesQuery.isPending ? <SectionLoader /> : (messagesQuery.data?.items || []).length ? messagesQuery.data?.items.map((message) => (
-            <div key={message.id} className={`rounded-2xl border p-4 ${message.direction === "admin" ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)]"}`}>
+            <div key={message.id} className={`rounded-2xl border p-4 ${message.direction === "admin" ? "border-primary/40 bg-primary/10" : "border-background-border bg-background-panel"}`}>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-slate-100">
+                <p className="text-sm font-medium text-text-primary">
                   {message.author?.email || message.source} · {message.direction === "admin" ? "Admin" : message.direction === "customer" ? "Customer" : "System"}
                 </p>
-                <p className="text-xs text-slate-500">{formatDateTime(message.createdAt)}</p>
+                <p className="text-xs text-text-muted">{formatDateTime(message.createdAt)}</p>
               </div>
-              <p className="mt-2 text-sm text-slate-300">{message.body}</p>
+              <p className="mt-2 text-sm text-text-secondary">{message.body}</p>
               {message.attachments.length ? (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {message.attachments.map((attachment) => (
-                    <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="rounded-full border border-brand-500/15 px-3 py-1 text-xs text-brand-100 hover:border-brand-500/35">
+                    <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="rounded-full border border-background-border px-3 py-1 text-xs text-primary hover:border-primary/40">
                       {attachment.filename}
                     </a>
                   ))}
@@ -257,12 +257,12 @@ export function TicketDetailsPage() {
           )) : <EmptyState icon={MessageSquare} title="No conversation messages" description="No messages have been added to this ticket yet." />}
         </div>
         {showReplyActions ? (
-          <div id="ticket-inline-reply" className="mt-5 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <label className="grid gap-2 text-sm text-slate-200">
-              <span className="font-medium text-slate-300">Canned Responses</span>
+          <div id="ticket-inline-reply" className="mt-5 rounded-2xl border border-background-border bg-background-panel p-4">
+            <label className="grid gap-2 text-sm text-text-primary">
+              <span className="font-medium text-text-secondary">Canned Responses</span>
               <div className="relative">
                 <select
-                  className="h-12 w-full appearance-none rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-slate-100 outline-none transition focus:border-brand-500/35"
+                  className="h-12 w-full appearance-none rounded-2xl border border-background-border bg-background-panel px-4 text-text-primary outline-none transition focus:border-primary/40"
                   defaultValue=""
                   onChange={(event) => {
                     const selected = cannedOptions.find((item) => item.id === event.target.value);
@@ -316,9 +316,9 @@ export function TicketDetailsPage() {
           </CardHeader>
           <div className="space-y-3">
             {notesQuery.isPending ? <SectionLoader /> : (notesQuery.data || []).length ? notesQuery.data?.map((note) => (
-              <div key={note.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <p className="text-sm text-slate-100">{note.body}</p>
-                <p className="mt-2 text-xs text-slate-500">{note.category} · {note.author} · {formatDateTime(note.createdAt)}</p>
+              <div key={note.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="text-sm text-text-primary">{note.body}</p>
+                <p className="mt-2 text-xs text-text-muted">{note.category} · {note.author} · {formatDateTime(note.createdAt)}</p>
               </div>
             )) : <EmptyState icon={MessageSquare} title="No internal notes" description="No support notes have been added yet." />}
           </div>
@@ -334,15 +334,15 @@ export function TicketDetailsPage() {
           </CardHeader>
           <div className="space-y-3">
             {flagsQuery.isPending ? <SectionLoader /> : (flagsQuery.data || []).length ? flagsQuery.data?.map((flag) => (
-              <div key={flag.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={flag.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm text-slate-100">{flag.flag}</p>
-                    <p className="mt-1 text-xs text-slate-500">{flag.severity} · {flag.createdBy} · {formatDateTime(flag.createdAt)}</p>
+                    <p className="text-sm text-text-primary">{flag.flag}</p>
+                    <p className="mt-1 text-xs text-text-muted">{flag.severity} · {flag.createdBy} · {formatDateTime(flag.createdAt)}</p>
                   </div>
                   {showManageActions ? <Button variant="ghost" size="sm" onClick={() => { setSelectedFlagId(flag.id); removeFlagDisclosure.onOpen(); }}>Remove</Button> : null}
                 </div>
-                {flag.description ? <p className="mt-2 text-sm text-slate-300">{flag.description}</p> : null}
+                {flag.description ? <p className="mt-2 text-sm text-text-secondary">{flag.description}</p> : null}
               </div>
             )) : <EmptyState icon={LifeBuoy} title="No flags" description="This ticket does not currently have internal flags." />}
           </div>

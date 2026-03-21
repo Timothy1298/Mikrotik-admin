@@ -28,20 +28,20 @@ export function UserFlagsPanel({
       </CardHeader>
       <div className="space-y-4">
         {flags.length ? flags.map((flag) => (
-          <div key={`${flag.flag}-${flag.createdAt}`} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+          <div key={`${flag.flag}-${flag.createdAt}`} className="rounded-2xl border border-background-border bg-background-panel p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium text-slate-100">{flag.flag.replace(/_/g, ' ')}</p>
+                  <p className="font-medium text-text-primary">{flag.flag.replace(/_/g, ' ')}</p>
                   <UserStatusBadge status={flag.severity === 'high' ? 'flagged' : 'watchlist'} />
                 </div>
-                <p className="text-sm text-slate-400">{flag.description || 'No description provided.'}</p>
-                <p className="font-mono text-xs text-slate-500">{flag.createdBy} • {formatDateTime(flag.createdAt)}</p>
+                <p className="text-sm text-text-secondary">{flag.description || 'No description provided.'}</p>
+                <p className="font-mono text-xs text-text-muted">{flag.createdBy} • {formatDateTime(flag.createdAt)}</p>
               </div>
               {onRemoveFlag ? <Button variant="ghost" className="text-danger hover:bg-danger/10" onClick={() => onRemoveFlag(flag)}>Remove flag</Button> : null}
             </div>
           </div>
-        )) : <p className="text-sm text-slate-400">No internal flags recorded for this account.</p>}
+        )) : <p className="text-sm text-text-secondary">No internal flags recorded for this account.</p>}
       </div>
     </Card>
   );

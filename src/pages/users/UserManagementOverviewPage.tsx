@@ -94,10 +94,10 @@ export function UserManagementOverviewPage() {
             </div>
           </CardHeader>
           <div className="grid gap-3">
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.usersVerificationQueue}>Verification Queue <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.usersBillingRisk}>Billing Risk <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.usersSecurityReview}>Security Review <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.usersSupportImpact}>Support Impact <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersVerificationQueue}>Verification Queue <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersBillingRisk}>Billing Risk <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersSecurityReview}>Security Review <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersSupportImpact}>Support Impact <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </Card>
       </div>
@@ -112,13 +112,13 @@ export function UserManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {recentUsersQuery.isPending ? <SectionLoader /> : recentUsersQuery.isError ? <ErrorState title="Unable to load recent signups" description="Retry after confirming the users directory endpoint is available." onAction={() => void recentUsersQuery.refetch()} /> : (recentUsersQuery.data?.items || []).length ? recentUsersQuery.data?.items.map((user) => (
-              <div key={user.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={user.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{user.name}</p>
-                    <p className="text-sm text-slate-400">{user.email}</p>
+                    <p className="font-medium text-text-primary">{user.name}</p>
+                    <p className="text-sm text-text-secondary">{user.email}</p>
                   </div>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(user.createdAt)}</span>
+                  <span className="font-mono text-xs text-text-muted">{formatDateTime(user.createdAt)}</span>
                 </div>
               </div>
             )) : <EmptyState icon={UserPlus2} title="No recent signups" description="Recent user records will appear here as the backend directory grows." />}
@@ -134,11 +134,11 @@ export function UserManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {reviewUsersQuery.isPending ? <SectionLoader /> : reviewUsersQuery.isError ? <ErrorState title="Unable to load review queue" description="Retry after confirming the flagged users query is available." onAction={() => void reviewUsersQuery.refetch()} /> : (reviewUsersQuery.data?.items || []).length ? reviewUsersQuery.data?.items.map((user) => (
-              <div key={user.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={user.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{user.name}</p>
-                    <p className="text-sm text-slate-400">{user.email}</p>
+                    <p className="font-medium text-text-primary">{user.name}</p>
+                    <p className="text-sm text-text-secondary">{user.email}</p>
                   </div>
                   <Button variant="ghost" onClick={() => navigate(appRoutes.usersSecurityReview)}>Open queue</Button>
                 </div>

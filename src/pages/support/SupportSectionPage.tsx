@@ -224,10 +224,10 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
                   key={item.assignee?.id || "unassigned"}
                   type="button"
                   onClick={() => setSelectedAssigneeId(item.assignee?.id || "")}
-                  className={`w-full rounded-2xl border p-4 text-left transition ${selectedAssigneeId === (item.assignee?.id || "") ? "border-brand-500/35 bg-[rgba(37,99,235,0.08)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]"}`}
+                  className={`w-full rounded-2xl border p-4 text-left transition ${selectedAssigneeId === (item.assignee?.id || "") ? "border-primary/40 bg-primary/10" : "border-background-border bg-background-panel hover:border-primary/40 hover:bg-primary/10"}`}
                 >
-                  <p className="font-medium text-slate-100">{item.assignee?.name || "Unassigned"}</p>
-                  <p className="mt-1 text-sm text-slate-400">{item.openTickets} open · {item.escalatedTickets} escalated · {item.staleTickets} stale</p>
+                  <p className="font-medium text-text-primary">{item.assignee?.name || "Unassigned"}</p>
+                  <p className="mt-1 text-sm text-text-secondary">{item.openTickets} open · {item.escalatedTickets} escalated · {item.staleTickets} stale</p>
                 </button>
               ))}
             </div>
@@ -255,10 +255,10 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
         <Card>
           <DataToolbar>
             <div className="flex items-center gap-3">
-              <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
+              <div className="icon-block-primary rounded-2xl p-2 text-text-primary"><Icon className="h-4 w-4" /></div>
               <div>
-                <p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p>
-                <p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p>
+                <p className="text-sm font-medium text-text-primary">{sectionMeta.title}</p>
+                <p className="font-mono text-xs text-text-muted">{sectionMeta.description}</p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -282,7 +282,7 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
                   {selectedTicket.flags.length && showManageActions ? <Button variant="ghost" size="sm" onClick={() => { setSelectedFlagId(selectedTicket.flags[0]?.id || ""); removeFlagDisclosure.onOpen(); }}>Unflag</Button> : null}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">Select a ticket to take action</p>
+                <p className="text-xs text-text-muted">Select a ticket to take action</p>
               )}
               <RefreshButton loading={ticketsQuery.isFetching || unassignedQuery.isFetching || escalatedQuery.isFetching || staleQuery.isFetching || workloadQuery.isFetching || agentsQuery.isFetching} onClick={refreshCurrentSection} />
             </div>

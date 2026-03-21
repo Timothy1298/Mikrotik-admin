@@ -50,8 +50,8 @@ export function ApplyPlanDialog({
         </div>
         <Input label="Linked subscription ID (optional)" placeholder="Subscription document id" {...register("subscriptionId")} />
         {selectedPlan ? (
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-300">
-            <p className="font-medium text-slate-100">{selectedPlan.name}</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-secondary">
+            <p className="font-medium text-text-primary">{selectedPlan.name}</p>
             <p className="mt-2">Download: {(selectedPlan.speedDownloadKbps / 1000).toFixed(1)} Mbps</p>
             <p>Upload: {(selectedPlan.speedUploadKbps / 1000).toFixed(1)} Mbps</p>
             <p>Price: {selectedPlan.currency} {selectedPlan.price.toFixed(2)}</p>

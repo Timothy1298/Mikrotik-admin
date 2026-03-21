@@ -15,9 +15,9 @@ export function RouterCustomerPanel({ router }: { router: RouterDetail }) {
       </CardHeader>
       {customer ? (
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="text-sm font-medium text-slate-100">{customer.name}</p>
-            <p className="mt-1 text-sm text-slate-400">{customer.email}</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="text-sm font-medium text-text-primary">{customer.name}</p>
+            <p className="mt-1 text-sm text-text-secondary">{customer.email}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Badge tone={customer.accountStatus === "active" ? "success" : "danger"}>{customer.accountStatus}</Badge>
@@ -27,7 +27,7 @@ export function RouterCustomerPanel({ router }: { router: RouterDetail }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-400">No customer ownership record is attached to this router.</p>
+        <p className="text-sm text-text-secondary">No customer ownership record is attached to this router.</p>
       )}
     </Card>
   );

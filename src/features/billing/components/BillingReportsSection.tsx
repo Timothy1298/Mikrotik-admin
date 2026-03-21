@@ -71,7 +71,7 @@ export function BillingReportsSection() {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {revenueMetrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
               </div>
-              <div className="h-80 rounded-[24px] border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div className="h-80 rounded-2xl border border-background-border bg-background-panel p-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={revenueQuery.data.series}>
                     <defs>
@@ -90,15 +90,15 @@ export function BillingReportsSection() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-left text-sm">
-                  <thead className="font-mono text-slate-500">
+                  <thead className="font-mono text-text-muted">
                     <tr><th className="pb-3">Account</th><th className="pb-3">Email</th><th className="pb-3">Revenue</th></tr>
                   </thead>
                   <tbody className="divide-y divide-brand-500/15">
                     {revenueQuery.data.topAccounts.map((account) => (
                       <tr key={account.accountId}>
-                        <td className="py-3 text-slate-100">{account.name}</td>
-                        <td className="py-3 text-slate-400">{account.email}</td>
-                        <td className="py-3 text-slate-200">{formatCurrency(account.revenue, "KES")}</td>
+                        <td className="py-3 text-text-primary">{account.name}</td>
+                        <td className="py-3 text-text-secondary">{account.email}</td>
+                        <td className="py-3 text-text-primary">{formatCurrency(account.revenue, "KES")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -124,17 +124,17 @@ export function BillingReportsSection() {
             <MetricCard title="Total Outstanding" value={formatCurrency(outstandingQuery.data.totalOutstanding, "KES")} progress={100} />
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-left text-sm">
-                <thead className="font-mono text-slate-500">
+                <thead className="font-mono text-text-muted">
                   <tr><th className="pb-3">Account</th><th className="pb-3">Email</th><th className="pb-3">Outstanding</th><th className="pb-3">Invoices</th><th className="pb-3">Oldest Invoice</th></tr>
                 </thead>
                 <tbody className="divide-y divide-brand-500/15">
                   {outstandingQuery.data.accounts.map((account) => (
                     <tr key={account.accountId}>
-                      <td className="py-3"><Link className="text-brand-100 hover:underline" to={appRoutes.userDetail(account.accountId)}>{account.name}</Link></td>
-                      <td className="py-3 text-slate-400">{account.email}</td>
-                      <td className="py-3 text-slate-200">{formatCurrency(account.totalOutstanding, "KES")}</td>
-                      <td className="py-3 text-slate-200">{account.invoiceCount}</td>
-                      <td className="py-3 text-slate-400">{account.oldestInvoiceDate ? dayjs(account.oldestInvoiceDate).fromNow() : "—"}</td>
+                      <td className="py-3"><Link className="text-primary hover:underline" to={appRoutes.userDetail(account.accountId)}>{account.name}</Link></td>
+                      <td className="py-3 text-text-secondary">{account.email}</td>
+                      <td className="py-3 text-text-primary">{formatCurrency(account.totalOutstanding, "KES")}</td>
+                      <td className="py-3 text-text-primary">{account.invoiceCount}</td>
+                      <td className="py-3 text-text-secondary">{account.oldestInvoiceDate ? dayjs(account.oldestInvoiceDate).fromNow() : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -37,7 +37,7 @@ export function CreateInvoiceDialog({ open, loading, accountId, accountName, onC
 
   return (
     <Modal open={open} title="Create Manual Invoice" description="Generate an ad-hoc invoice for the selected subscriber." onClose={handleClose}>
-      <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Subscriber: <span className="font-semibold text-slate-100">{accountName}</span></div>
+      <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Subscriber: <span className="font-semibold text-text-primary">{accountName}</span></div>
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Amount" type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="1500.00" />
         <Select label="Currency" value={currency} onChange={(event) => setCurrency(event.target.value)} options={[{ label: "KES", value: "KES" }, { label: "USD", value: "USD" }, { label: "UGX", value: "UGX" }, { label: "TZS", value: "TZS" }]} />

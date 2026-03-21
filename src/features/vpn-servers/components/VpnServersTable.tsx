@@ -53,22 +53,22 @@ export function VpnServersTable({
       header: "Server",
       cell: ({ row }) => (
         <div className="space-y-1">
-          <button type="button" className="inline-flex items-center gap-2 font-medium text-slate-100 transition hover:text-brand-100" onClick={(event) => { event.stopPropagation(); openFullPage(row.original); }}>
-            {navigatingServerId === row.original.id ? <Loader2 className="h-4 w-4 animate-spin text-brand-100" /> : null}
+          <button type="button" className="inline-flex items-center gap-2 font-medium text-text-primary transition hover:text-primary" onClick={(event) => { event.stopPropagation(); openFullPage(row.original); }}>
+            {navigatingServerId === row.original.id ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
             {row.original.name}
           </button>
-          <p className="font-mono text-xs text-slate-500">{row.original.nodeId}</p>
+          <p className="font-mono text-xs text-text-muted">{row.original.nodeId}</p>
         </div>
       ),
     },
-    { header: "Region", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.region}</span> },
+    { header: "Region", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.region}</span> },
     { header: "Status", cell: ({ row }) => <VpnServerStatusBadge status={row.original.status} /> },
     { header: "Health", cell: ({ row }) => <VpnServerHealthBadge status={row.original.healthSummary.status} /> },
     { header: "Maintenance", cell: ({ row }) => <VpnServerMaintenanceBadge active={row.original.maintenanceMode} /> },
-    { header: "Routers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.onlineRouterCount}/{row.original.routerCount} online</span> },
-    { header: "Peers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.activePeerCount}</span> },
+    { header: "Routers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.onlineRouterCount}/{row.original.routerCount} online</span> },
+    { header: "Peers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.activePeerCount}</span> },
     { header: "Load", cell: ({ row }) => <VpnServerLoadBadge overloaded={row.original.loadCapacitySummary.overloaded} nearCapacity={row.original.loadCapacitySummary.nearCapacity} /> },
-    { header: "Last heartbeat", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastHeartbeatAt)}</span> },
+    { header: "Last heartbeat", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastHeartbeatAt)}</span> },
     {
       header: "Actions",
       cell: ({ row }) => (

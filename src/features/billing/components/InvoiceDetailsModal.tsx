@@ -11,7 +11,7 @@ export function InvoiceDetailsModal({ open, invoice, onClose }: { open: boolean;
     <Modal open={open} title={invoice.transactionId} description={invoice.description} onClose={onClose}>
       <Card>
         <CardHeader><div><CardTitle>Invoice details</CardTitle><CardDescription>Billing amount, due date, and linked account context.</CardDescription></div></CardHeader>
-        <div className="space-y-3 text-sm text-slate-200">
+        <div className="space-y-3 text-sm text-text-primary">
           <div className="flex items-center justify-between"><span>Account</span><span>{invoice.account?.name || "Unknown"}</span></div>
           <div className="flex items-center justify-between"><span>Amount</span><span>{formatCurrency(invoice.amount, invoice.currency || "USD")}</span></div>
           <div className="flex items-center justify-between"><span>Status</span><InvoiceStatusBadge status={invoice.status} /></div>

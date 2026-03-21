@@ -66,7 +66,7 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
+      <div className="rounded-2xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-primary">
         <div className="flex items-start gap-2">
           <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
           <span>Commands run directly on the live router. All executions are logged.</span>
@@ -75,8 +75,8 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
 
       {inlineError ? <InlineError message={inlineError} /> : null}
 
-      <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.96)] p-4">
-        <pre className="min-h-40 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm text-slate-200">
+      <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+        <pre className="min-h-40 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm text-text-primary">
           {output || "Command output will appear here."}
         </pre>
       </div>

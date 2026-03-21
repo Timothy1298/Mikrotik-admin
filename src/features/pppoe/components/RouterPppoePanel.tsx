@@ -70,26 +70,26 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
       </CardHeader>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Subscribers</p>
-            <Users className="h-4 w-4 text-brand-100" />
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Subscribers</p>
+            <Users className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-100">{subscribers.length}</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{subscribers.length}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Active sessions</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Active sessions</p>
             <Wifi className="h-4 w-4 text-success" />
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-100">{sessions.length}</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{sessions.length}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Profiles</p>
-            <ShieldCheck className="h-4 w-4 text-brand-100" />
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Profiles</p>
+            <ShieldCheck className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-100">{profiles.length}</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{profiles.length}</p>
         </div>
       </div>
 

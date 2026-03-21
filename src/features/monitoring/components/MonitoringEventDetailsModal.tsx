@@ -38,7 +38,7 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
             <CardDescription>Real monitoring metadata associated with the selected item.</CardDescription>
           </div>
         </CardHeader>
-        <div className="space-y-4 text-sm text-slate-200">
+        <div className="space-y-4 text-sm text-text-primary">
           {detail.kind === "diagnostic" ? (
             <>
               <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
                 <Badge tone="info">{detail.item.resourceType}</Badge>
               </div>
               <p>{detail.item.message}</p>
-              <p className="font-mono text-xs text-slate-500">{detail.item.resourceId}</p>
+              <p className="font-mono text-xs text-text-muted">{detail.item.resourceId}</p>
             </>
           ) : null}
 
@@ -58,21 +58,21 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
                 {detail.item.resource?.type ? <Badge tone="neutral">{detail.item.resource.type}</Badge> : null}
               </div>
               <p>{detail.item.summary}</p>
-              {detail.item.actor ? <p className="text-slate-400">Actor: {detail.item.actor.name || detail.item.actor.email || detail.item.actor.id}</p> : null}
-              {detail.item.resource ? <p className="text-slate-400">Resource: {detail.item.resource.name || detail.item.resource.type} ({detail.item.resource.id})</p> : null}
-              <p className="font-mono text-xs text-slate-500">{formatDateTime(detail.item.timestamp)}</p>
+              {detail.item.actor ? <p className="text-text-secondary">Actor: {detail.item.actor.name || detail.item.actor.email || detail.item.actor.id}</p> : null}
+              {detail.item.resource ? <p className="text-text-secondary">Resource: {detail.item.resource.name || detail.item.resource.type} ({detail.item.resource.id})</p> : null}
+              <p className="font-mono text-xs text-text-muted">{formatDateTime(detail.item.timestamp)}</p>
             </>
           ) : null}
 
           {detail.kind === "router" ? (
             <div className="space-y-2">
               <p>{detail.item.customer?.name || "Unassigned customer"} • {detail.item.serverNode}</p>
-              <p className="font-mono text-xs text-slate-500">{detail.item.vpnIp}</p>
-              <p>Connection: <span className="text-slate-100">{detail.item.connectionStatus}</span> • Setup: <span className="text-slate-100">{detail.item.setupStatus}</span></p>
+              <p className="font-mono text-xs text-text-muted">{detail.item.vpnIp}</p>
+              <p>Connection: <span className="text-text-primary">{detail.item.connectionStatus}</span> • Setup: <span className="text-text-primary">{detail.item.setupStatus}</span></p>
               <div className="flex flex-wrap gap-2">
                 {(detail.item.healthSummary.issues || []).length ? detail.item.healthSummary.issues.map((issue) => <Badge key={issue} tone="warning">{issue.replace(/_/g, " ")}</Badge>) : <Badge tone="success">No active issues</Badge>}
               </div>
-              <p className="text-slate-400">Last seen: {formatDateTime(detail.item.lastSeen)} • Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
+              <p className="text-text-secondary">Last seen: {formatDateTime(detail.item.lastSeen)} • Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
             </div>
           ) : null}
 
@@ -84,7 +84,7 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
               </div>
               <p>{detail.item.region} • {detail.item.nodeId}</p>
               <p>{detail.item.routerCount} routers • {detail.item.activePeerCount} peers</p>
-              <p className="text-slate-400">Last heartbeat: {formatDateTime(detail.item.lastHeartbeatAt)}</p>
+              <p className="text-text-secondary">Last heartbeat: {formatDateTime(detail.item.lastHeartbeatAt)}</p>
             </div>
           ) : null}
 
@@ -93,7 +93,7 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
               <p>Peer: {detail.item.peerName || "Unknown peer"}</p>
               <p>
                 Linked router:{" "}
-                <Link className="text-brand-100 transition hover:text-white" to={appRoutes.routerDetail(detail.item.router.id)}>
+                <Link className="text-primary transition hover:text-text-primary" to={appRoutes.routerDetail(detail.item.router.id)}>
                   {detail.item.router.name}
                 </Link>
               </p>
@@ -103,7 +103,7 @@ export function MonitoringEventDetailsModal({ open, detail, onClose }: { open: b
                 <HealthStatusBadge status={detail.item.enabled ? "enabled" : "disabled"} />
               </div>
               <p>RX: {formatBytes(detail.item.transferRx)} • TX: {formatBytes(detail.item.transferTx)}</p>
-              <p className="text-slate-400">Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
+              <p className="text-text-secondary">Last handshake: {formatDateTime(detail.item.lastHandshake)}</p>
             </div>
           ) : null}
 

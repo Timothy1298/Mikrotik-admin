@@ -16,11 +16,11 @@ export function PppoeSessionsTable({
 }) {
   const columns = useMemo<ColumnDef<PppoeSession>[]>(() => [
     { header: "Username", accessorKey: "name" },
-    { header: "IP Address", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.address || "Unknown"}</span> },
-    { header: "Caller IP", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.callerIp || "Unknown"}</span> },
-    { header: "Upload", cell: ({ row }) => <span className="text-sm text-slate-200">{formatBytes(row.original.bytesOut || 0)}</span> },
-    { header: "Download", cell: ({ row }) => <span className="text-sm text-slate-200">{formatBytes(row.original.bytesIn || 0)}</span> },
-    { header: "Uptime", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.uptime || "Unknown"}</span> },
+    { header: "IP Address", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.address || "Unknown"}</span> },
+    { header: "Caller IP", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.callerIp || "Unknown"}</span> },
+    { header: "Upload", cell: ({ row }) => <span className="text-sm text-text-primary">{formatBytes(row.original.bytesOut || 0)}</span> },
+    { header: "Download", cell: ({ row }) => <span className="text-sm text-text-primary">{formatBytes(row.original.bytesIn || 0)}</span> },
+    { header: "Uptime", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.uptime || "Unknown"}</span> },
     { header: "Disconnect", cell: ({ row }) => <Button variant="danger" size="sm" onClick={(event) => { event.stopPropagation(); onDisconnect(row.original); }}>Disconnect</Button> },
   ], [onDisconnect]);
 

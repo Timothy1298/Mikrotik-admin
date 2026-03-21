@@ -22,27 +22,27 @@ export function VpnServerRoutersPanel({ items, loading, onRefresh }: { items: Vp
         <RefreshButton loading={loading} onClick={onRefresh} />
       </CardHeader>
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-slate-400">Loading routers…</p> : items.length ? items.map((router) => {
+        {loading ? <p className="text-sm text-text-secondary">Loading routers…</p> : items.length ? items.map((router) => {
           const statusTone = router.status === "active" ? "bg-success" : router.status === "pending" ? "bg-warning" : "bg-danger";
           const provisioningTone = router.provisioningState === "connected" ? "success" : router.provisioningState === "awaiting_connection" ? "warning" : router.provisioningState === "failed" ? "danger" : "neutral";
           return (
-            <div key={router.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+            <div key={router.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="space-y-2">
-                  <Link className="text-sm font-medium text-slate-100 transition hover:text-brand-100" to={appRoutes.routerDetail(router.id)}>
+                  <Link className="text-sm font-medium text-text-primary transition hover:text-primary" to={appRoutes.routerDetail(router.id)}>
                     {router.name}
                   </Link>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
                     <span className="inline-flex items-center gap-2">
                       <span className={`h-2.5 w-2.5 rounded-full ${statusTone}`} />
                       <span>{router.status}</span>
                     </span>
                     <Badge tone={provisioningTone}>{router.provisioningState.replace(/_/g, " ")}</Badge>
-                    <span>{router.customer ? <Link className="transition hover:text-slate-100" to={appRoutes.userDetail(router.customer.id)}>{router.customer.name}</Link> : "No customer"}</span>
+                    <span>{router.customer ? <Link className="transition hover:text-text-primary" to={appRoutes.userDetail(router.customer.id)}>{router.customer.name}</Link> : "No customer"}</span>
                   </div>
-                  <p className="font-mono text-xs text-slate-500">{router.vpnIp}</p>
+                  <p className="font-mono text-xs text-text-muted">{router.vpnIp}</p>
                 </div>
-                <p className="text-xs text-slate-500">{router.lastSeen ? dayjs(router.lastSeen).fromNow() : "No telemetry yet"}</p>
+                <p className="text-xs text-text-muted">{router.lastSeen ? dayjs(router.lastSeen).fromNow() : "No telemetry yet"}</p>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {[
@@ -50,8 +50,8 @@ export function VpnServerRoutersPanel({ items, loading, onRefresh }: { items: Vp
                   { label: "SSH", value: router.publicPorts.ssh ?? "—" },
                   { label: "API", value: router.publicPorts.api ?? "—" },
                 ].map((port) => (
-                  <span key={port.label} className="rounded-xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-1 text-xs text-slate-300">
-                    {port.label}: <span className="font-mono text-slate-100">{port.value}</span>
+                  <span key={port.label} className="rounded-xl border border-background-border bg-background-elevated px-3 py-1 text-xs text-text-secondary">
+                    {port.label}: <span className="font-mono text-text-primary">{port.value}</span>
                   </span>
                 ))}
               </div>

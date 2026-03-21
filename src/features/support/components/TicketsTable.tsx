@@ -24,14 +24,14 @@ export function TicketsTable({
   onEscalate?: (row: SupportTicketRow) => void;
 }) {
   const columns: ColumnDef<SupportTicketRow>[] = [
-    { header: "Ticket", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.subject}</p><p className="text-xs text-slate-500">{row.original.ticketReference}</p></div> },
-    { header: "Customer", cell: ({ row }) => <div><p>{row.original.customer?.name || "Unknown customer"}</p><p className="text-xs text-slate-500">{row.original.customer?.email || "No email"}</p></div> },
+    { header: "Ticket", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.subject}</p><p className="text-xs text-text-muted">{row.original.ticketReference}</p></div> },
+    { header: "Customer", cell: ({ row }) => <div><p>{row.original.customer?.name || "Unknown customer"}</p><p className="text-xs text-text-muted">{row.original.customer?.email || "No email"}</p></div> },
     { header: "Status", cell: ({ row }) => <TicketStatusBadge status={row.original.status} /> },
     { header: "Priority", cell: ({ row }) => <TicketPriorityBadge priority={row.original.priority} /> },
     { header: "Category", cell: ({ row }) => <TicketCategoryBadge category={row.original.category} /> },
     { header: "Escalation", cell: ({ row }) => <TicketEscalationBadge escalated={row.original.escalated} /> },
-    { header: "Assignee", cell: ({ row }) => <div><p>{row.original.assignee?.name || "Unassigned"}</p><p className="text-xs text-slate-500">{row.original.assignee?.supportTeam || row.original.assignedTeam}</p></div> },
-    { header: "Awaiting", cell: ({ row }) => <span className="text-xs text-slate-400">{row.original.lastReplySummary.awaiting.replace(/_/g, " ")}</span> },
+    { header: "Assignee", cell: ({ row }) => <div><p>{row.original.assignee?.name || "Unassigned"}</p><p className="text-xs text-text-muted">{row.original.assignee?.supportTeam || row.original.assignedTeam}</p></div> },
+    { header: "Awaiting", cell: ({ row }) => <span className="text-xs text-text-secondary">{row.original.lastReplySummary.awaiting.replace(/_/g, " ")}</span> },
     {
       header: "Age",
       cell: ({ row }) => (
@@ -40,7 +40,7 @@ export function TicketsTable({
             <p>{row.original.age.ageHours}h</p>
             <TicketAgeBadge stale={row.original.age.stale} />
           </div>
-          <p className="text-xs text-slate-500">{row.original.age.idleHours}h idle</p>
+          <p className="text-xs text-text-muted">{row.original.age.idleHours}h idle</p>
         </div>
       ),
     },

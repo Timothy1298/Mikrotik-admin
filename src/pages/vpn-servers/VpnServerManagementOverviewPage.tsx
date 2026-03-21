@@ -73,13 +73,13 @@ export function VpnServerManagementOverviewPage() {
               const utilization = server.loadCapacitySummary.peerUtilization ?? 0;
               const toneClass = utilization >= 90 ? "bg-danger" : utilization >= 70 ? "bg-warning" : "bg-success";
               return (
-                <div key={server.id} className="grid gap-3 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 md:grid-cols-[minmax(140px,220px)_minmax(0,1fr)_80px_auto] md:items-center">
-                  <p className="truncate text-sm font-medium text-slate-100">{server.name}</p>
+                <div key={server.id} className="grid gap-3 rounded-2xl border border-background-border bg-background-panel p-4 md:grid-cols-[minmax(140px,220px)_minmax(0,1fr)_80px_auto] md:items-center">
+                  <p className="truncate text-sm font-medium text-text-primary">{server.name}</p>
                   <div className="relative">
                     <Progress value={utilization} className="h-3 bg-slate-900" />
                     <div className={cn("absolute inset-y-0 left-0 rounded-full opacity-85", toneClass)} style={{ width: `${Math.max(0, Math.min(100, utilization))}%` }} />
                   </div>
-                  <p className="text-sm text-slate-300">{server.loadCapacitySummary.peerUtilization?.toFixed(0) ?? "—"}%</p>
+                  <p className="text-sm text-text-secondary">{server.loadCapacitySummary.peerUtilization?.toFixed(0) ?? "—"}%</p>
                   <div className="justify-self-start md:justify-self-end">
                     <VpnServerHealthBadge status={server.healthSummary.status} />
                   </div>
@@ -116,10 +116,10 @@ export function VpnServerManagementOverviewPage() {
             </div>
           </CardHeader>
           <div className="grid gap-3">
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.vpnServersUnhealthy}>Unhealthy Servers <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.vpnServersMaintenance}>Maintenance Mode <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.vpnServersOverloaded}>Overloaded Servers <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.vpnServersDiagnosticsReview}>Diagnostics & Review <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.vpnServersUnhealthy}>Unhealthy Servers <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.vpnServersMaintenance}>Maintenance Mode <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.vpnServersOverloaded}>Overloaded Servers <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.vpnServersDiagnosticsReview}>Diagnostics & Review <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </Card>
       </div>
@@ -134,13 +134,13 @@ export function VpnServerManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {recentServersQuery.isPending ? <SectionLoader /> : recentServersQuery.isError ? <ErrorState title="Unable to load recent servers" description="Retry after confirming the VPN server list endpoint is available." onAction={() => void recentServersQuery.refetch()} /> : (recentServersQuery.data?.items || []).length ? recentServersQuery.data?.items.map((server) => (
-              <div key={server.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={server.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{server.name}</p>
-                    <p className="text-sm text-slate-400">{server.region} • {server.nodeId}</p>
+                    <p className="font-medium text-text-primary">{server.name}</p>
+                    <p className="text-sm text-text-secondary">{server.region} • {server.nodeId}</p>
                   </div>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(server.createdAt)}</span>
+                  <span className="font-mono text-xs text-text-muted">{formatDateTime(server.createdAt)}</span>
                 </div>
               </div>
             )) : <EmptyState icon={Server} title="No recent servers" description="Newly added VPN server records will appear here." />}
@@ -156,13 +156,13 @@ export function VpnServerManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {attentionServersQuery.isPending ? <SectionLoader /> : attentionServersQuery.isError ? <ErrorState title="Unable to load impacted servers" description="Retry after confirming degraded server filtering is available." onAction={() => void attentionServersQuery.refetch()} /> : (attentionServersQuery.data?.items || []).length ? attentionServersQuery.data?.items.map((server) => (
-              <div key={server.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={server.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{server.name}</p>
-                    <p className="text-sm text-slate-400">{server.healthSummary.status} • {server.routerCount} routers</p>
+                    <p className="font-medium text-text-primary">{server.name}</p>
+                    <p className="text-sm text-text-secondary">{server.healthSummary.status} • {server.routerCount} routers</p>
                   </div>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(server.lastHeartbeatAt)}</span>
+                  <span className="font-mono text-xs text-text-muted">{formatDateTime(server.lastHeartbeatAt)}</span>
                 </div>
               </div>
             )) : <EmptyState icon={Activity} title="Infrastructure is steady" description="No degraded VPN servers currently need urgent attention." />}

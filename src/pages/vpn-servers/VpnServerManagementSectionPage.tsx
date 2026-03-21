@@ -189,15 +189,15 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
       <Card>
         <DataToolbar>
           <div className="flex items-center gap-3">
-            <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
+            <div className="icon-block-primary rounded-2xl p-2 text-text-primary"><Icon className="h-4 w-4" /></div>
             <div>
-              <p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p>
-              <p className="font-mono text-xs text-slate-500">{total} visible servers{activeFiltersCount ? ` • ${activeFiltersCount} active filters` : ""}</p>
+              <p className="text-sm font-medium text-text-primary">{sectionMeta.title}</p>
+              <p className="font-mono text-xs text-text-muted">{total} visible servers{activeFiltersCount ? ` • ${activeFiltersCount} active filters` : ""}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {can(user, permissions.vpnServersManage) ? <Button onClick={addDisclosure.onOpen}>Add server</Button> : null}
-            {serversQuery.isFetching && !serversQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
+            {serversQuery.isFetching && !serversQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
             <RefreshButton loading={serversQuery.isFetching || statsQuery.isFetching} onClick={() => { void serversQuery.refetch(); void statsQuery.refetch(); }} />
           </div>
         </DataToolbar>

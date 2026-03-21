@@ -68,23 +68,37 @@ export function Breadcrumbs({ items }: { items: string[] }) {
   ].filter((link) => link.path !== location.pathname);
 
   return (
-    <div className="flex flex-col gap-2 border-b border-brand-500/15 pb-2.5 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 border-b border-background-border pb-4 md:flex-row md:items-center md:justify-between">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px]" onClick={() => navigate(-1)} leftIcon={<ArrowLeft className="h-3 w-3" />}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 px-3 text-[11px]"
+          onClick={() => navigate(-1)}
+          leftIcon={<ArrowLeft className="h-3 w-3" />}
+        >
           Back
         </Button>
-        <nav className="flex min-w-0 flex-wrap items-center gap-1 text-[10px] uppercase tracking-[0.15em] text-slate-500 font-mono">
-          <Link to={appRoutes.dashboard} className="inline-flex items-center gap-1 rounded-full px-1.5 py-1 text-slate-400 transition hover:bg-[rgba(37,99,235,0.08)] hover:text-white">
+        <nav className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-[10px] uppercase tracking-[0.15em] text-text-muted">
+          <Link
+            to={appRoutes.dashboard}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-text-secondary transition hover:bg-primary/10 hover:text-text-primary"
+          >
             <Home className="h-2.5 w-2.5" />
             Home
           </Link>
           {crumbs.map((item, index) => (
             <span key={`${item.path}-${index}`} className="inline-flex min-w-0 items-center gap-1">
-              <ChevronRight className="h-2.5 w-2.5 text-brand-500/35" />
+              <ChevronRight className="h-2.5 w-2.5 text-text-muted" />
               {item.active ? (
-                <span className="truncate rounded-full border border-brand-500/15 bg-[linear-gradient(90deg,rgba(37,99,235,0.12),rgba(56,189,248,0.05))] px-1.5 py-1 text-slate-200">{item.label}</span>
+                <span className="truncate rounded-full border border-background-border bg-background-panel px-2 py-1 text-text-primary">
+                  {item.label}
+                </span>
               ) : (
-                <Link to={item.path} className="truncate rounded-full px-1.5 py-1 transition hover:bg-[rgba(37,99,235,0.08)] hover:text-white">
+                <Link
+                  to={item.path}
+                  className="truncate rounded-full px-2 py-1 transition hover:bg-primary/10 hover:text-text-primary"
+                >
                   {item.label}
                 </Link>
               )}
@@ -98,7 +112,7 @@ export function Breadcrumbs({ items }: { items: string[] }) {
           <Link
             key={link.path}
             to={link.path}
-            className="rounded-full border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-2.5 py-1 text-[10px] font-medium text-slate-300 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-white"
+            className="rounded-full border border-background-border bg-background-panel px-3 py-1.5 text-[10px] font-medium text-text-secondary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary"
           >
             {link.label}
           </Link>

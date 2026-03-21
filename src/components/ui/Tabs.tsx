@@ -1,18 +1,26 @@
 import { cn } from "@/lib/utils/cn";
 
-export function Tabs({ tabs, value, onChange }: { tabs: Array<{ label: string; value: string }>; value: string; onChange: (value: string) => void }) {
+export function Tabs({
+  tabs,
+  value,
+  onChange,
+}: {
+  tabs: Array<{ label: string; value: string }>;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
-    <div className="flex flex-wrap gap-1 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-1">
+    <div className="flex flex-wrap gap-1 rounded-xl border border-background-border bg-background-panel p-1">
       {tabs.map((tab) => (
         <button
           key={tab.value}
           type="button"
           onClick={() => onChange(tab.value)}
           className={cn(
-            "rounded-xl border border-transparent px-4 py-2 text-sm font-medium transition",
+            "rounded-lg border border-transparent px-4 py-2 text-sm font-medium transition-colors",
             value === tab.value
-              ? "surface-active text-slate-100"
-              : "text-slate-400 hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)] hover:text-white",
+              ? "surface-active text-text-primary"
+              : "text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
           )}
         >
           {tab.label}

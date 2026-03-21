@@ -19,7 +19,7 @@ export function RouterPortsPanel({ router }: { router: RouterDetail }) {
         </div>
       </CardHeader>
       {managementOnly ? (
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-secondary">
           This router was attached for management only. Public proxy ports are not allocated. Use the stored local RouterOS API access path instead.
         </div>
       ) : null}
@@ -29,12 +29,12 @@ export function RouterPortsPanel({ router }: { router: RouterDetail }) {
           { key: "ssh", label: "SSH", value: ports.ssh },
           { key: "api", label: "API", value: ports.api },
         ].map((item) => (
-          <div key={item.key} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+          <div key={item.key} className="rounded-2xl border border-background-border bg-background-panel p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-slate-100">{item.label}</p>
-                <p className="mt-2 font-mono text-lg text-slate-100">{item.value.publicPort ?? "—"}</p>
-                <p className="mt-1 text-xs text-slate-500">target {item.value.targetPort}</p>
+                <p className="text-sm font-medium text-text-primary">{item.label}</p>
+                <p className="mt-2 font-mono text-lg text-text-primary">{item.value.publicPort ?? "—"}</p>
+                <p className="mt-1 text-xs text-text-muted">target {item.value.targetPort}</p>
               </div>
               <div className="flex flex-col gap-2">
                 <RouterPortStatusBadge status={item.value.allocationStatus} />

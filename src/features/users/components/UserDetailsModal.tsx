@@ -34,12 +34,12 @@ export function UserDetailsModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[linear-gradient(0deg,rgba(8,14,31,0.9),transparent)] p-4 backdrop-blur-sm md:p-6">
-      <div className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-[28px] border border-brand-500/15 bg-[rgba(8,14,31,0.9)]">
-        <div className="flex items-center justify-between gap-4 border-b border-brand-500/15 px-5 py-4 md:px-6">
+    <div className="fixed inset-0 z-50 bg-[rgba(15,23,42,0.85)] p-4 backdrop-blur-sm md:p-6">
+      <div className="mx-auto flex h-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-background-border bg-background-panel">
+        <div className="flex items-center justify-between gap-4 border-b border-background-border px-5 py-4 md:px-6">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-brand-100">User workspace</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-100">{user?.profile.name || 'Loading account details'}</h2>
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">User workspace</p>
+            <h2 className="mt-2 text-2xl font-semibold text-text-primary">{user?.profile.name || 'Loading account details'}</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-4 w-4" />

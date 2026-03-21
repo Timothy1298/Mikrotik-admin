@@ -30,15 +30,15 @@ export function VpnServerDiagnosticsPanel({ serverId }: { serverId: string }) {
       {diagnostics ? (
         <>
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-100">Health checks</p>
+            <p className="text-sm font-medium text-text-primary">Health checks</p>
             <div className="grid gap-3 md:grid-cols-2">
               {healthChecks.map((check) => (
-                <div key={check.check} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+                <div key={check.check} className="rounded-2xl border border-background-border bg-background-panel p-4">
                   <div className="flex items-start gap-3">
                     {check.passed ? <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" /> : <XCircle className="mt-0.5 h-4 w-4 text-danger" />}
                     <div>
-                      <p className="text-sm font-medium text-slate-100">{check.check}</p>
-                      {check.detail ? <p className="mt-1 text-xs text-slate-500">{check.detail}</p> : null}
+                      <p className="text-sm font-medium text-text-primary">{check.check}</p>
+                      {check.detail ? <p className="mt-1 text-xs text-text-muted">{check.detail}</p> : null}
                     </div>
                   </div>
                 </div>
@@ -47,7 +47,7 @@ export function VpnServerDiagnosticsPanel({ serverId }: { serverId: string }) {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-100">Active issues</p>
+            <p className="text-sm font-medium text-text-primary">Active issues</p>
             {issues.length ? (
               <div className="flex flex-wrap gap-2">
                 {issues.map((issue) => (
@@ -57,8 +57,8 @@ export function VpnServerDiagnosticsPanel({ serverId }: { serverId: string }) {
                       issue.severity === "critical" || issue.severity === "high"
                         ? "rounded-xl border border-danger/20 bg-danger/10 px-3 py-2 text-xs text-danger"
                         : issue.severity === "warning" || issue.severity === "medium"
-                          ? "rounded-xl border border-warning/20 bg-warning/10 px-3 py-2 text-xs text-warning"
-                          : "rounded-xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-2 text-xs text-slate-300"
+                          ? "rounded-xl border border-warning/20 bg-warning/10 px-3 py-2 text-xs text-primary"
+                          : "rounded-xl border border-background-border bg-background-elevated px-3 py-2 text-xs text-text-secondary"
                     }
                   >
                     {issue.message}
@@ -71,17 +71,17 @@ export function VpnServerDiagnosticsPanel({ serverId }: { serverId: string }) {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-100">Recommended actions</p>
+            <p className="text-sm font-medium text-text-primary">Recommended actions</p>
             {recommendedActions.length ? (
-              <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-300">
+              <ol className="list-decimal space-y-2 pl-5 text-sm text-text-secondary">
                 {recommendedActions.map((action) => <li key={action}>{action.replace(/_/g, " ")}</li>)}
               </ol>
             ) : (
-              <p className="text-sm text-slate-500">No recommended actions at this time.</p>
+              <p className="text-sm text-text-muted">No recommended actions at this time.</p>
             )}
           </div>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-text-muted">
             Analysis generated {diagnostics.generatedAt ? dayjs(diagnostics.generatedAt).fromNow() : "recently"}.
           </p>
         </>

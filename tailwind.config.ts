@@ -1,82 +1,82 @@
 import type { Config } from "tailwindcss";
 
-export default {
+const config = {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Syne', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
       },
       colors: {
-        white: "#ffffff",
-        canvas: "#080e1f",
-        slate: {
-          50: "#ffffff",
-          100: "#e0f2fe",
-          200: "#e2e8f0",
-          300: "#cbd5e1",
-          400: "#bfd0e5",
-          500: "#94a3b8",
-          600: "#7dd3fc",
-          700: "#38bdf8",
-          800: "#0a1220",
-          900: "#080e1f",
-          950: "#080e1f",
+        background: {
+          main: "#0b1220",
+          panel: "#111827",
+          elevated: "#1f2937",
+          sidebar: "#0f172a",
+          border: "#1e293b",
         },
-        surface: {
-          1: "#080e1f",
-          2: "#0a1220",
-          3: "rgba(8,14,31,0.9)",
+        primary: {
+          DEFAULT: "#3b82f6",
+          hover: "#2563eb",
         },
         brand: {
-          50: "#e0f2fe",
-          100: "#7dd3fc",
-          300: "#38bdf8",
-          500: "#2563eb",
-          600: "#1d4ed8",
-          700: "#0284c7",
+          100: "#3b82f6",
+          200: "#3b82f6",
+          300: "#3b82f6",
+          400: "#3b82f6",
+          500: "#3b82f6",
         },
-        success: "#7dd3fc",
-        warning: "#c4b5fd",
-        danger: "#f87171",
-      },
-      boxShadow: {
-        panel: "none",
-        glow: "none",
-        inset: "none",
+        text: {
+          primary: "#f9fafb",
+          secondary: "#9ca3af",
+          muted: "#6b7280",
+        },
+        warning: "#3b82f6",
+        success: "#22c55e",
+        danger: "#ef4444",
+        slate: {
+          100: "#f9fafb",
+          200: "#d1d5db",
+          300: "#9ca3af",
+          400: "#6b7280",
+          500: "#6b7280",
+          700: "#1f2937",
+          800: "#111827",
+          900: "#0f172a",
+          950: "#0b1220",
+        },
       },
       borderRadius: {
-        "4xl": "2rem",
+        lg: "8px",
+        xl: "12px",
+        "2xl": "16px",
+      },
+      boxShadow: {
+        panel: "0 18px 40px rgba(2, 6, 23, 0.34)",
       },
       animation: {
-        "float-soft": "floatSoft 8s ease-in-out infinite",
+        "fade-up": "fadeUp 0.24s ease-out",
         shimmer: "shimmer 1.8s linear infinite",
-        "fade-up": "fadeUp 0.4s ease-out",
         pulsegrid: "pulseGrid 6s ease-in-out infinite",
       },
       keyframes: {
-        floatSoft: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-6px)" },
+        fadeUp: {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
-        fadeUp: {
-          from: { opacity: "0", transform: "translateY(10px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
         pulseGrid: {
-          "0%, 100%": { opacity: "0.18" },
-          "50%": { opacity: "0.32" },
+          "0%, 100%": { opacity: "0.14" },
+          "50%": { opacity: "0.24" },
         },
-      },
-      backgroundImage: {
-        "panel-glow": "radial-gradient(circle at top left, rgba(37,99,235,0.16) 0%, transparent 42%)",
       },
     },
   },
   plugins: [],
 } satisfies Config;
+
+export default config;

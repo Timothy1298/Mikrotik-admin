@@ -12,24 +12,34 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, hint, error, leftIcon, rightElement, ...props }, ref) => {
     return (
-      <label className="grid gap-2 text-sm text-slate-200">
-        {label ? <span className="font-medium text-slate-300">{label}</span> : null}
+      <label className="grid gap-2 text-sm text-text-primary">
+        {label ? <span className="font-medium text-text-secondary">{label}</span> : null}
         <div className="relative">
-          {leftIcon ? <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">{leftIcon}</span> : null}
+          {leftIcon ? (
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">{leftIcon}</span>
+          ) : null}
           <input
             ref={ref}
             className={cn(
-              "h-12 w-full rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-brand-500/35",
+              "h-11 w-full rounded-lg border border-background-border bg-background-panel px-4 text-text-primary outline-none transition-colors placeholder:text-text-muted focus:border-primary/50 focus:bg-background-elevated",
               leftIcon && "pl-11",
               rightElement && "pr-12",
-              error && "border-danger/30 focus:border-danger/30",
+              error && "border-danger/30 focus:border-danger/40",
               className,
             )}
             {...props}
           />
-          {rightElement ? <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">{rightElement}</span> : null}
+          {rightElement ? (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary">
+              {rightElement}
+            </span>
+          ) : null}
         </div>
-        {error ? <span className="text-xs text-danger">{error}</span> : hint ? <span className="text-xs text-slate-500">{hint}</span> : null}
+        {error ? (
+          <span className="text-xs text-danger">{error}</span>
+        ) : hint ? (
+          <span className="text-xs text-text-muted">{hint}</span>
+        ) : null}
       </label>
     );
   },

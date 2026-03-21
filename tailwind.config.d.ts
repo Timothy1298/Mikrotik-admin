@@ -1,64 +1,71 @@
-declare const _default: {
+declare const config: {
     content: string[];
     theme: {
         extend: {
             fontFamily: {
-                sans: [string, string];
-                mono: [string, string];
+                sans: [string, string, string, string];
+                mono: [string, string, string, string];
             };
             colors: {
-                white: string;
-                canvas: string;
-                slate: {
-                    50: string;
+                background: {
+                    main: string;
+                    panel: string;
+                    elevated: string;
+                    sidebar: string;
+                    border: string;
+                };
+                primary: {
+                    DEFAULT: string;
+                    hover: string;
+                };
+                brand: {
                     100: string;
                     200: string;
                     300: string;
                     400: string;
                     500: string;
-                    600: string;
+                };
+                text: {
+                    primary: string;
+                    secondary: string;
+                    muted: string;
+                };
+                warning: string;
+                success: string;
+                danger: string;
+                slate: {
+                    100: string;
+                    200: string;
+                    300: string;
+                    400: string;
+                    500: string;
                     700: string;
                     800: string;
                     900: string;
                     950: string;
                 };
-                surface: {
-                    1: string;
-                    2: string;
-                    3: string;
-                };
-                brand: {
-                    50: string;
-                    100: string;
-                    300: string;
-                    500: string;
-                    600: string;
-                    700: string;
-                };
-                success: string;
-                warning: string;
-                danger: string;
+            };
+            borderRadius: {
+                lg: string;
+                xl: string;
+                "2xl": string;
             };
             boxShadow: {
                 panel: string;
-                glow: string;
-                inset: string;
-            };
-            borderRadius: {
-                "4xl": string;
             };
             animation: {
-                "float-soft": string;
-                shimmer: string;
                 "fade-up": string;
+                shimmer: string;
                 pulsegrid: string;
             };
             keyframes: {
-                floatSoft: {
-                    "0%, 100%": {
+                fadeUp: {
+                    from: {
+                        opacity: string;
                         transform: string;
                     };
-                    "50%": {
+                    to: {
+                        opacity: string;
                         transform: string;
                     };
                 };
@@ -70,16 +77,6 @@ declare const _default: {
                         backgroundPosition: string;
                     };
                 };
-                fadeUp: {
-                    from: {
-                        opacity: string;
-                        transform: string;
-                    };
-                    to: {
-                        opacity: string;
-                        transform: string;
-                    };
-                };
                 pulseGrid: {
                     "0%, 100%": {
                         opacity: string;
@@ -89,11 +86,8 @@ declare const _default: {
                     };
                 };
             };
-            backgroundImage: {
-                "panel-glow": string;
-            };
         };
     };
     plugins: any[];
 };
-export default _default;
+export default config;

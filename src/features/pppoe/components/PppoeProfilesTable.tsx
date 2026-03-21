@@ -16,9 +16,9 @@ export function PppoeProfilesTable({
 }) {
   const columns = useMemo<ColumnDef<PppoeProfile>[]>(() => [
     { header: "Profile", accessorKey: "name" },
-    { header: "Local Address", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.localAddress || "Not set"}</span> },
-    { header: "Remote Address", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.remoteAddress || "Not set"}</span> },
-    { header: "Rate Limit", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.rateLimit || "Unlimited"}</span> },
+    { header: "Local Address", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.localAddress || "Not set"}</span> },
+    { header: "Remote Address", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.remoteAddress || "Not set"}</span> },
+    { header: "Rate Limit", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.rateLimit || "Unlimited"}</span> },
   ], []);
 
   return (

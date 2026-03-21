@@ -274,8 +274,8 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
       <Card>
         <DataToolbar>
           <div className="flex items-center gap-3">
-            <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
-            <div><p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p><p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p></div>
+            <div className="icon-block-primary rounded-2xl p-2 text-text-primary"><Icon className="h-4 w-4" /></div>
+            <div><p className="text-sm font-medium text-text-primary">{sectionMeta.title}</p><p className="font-mono text-xs text-text-muted">{sectionMeta.description}</p></div>
           </div>
           <RefreshButton
             loading={subscriptionsQuery.isFetching || trialsQuery.isFetching || invoicesQuery.isFetching || paymentsQuery.isFetching || activityQuery.isFetching || detailQuery.isFetching}

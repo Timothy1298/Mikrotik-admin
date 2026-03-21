@@ -17,11 +17,11 @@ export function DisconnectPppoeSessionDialog({
 }) {
   return (
     <Modal open={open} onClose={onClose} title="Disconnect PPPoE session" description="Terminate the selected PPPoE subscriber session immediately from the router.">
-      <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-300">
+      <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-secondary">
         {session ? (
           <p>
-            Disconnect <span className="font-medium text-slate-100">{session.name || "unknown subscriber"}</span> on{" "}
-            <span className="font-mono text-slate-100">{session.address || "unknown IP"}</span>.
+            Disconnect <span className="font-medium text-text-primary">{session.name || "unknown subscriber"}</span> on{" "}
+            <span className="font-mono text-text-primary">{session.address || "unknown IP"}</span>.
           </p>
         ) : <p>No session selected.</p>}
       </div>

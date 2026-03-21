@@ -52,18 +52,18 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
       />
 
       {!result ? (
-        <p className="text-sm text-slate-500">No ping test has been run yet for this router.</p>
+        <p className="text-sm text-text-muted">No ping test has been run yet for this router.</p>
       ) : (
         <div className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
               <div className="flex items-center gap-2">
                 {result.reachable ? <CheckCircle2 className="h-4 w-4 text-success" /> : <CircleX className="h-4 w-4 text-danger" />}
-                <p className="text-sm font-medium text-slate-100">{result.reachable ? "Reachable" : "Unreachable"}</p>
+                <p className="text-sm font-medium text-text-primary">{result.reachable ? "Reachable" : "Unreachable"}</p>
               </div>
-              <p className="mt-2 text-xs text-slate-500">Target: {result.target || target || defaultTarget}</p>
+              <p className="mt-2 text-xs text-text-muted">Target: {result.target || target || defaultTarget}</p>
               <p className={`mt-2 text-xs ${result.reachable ? "text-success" : "text-danger"}`}>{result.error || (result.reachable ? "Router responded to ping." : "Router did not return a successful ping response.")}</p>
-              <p className="mt-2 text-xs text-slate-500">{result.createdAt ? formatDateTime(result.createdAt) : "Just now"}</p>
+              <p className="mt-2 text-xs text-text-muted">{result.createdAt ? formatDateTime(result.createdAt) : "Just now"}</p>
             </div>
             <Metric label="Packets sent" value={result.packetsSent ?? "—"} />
             <Metric label="Packets received" value={result.packetsReceived ?? "—"} />
@@ -72,7 +72,7 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
           </div>
 
           <div className="space-y-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Ping history</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Ping history</p>
             {history.length ? (
               <div className="grid gap-3">
                 {history.map((entry, index) => (
@@ -80,23 +80,23 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
                     key={`${entry.createdAt || "entry"}-${index}`}
                     type="button"
                     onClick={() => setResult(entry)}
-                    className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]"
+                    className="rounded-2xl border border-background-border bg-background-panel px-4 py-3 text-left transition hover:border-primary/40 hover:bg-primary/10"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-medium text-slate-100">{entry.target || defaultTarget}</p>
-                        <p className="mt-1 text-xs text-slate-500">{entry.createdAt ? formatDateTime(entry.createdAt) : "Unknown time"}{entry.actor ? ` • ${entry.actor}` : ""}</p>
+                        <p className="text-sm font-medium text-text-primary">{entry.target || defaultTarget}</p>
+                        <p className="mt-1 text-xs text-text-muted">{entry.createdAt ? formatDateTime(entry.createdAt) : "Unknown time"}{entry.actor ? ` • ${entry.actor}` : ""}</p>
                       </div>
                       <div className="text-right">
                         <p className={`text-sm font-medium ${entry.reachable ? "text-success" : "text-danger"}`}>{entry.reachable ? "Reachable" : "Unreachable"}</p>
-                        <p className="mt-1 text-xs text-slate-500">{entry.packetLoss != null ? `${entry.packetLoss}% loss` : "No loss data"}{entry.avgRtt != null ? ` • ${entry.avgRtt} ms` : ""}</p>
+                        <p className="mt-1 text-xs text-text-muted">{entry.packetLoss != null ? `${entry.packetLoss}% loss` : "No loss data"}{entry.avgRtt != null ? ` • ${entry.avgRtt} ms` : ""}</p>
                       </div>
                     </div>
                   </button>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">No ping history has been recorded yet.</p>
+              <p className="text-sm text-text-muted">No ping history has been recorded yet.</p>
             )}
           </div>
         </div>
@@ -107,9 +107,9 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
 
 function Metric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-3 text-sm text-slate-100">{value}</p>
+    <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{label}</p>
+      <p className="mt-3 text-sm text-text-primary">{value}</p>
     </div>
   );
 }

@@ -44,11 +44,11 @@ export function DeleteSubscriberDialog({
       description="This permanently removes the subscriber account from the system."
       onClose={handleClose}
     >
-      <div className="rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm text-slate-200">
+      <div className="rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm text-text-primary">
         <div className="flex items-start gap-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-danger" />
           <p>
-            This will permanently delete {userName ? <span className="font-semibold text-slate-100">{userName}</span> : 'the subscriber account'}.
+            This will permanently delete {userName ? <span className="font-semibold text-text-primary">{userName}</span> : 'the subscriber account'}.
             {' '}This action cannot be undone.
           </p>
         </div>

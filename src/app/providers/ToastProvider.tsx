@@ -3,13 +3,13 @@ import { Toaster } from "sonner";
 export function ToastProvider() {
   return (
     <Toaster
-      position="top-right"
+      position="bottom-right"
       richColors
       theme="dark"
       closeButton
       toastOptions={{
         duration: 3200,
-        className: "border border-brand-500/15 bg-[rgba(8,14,31,0.9)] text-slate-100",
+        className: "border border-background-border bg-background-panel text-text-primary shadow-panel",
       }}
     />
   );

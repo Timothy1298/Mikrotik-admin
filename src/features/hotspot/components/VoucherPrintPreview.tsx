@@ -35,10 +35,10 @@ export function VoucherPrintPreview({
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {vouchers.map((voucher) => (
-          <div key={`${voucher.username}-${voucher.password}`} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Voucher</p>
-            <p className="mt-4 text-lg font-semibold text-slate-100">{voucher.username}</p>
-            <p className="mt-2 font-mono text-sm text-brand-100">{voucher.password}</p>
+          <div key={`${voucher.username}-${voucher.password}`} className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Voucher</p>
+            <p className="mt-4 text-lg font-semibold text-text-primary">{voucher.username}</p>
+            <p className="mt-2 font-mono text-sm text-primary">{voucher.password}</p>
           </div>
         ))}
       </div>

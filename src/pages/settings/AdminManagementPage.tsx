@@ -28,7 +28,7 @@ function formatRole(role?: string | null) {
 }
 
 function ActionButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button type="button" className="rounded-lg border border-brand-500/15 px-2 py-1 text-xs text-slate-300 hover:bg-[rgba(37,99,235,0.08)]" {...props}>{children}</button>;
+  return <button type="button" className="rounded-lg border border-background-border px-2 py-1 text-xs text-text-secondary hover:bg-primary/10" {...props}>{children}</button>;
 }
 
 function CreateAdminDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -137,7 +137,7 @@ function DeleteAdminDialog({ open, admin, onClose }: { open: boolean; admin: Adm
 
   return (
     <Modal open={open} title="Delete Admin" description="Delete this admin account permanently. This action cannot be undone." onClose={onClose}>
-      <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-slate-200">
+      <div className="rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-text-primary">
         You are deleting <span className="font-semibold">{admin.email}</span>.
       </div>
       <Textarea label="Reason" value={reason} onChange={(event) => setReason(event.target.value)} />
@@ -201,24 +201,24 @@ export function AdminManagementPage() {
               cell: ({ row }) => (
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-slate-100">{row.original.name}</p>
+                    <p className="font-medium text-text-primary">{row.original.name}</p>
                     {currentUser?.id === row.original.id ? <Badge tone="info">You</Badge> : null}
                   </div>
-                  <p className="text-sm text-slate-500">{row.original.email}</p>
+                  <p className="text-sm text-text-muted">{row.original.email}</p>
                 </div>
               ),
             },
-            { header: "Role", cell: ({ row }) => <span className="text-sm text-slate-200">{formatRole(row.original.adminRole)}</span> },
+            { header: "Role", cell: ({ row }) => <span className="text-sm text-text-primary">{formatRole(row.original.adminRole)}</span> },
             { header: "Status", cell: ({ row }) => <Badge tone={row.original.isActive ? "success" : "danger"}>{row.original.isActive ? "Active" : "Deactivated"}</Badge> },
-            { header: "Last login", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : "Never"}</span> },
-            { header: "Created", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.createdAt)}</span> },
+            { header: "Last login", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{row.original.lastLoginAt ? formatDateTime(row.original.lastLoginAt) : "Never"}</span> },
+            { header: "Created", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.createdAt)}</span> },
             {
               header: "Actions",
               cell: ({ row }) => {
                 const isCurrent = currentUser?.id === row.original.id;
                 return (
                   <div className="flex flex-wrap items-center gap-2">
-                    <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                    <MoreHorizontal className="h-4 w-4 text-text-muted" />
                     <ActionButton disabled={isCurrent} onClick={(event) => { event.stopPropagation(); setEditingAdmin(row.original); }}>Edit role</ActionButton>
                     {row.original.isActive ? (
                       <ActionButton disabled={isCurrent} onClick={(event) => { event.stopPropagation(); void deactivateMutation.mutateAsync([row.original.id, "Deactivated from admin management page"] as never); }}>Deactivate</ActionButton>

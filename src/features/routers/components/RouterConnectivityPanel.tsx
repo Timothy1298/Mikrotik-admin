@@ -20,22 +20,22 @@ export function RouterConnectivityPanel({ router }: { router: RouterDetail }) {
         </div>
       </CardHeader>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{managementOnly ? "Connection state" : "Tunnel state"}</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Connection state" : "Tunnel state"}</p>
           <div className="mt-3"><RouterTunnelHealthBadge status={connectivity.tunnelStatus} /></div>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{managementOnly ? "Management host" : "Server node"}</p>
-          <p className="mt-3 text-sm font-medium text-slate-100">{managementOnly ? (router.discovery.localAddress || connectivity.vpnIp || "Unavailable") : connectivity.serverNode}</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Management host" : "Server node"}</p>
+          <p className="mt-3 text-sm font-medium text-text-primary">{managementOnly ? (router.discovery.localAddress || connectivity.vpnIp || "Unavailable") : connectivity.serverNode}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{managementOnly ? "Identity / hostname" : "VPN IP"}</p>
-          <p className="mt-3 font-mono text-sm text-slate-100">{managementOnly ? (router.discovery.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (connectivity.vpnIp || "Unavailable")}</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Identity / hostname" : "VPN IP"}</p>
+          <p className="mt-3 font-mono text-sm text-text-primary">{managementOnly ? (router.discovery.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (connectivity.vpnIp || "Unavailable")}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{managementOnly ? "API health" : "Last handshake"}</p>
-          <p className="mt-3 text-sm text-slate-100">{managementOnly ? formatDateTime(router.apiAccess.lastSuccessAt) : formatDateTime(connectivity.lastHandshake)}</p>
-          <p className="mt-1 text-xs text-slate-500">{managementOnly ? router.apiAccess.state : connectivity.handshakeState}</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "API health" : "Last handshake"}</p>
+          <p className="mt-3 text-sm text-text-primary">{managementOnly ? formatDateTime(router.apiAccess.lastSuccessAt) : formatDateTime(connectivity.lastHandshake)}</p>
+          <p className="mt-1 text-xs text-text-muted">{managementOnly ? router.apiAccess.state : connectivity.handshakeState}</p>
         </div>
       </div>
     </Card>

@@ -15,29 +15,40 @@ export function UserMenu() {
 
   return (
     <div className="group relative">
-      <Button variant="ghost" className="h-auto gap-3 rounded-2xl px-2 py-2">
+      <Button variant="ghost" className="h-auto gap-3 rounded-xl px-3 py-2">
         <Avatar name={user.name} />
         <div className="hidden text-left lg:block">
-          <p className="text-sm font-medium text-white">{user.name}</p>
-          <p className="text-xs text-slate-500">{user.email}</p>
+          <p className="text-sm font-medium text-text-primary">{user.name}</p>
+          <p className="text-xs text-text-secondary">{user.email}</p>
         </div>
       </Button>
-      <div className="absolute right-0 z-30 mt-2 hidden min-w-64 rounded-3xl border border-brand-500/15 bg-[rgba(8,14,31,0.96)] p-3 shadow-[0_20px_45px_rgba(2,6,23,0.45)] group-focus-within:block group-hover:block">
-        <div className="mb-3 rounded-2xl border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-3">
-          <p className="text-sm font-medium text-white">{user.name}</p>
-          <p className="text-xs text-slate-500">{user.email}</p>
-          <Badge tone="info" className="mt-3">{user.role}</Badge>
+      <div className="absolute right-0 z-30 mt-2 hidden min-w-64 rounded-2xl border border-background-border bg-background-panel p-3 shadow-panel group-focus-within:block group-hover:block">
+        <div className="mb-3 rounded-xl border border-background-border bg-background-elevated p-3">
+          <p className="text-sm font-medium text-text-primary">{user.name}</p>
+          <p className="text-xs text-text-secondary">{user.email}</p>
+          <Badge tone="info" className="mt-3">
+            {user.role}
+          </Badge>
         </div>
         <div className="space-y-1">
-          <Link to={appRoutes.settings} className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]">
+          <Link
+            to={appRoutes.settings}
+            className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-sm text-text-secondary transition hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary"
+          >
             <UserCircle2 className="h-4 w-4" />
             Profile
           </Link>
-          <Link to={appRoutes.settingsSecurity} className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-slate-200 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)]">
+          <Link
+            to={appRoutes.settingsSecurity}
+            className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-sm text-text-secondary transition hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary"
+          >
             <Settings className="h-4 w-4" />
             Settings
           </Link>
-          <button className="flex w-full items-center gap-2 rounded-2xl border border-transparent px-3 py-2 text-left text-sm text-danger transition hover:border-danger/30 hover:bg-danger/10" onClick={() => void logout()}>
+          <button
+            className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-sm text-danger transition hover:border-danger/30 hover:bg-danger/10"
+            onClick={() => void logout()}
+          >
             <LogOut className="h-4 w-4" />
             Logout
           </button>

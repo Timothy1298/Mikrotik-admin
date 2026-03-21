@@ -59,27 +59,27 @@ import { cn } from "@/lib/utils/cn";
 dayjs.extend(relativeTime);
 
 const toneTextClass = {
-  info: "text-brand-100",
+  info: "text-primary",
   success: "text-success",
-  warning: "text-warning",
+  warning: "text-primary",
   danger: "text-danger",
-  neutral: "text-slate-100",
+  neutral: "text-text-primary",
 } as const;
 
 const toneBorderClass = {
   info: "border-l-brand-400",
   success: "border-l-success",
-  warning: "border-l-warning",
+  warning: "border-l-primary",
   danger: "border-l-danger",
   neutral: "border-l-slate-500",
 } as const;
 
 const toneIconClass = {
-  info: "text-brand-100",
+  info: "text-primary",
   success: "text-success",
-  warning: "text-warning",
+  warning: "text-primary",
   danger: "text-danger",
-  neutral: "text-slate-300",
+  neutral: "text-text-secondary",
 } as const;
 
 function getStatusTone(healthy: boolean, warning = false) {
@@ -97,7 +97,7 @@ function RouterStatusSummary({
 
   return (
     <Card className="surface-card-3d overflow-hidden p-0">
-      <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+      <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
         <CardHeader>
           <div>
             <CardTitle>Router Status Summary</CardTitle>
@@ -109,22 +109,22 @@ function RouterStatusSummary({
         {routerStatsQuery.isPending ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <div className="h-4 w-24 animate-pulse rounded-xl bg-brand-500/15" />
-                <div className="mt-4 h-8 w-14 animate-pulse rounded-xl bg-brand-500/15" />
+              <div key={index} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <div className="h-4 w-24 animate-pulse rounded-xl bg-primary/15" />
+                <div className="mt-4 h-8 w-14 animate-pulse rounded-xl bg-primary/15" />
               </div>
             ))}
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: "Total Routers", value: stats?.totalRouters ?? 0, tone: "text-brand-100" },
+              { label: "Total Routers", value: stats?.totalRouters ?? 0, tone: "text-primary" },
               { label: "Online Routers", value: stats?.onlineRouters ?? 0, tone: "text-success" },
               { label: "Offline Routers", value: stats?.offlineRouters ?? 0, tone: "text-danger" },
-              { label: "Pending Setup", value: stats?.pendingSetupRouters ?? 0, tone: "text-warning" },
+              { label: "Pending Setup", value: stats?.pendingSetupRouters ?? 0, tone: "text-primary" },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+              <div key={item.label} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{item.label}</p>
                 <p className={cn("mt-3 text-2xl font-semibold", item.tone)}>{item.value}</p>
               </div>
             ))}
@@ -411,16 +411,16 @@ export function DashboardPage() {
         meta="Live command center"
       />
 
-      <div className="flex flex-col gap-3 rounded-[24px] border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-background-border bg-background-panel p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <Badge tone={wireguard.error ? "danger" : connectedPeers > 0 ? "success" : "warning"}>
               {wireguard.error ? "Needs attention" : connectedPeers > 0 ? "Live" : "Idle"}
             </Badge>
-            <span className="text-xs text-slate-400">Auto-refreshes every 30s</span>
+            <span className="text-xs text-text-secondary">Auto-refreshes every 30s</span>
           </div>
           {dashboardQuery.isFetching && !dashboardQuery.isPending ? (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <Spinner className="h-3.5 w-3.5 border-[1.5px]" />
               <span>Refreshing...</span>
             </div>
@@ -429,11 +429,11 @@ export function DashboardPage() {
         <RefreshButton loading={dashboardQuery.isFetching} onClick={() => void dashboardQuery.refetch()} />
       </div>
 
-      <div className="flex flex-wrap gap-3 rounded-[24px] border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+      <div className="flex flex-wrap gap-3 rounded-2xl border border-background-border bg-background-panel p-4">
         {statusItems.map((item) => (
-          <div key={item.label} className="flex items-center gap-2 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.5)] px-3 py-2">
+          <div key={item.label} className="flex items-center gap-2 rounded-2xl border border-background-border bg-background-elevated/60 px-3 py-2">
             <span className={cn("h-2 w-2 rounded-full", item.online ? "bg-success animate-pulse" : item.tone === "warning" ? "bg-warning" : "bg-danger")} />
-            <span className="text-xs font-medium text-slate-300">{item.label}</span>
+            <span className="text-xs font-medium text-text-secondary">{item.label}</span>
             <span className={cn("text-xs", toneTextClass[item.tone])}>{item.value}</span>
           </div>
         ))}
@@ -442,16 +442,16 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 2xl:grid-cols-8">
         {kpiCards.map((card) => (
           <Link key={card.title} to={card.path} className="group">
-            <div className="flex h-full flex-col gap-2 rounded-[20px] border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 transition-colors hover:border-brand-500/40 hover:bg-[rgba(8,14,31,1)]">
+            <div className="flex h-full flex-col gap-2 rounded-xl border border-background-border bg-background-panel p-4 transition-colors hover:border-primary/40 hover:bg-background-main">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-400">{card.title}</p>
+                <p className="text-xs font-medium text-text-secondary">{card.title}</p>
                 <div className="flex items-center gap-2">
-                  <card.icon className="h-4 w-4 text-slate-500 transition-colors group-hover:text-brand-400" />
-                  <ArrowRight className="h-4 w-4 text-slate-600 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-brand-300" />
+                  <card.icon className="h-4 w-4 text-text-muted transition-colors group-hover:text-primary" />
+                  <ArrowRight className="h-4 w-4 text-text-muted opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100 group-hover:text-primary" />
                 </div>
               </div>
               <p className={cn("text-2xl font-bold", toneTextClass[card.tone])}>{card.value}</p>
-              <p className="text-xs text-slate-500">{card.delta}</p>
+              <p className="text-xs text-text-muted">{card.delta}</p>
             </div>
           </Link>
         ))}
@@ -463,7 +463,7 @@ export function DashboardPage() {
           <TrafficChartCard routerId={featuredRouter.id} title={`Live Telemetry: ${featuredRouter.name}`} />
         ) : (
           <Card className="surface-card-3d overflow-hidden p-0">
-            <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+            <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
               <CardHeader>
                 <div>
                   <CardTitle>Live Telemetry</CardTitle>
@@ -492,13 +492,13 @@ export function DashboardPage() {
                 { icon: Users, label: "Active Subscribers", value: users.active, progress: subscriberHealth, tone: "success" as const },
                 { icon: UserX, label: "Suspended Subscribers", value: users.suspended, progress: users.total > 0 ? Math.round((users.suspended / users.total) * 100) : 0, tone: "warning" as const },
               ].map((item) => (
-                <div key={item.label} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4">
+                <div key={item.label} className="rounded-2xl border border-background-border bg-background-elevated p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="icon-block-primary rounded-2xl p-2 text-slate-100">
+                      <div className="icon-block-primary rounded-2xl p-2 text-text-primary">
                         <item.icon className="h-4 w-4" />
                       </div>
-                      <p className="text-sm font-medium text-slate-300">{item.label}</p>
+                      <p className="text-sm font-medium text-text-secondary">{item.label}</p>
                     </div>
                     <p className={cn("text-lg font-semibold", toneTextClass[item.tone])}>{item.value}</p>
                   </div>
@@ -508,12 +508,12 @@ export function DashboardPage() {
             </div>
 
             {showBillingSection ? (
-              <div className="flex flex-col gap-4 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-4 rounded-2xl border border-background-border bg-background-elevated p-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Revenue this month</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(billing.monthlyRevenue)}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Revenue this month</p>
+                  <p className="mt-2 text-2xl font-semibold text-text-primary">{formatCurrency(billing.monthlyRevenue)}</p>
                 </div>
-                <Link to={appRoutes.billingOverview} className="inline-flex items-center gap-2 text-sm font-medium text-brand-100 transition hover:text-white">
+                <Link to={appRoutes.billingOverview} className="inline-flex items-center gap-2 text-sm font-medium text-primary transition hover:text-text-primary">
                   View billing <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -522,22 +522,22 @@ export function DashboardPage() {
         </AnalyticsChartCard>
 
         <Card className="surface-card-3d overflow-hidden p-0">
-          <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+          <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
             <CardHeader>
               <div>
                 <CardTitle>WireGuard State</CardTitle>
                 <CardDescription>Transport health, connected peers, and the latest tunnel details.</CardDescription>
               </div>
-              <div className="icon-block-primary rounded-2xl p-2.5 text-slate-100">
+              <div className="icon-block-primary rounded-2xl p-2.5 text-text-primary">
                 <Shield className="h-[18px] w-[18px]" />
               </div>
             </CardHeader>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3">
+              <div className="flex items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-slate-100">Transport status</p>
-                  <p className="text-sm text-slate-400">{wireguard.status || (wireguard.error ? "degraded" : "running")}</p>
+                  <p className="text-sm font-medium text-text-primary">Transport status</p>
+                  <p className="text-sm text-text-secondary">{wireguard.status || (wireguard.error ? "degraded" : "running")}</p>
                 </div>
                 <Badge tone={wireguard.error ? "danger" : "success"}>{wireguard.error ? "Issue detected" : "Operational"}</Badge>
               </div>
@@ -552,15 +552,15 @@ export function DashboardPage() {
                 </div>
               ) : null}
 
-              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Connected peers</p>
-                <p className="mt-2 text-3xl font-semibold text-white">{connectedPeers}</p>
+              <div className="rounded-2xl border border-background-border bg-background-panel px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Connected peers</p>
+                <p className="mt-2 text-3xl font-semibold text-text-primary">{connectedPeers}</p>
               </div>
 
               {(wireguard.details ?? []).length ? (
                 <div className="grid gap-3">
                   {(wireguard.details ?? []).slice(0, 4).map((detail) => (
-                    <div key={detail} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3 text-sm text-slate-300">
+                    <div key={detail} className="rounded-2xl border border-background-border bg-background-panel px-4 py-3 text-sm text-text-secondary">
                       {detail}
                     </div>
                   ))}
@@ -580,7 +580,7 @@ export function DashboardPage() {
           title="Transfer Traffic"
           description="RX / TX for recently active WireGuard peers"
           action={
-            <div className="flex items-center gap-3 text-xs text-slate-400">
+            <div className="flex items-center gap-3 text-xs text-text-secondary">
               <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#38bdf8]" /> RX</div>
               <div className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#7dd3fc]" /> TX</div>
             </div>
@@ -619,7 +619,7 @@ export function DashboardPage() {
         </AnalyticsChartCard>
 
         <Card className="surface-card-3d overflow-hidden p-0">
-          <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+          <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
             <CardHeader>
               <div>
                 <CardTitle>Peer Distribution</CardTitle>
@@ -648,9 +648,9 @@ export function DashboardPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-3">
-              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-2 text-sm text-slate-300">Total {clients.total}</div>
-              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-2 text-sm text-slate-300">Connected {connectedPeers}</div>
-              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] px-3 py-2 text-sm text-slate-300">Health {tunnelHealth}%</div>
+              <div className="rounded-2xl border border-background-border bg-background-elevated px-3 py-2 text-sm text-text-secondary">Total {clients.total}</div>
+              <div className="rounded-2xl border border-background-border bg-background-elevated px-3 py-2 text-sm text-text-secondary">Connected {connectedPeers}</div>
+              <div className="rounded-2xl border border-background-border bg-background-elevated px-3 py-2 text-sm text-text-secondary">Health {tunnelHealth}%</div>
             </div>
           </div>
         </Card>
@@ -659,7 +659,7 @@ export function DashboardPage() {
       <div className={cn("grid gap-5", showLogsSection ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]" : "grid-cols-1")}>
         {showLogsSection ? (
           <Card className="surface-card-3d overflow-hidden p-0">
-            <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+            <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
               <CardHeader>
                 <div>
                   <CardTitle>Recent Admin Activity</CardTitle>
@@ -671,7 +671,7 @@ export function DashboardPage() {
               <ActivityTimeline items={timelineItems} />
 
               <div className="mt-4">
-                <Link to={appRoutes.logsSecurityAudit} className="inline-flex items-center gap-2 text-sm font-medium text-brand-100 transition hover:text-white">
+                <Link to={appRoutes.logsSecurityAudit} className="inline-flex items-center gap-2 text-sm font-medium text-primary transition hover:text-text-primary">
                   View full audit trail <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -680,7 +680,7 @@ export function DashboardPage() {
         ) : null}
 
         <Card className="surface-card-3d overflow-hidden p-0">
-          <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+          <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
             <CardHeader>
               <div>
                 <CardTitle>Quick Actions</CardTitle>
@@ -694,14 +694,14 @@ export function DashboardPage() {
                   key={action.label}
                   to={action.path}
                   className={cn(
-                    "flex items-center gap-3 rounded-[16px] border border-brand-500/15 border-l-2 bg-[rgba(8,14,31,0.9)] px-3 py-3 transition-all hover:border-brand-500/40 hover:bg-[rgba(8,14,31,1)]",
+                    "flex items-center gap-3 rounded-xl border border-background-border border-l-2 bg-background-panel px-3 py-3 transition-all hover:border-primary/40 hover:bg-background-main",
                     toneBorderClass[action.tone],
                   )}
                 >
                   <action.icon className={cn("h-4 w-4 flex-shrink-0", toneIconClass[action.tone])} />
                   <div className="min-w-0">
-                    <span className="block text-sm font-medium text-slate-300">{action.label}</span>
-                    <span className="block truncate text-xs text-slate-500">{action.description}</span>
+                    <span className="block text-sm font-medium text-text-secondary">{action.label}</span>
+                    <span className="block truncate text-xs text-text-muted">{action.description}</span>
                   </div>
                 </Link>
               ))}
@@ -714,24 +714,24 @@ export function DashboardPage() {
         <div className="grid gap-5 xl:grid-cols-2">
           {showBillingSection ? (
             <Card className="surface-card-3d overflow-hidden p-0">
-              <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+              <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
                 <CardHeader>
                   <div>
                     <CardTitle>Revenue Snapshot</CardTitle>
                     <CardDescription>Current month collections and subscriber monetization posture.</CardDescription>
                   </div>
-                  <div className="icon-block-primary rounded-2xl p-2 text-slate-100">
+                  <div className="icon-block-primary rounded-2xl p-2 text-text-primary">
                     <CreditCard className="h-4 w-4" />
                   </div>
                 </CardHeader>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Monthly revenue</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{formatCurrency(billing.monthlyRevenue)}</p>
+                  <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Monthly revenue</p>
+                    <p className="mt-2 text-2xl font-semibold text-text-primary">{formatCurrency(billing.monthlyRevenue)}</p>
                   </div>
-                  <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Trial users</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{users.trial}</p>
+                  <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Trial users</p>
+                    <p className="mt-2 text-2xl font-semibold text-text-primary">{users.trial}</p>
                   </div>
                 </div>
               </div>
@@ -740,24 +740,24 @@ export function DashboardPage() {
 
           {showMonitoringSection ? (
             <Card className="surface-card-3d overflow-hidden p-0">
-              <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+              <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
                 <CardHeader>
                   <div>
                     <CardTitle>Incident Focus</CardTitle>
                     <CardDescription>Operational issues and support load that need network attention.</CardDescription>
                   </div>
-                  <div className="icon-block-primary rounded-2xl p-2 text-slate-100">
+                  <div className="icon-block-primary rounded-2xl p-2 text-text-primary">
                     <AlertTriangle className="h-4 w-4" />
                   </div>
                 </CardHeader>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Open incidents</p>
+                  <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Open incidents</p>
                     <p className={cn("mt-2 text-2xl font-semibold", incidents.open > 0 ? "text-danger" : "text-success")}>{incidents.open}</p>
                   </div>
-                  <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.75)] p-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Support queue</p>
-                    <p className={cn("mt-2 text-2xl font-semibold", support.openTickets > 0 ? "text-warning" : "text-success")}>{support.openTickets}</p>
+                  <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
+                    <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Support queue</p>
+                    <p className={cn("mt-2 text-2xl font-semibold", support.openTickets > 0 ? "text-primary" : "text-success")}>{support.openTickets}</p>
                   </div>
                 </div>
               </div>

@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils/cn";
 const toneStyles = {
   info: "icon-block-primary",
   success: "icon-block-primary",
-  warning: "border border-[rgba(139,92,246,0.25)] bg-[linear-gradient(90deg,rgba(124,58,237,0.15),rgba(139,92,246,0.06))] text-warning",
+  warning: "border border-[rgba(139,92,246,0.25)] bg-primary/10 text-primary",
   danger: "border border-danger/30 bg-danger/10 text-danger",
-  neutral: "border border-brand-500/15 bg-[linear-gradient(90deg,rgba(37,99,235,0.12),rgba(56,189,248,0.05))] text-slate-200",
+  neutral: "border border-background-border bg-primary/10 text-text-primary",
 } as const;
 
 export function StatCard({
@@ -29,7 +29,7 @@ export function StatCard({
 }) {
   return (
     <Card className="surface-card-3d animate-fade-up overflow-hidden p-0">
-      <div className="h-full rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-3.5">
+      <div className="h-full rounded-2xl border border-background-border bg-background-elevated p-3.5">
         <CardHeader className="mb-2.5 items-start gap-2.5">
           <div>
             <CardDescription className="text-[0.88rem]">{title}</CardDescription>
@@ -39,7 +39,7 @@ export function StatCard({
             <Icon className="h-3.5 w-3.5" />
           </div>
         </CardHeader>
-        <p className="text-[0.85rem] leading-5 text-slate-400">{description}</p>
+        <p className="text-[0.85rem] leading-5 text-text-secondary">{description}</p>
         {delta ? (
           <div className="mt-2.5 flex items-center gap-2">
             <Badge tone={tone === "neutral" ? "info" : tone} className="gap-1 rounded-xl px-2 py-1 normal-case tracking-normal">

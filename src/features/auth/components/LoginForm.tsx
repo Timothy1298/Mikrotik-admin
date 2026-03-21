@@ -146,8 +146,8 @@ export function LoginForm() {
     <>
       {challenge ? (
         <form className="grid gap-5" onSubmit={handleTwoFactorSubmit}>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm text-slate-300">
-            Enter the 6-digit code from your authenticator app for <span className="font-medium text-slate-100">{challenge.user.email}</span>.
+          <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm text-text-secondary">
+            Enter the 6-digit code from your authenticator app for <span className="font-medium text-text-primary">{challenge.user.email}</span>.
           </div>
 
           <Input
@@ -199,9 +199,9 @@ export function LoginForm() {
             {...register("password")}
           />
 
-          <div className="flex items-center justify-between gap-4 text-sm text-slate-400">
+          <div className="flex items-center justify-between gap-4 text-sm text-text-secondary">
             <Checkbox label="Remember this device" />
-            <span className="text-xs uppercase tracking-[0.18em] text-brand-100">Encrypted session</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-primary">Encrypted session</span>
           </div>
 
           {mutation.isError ? (

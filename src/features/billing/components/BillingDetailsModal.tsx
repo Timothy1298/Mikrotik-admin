@@ -15,7 +15,7 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader><div><CardTitle>Billing summary</CardTitle><CardDescription>Current plan, cycle, and risk state.</CardDescription></div></CardHeader>
-          <div className="space-y-3 text-sm text-slate-200">
+          <div className="space-y-3 text-sm text-text-primary">
             <div className="flex items-center justify-between"><span>Plan</span><span>{detail.overview.currentPlan}</span></div>
             <div className="flex items-center justify-between"><span>Status</span><SubscriptionStatusBadge status={detail.overview.subscriptionStatus} /></div>
             <div className="flex items-center justify-between"><span>Recurring value</span><span>{formatCurrency(detail.overview.estimatedRecurringValue, detail.account.currency || "USD")}</span></div>
@@ -25,7 +25,7 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
         </Card>
         <Card>
           <CardHeader><div><CardTitle>Entitlements</CardTitle><CardDescription>Derived service access from real billing state.</CardDescription></div></CardHeader>
-          <div className="space-y-3 text-sm text-slate-200">
+          <div className="space-y-3 text-sm text-text-primary">
             <div className="flex items-center justify-between"><span>Router management</span><span>{detail.entitlements.routerManagementEnabled ? "Enabled" : "Disabled"}</span></div>
             <div className="flex items-center justify-between"><span>Monitoring</span><span>{detail.entitlements.monitoringEnabled ? "Enabled" : "Disabled"}</span></div>
             <div className="flex items-center justify-between"><span>Support tier</span><span>{detail.entitlements.supportTier}</span></div>
@@ -38,14 +38,14 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
         <CardHeader><div><CardTitle>Recent invoices / payments</CardTitle><CardDescription>Latest transaction preview from the billing account workspace.</CardDescription></div></CardHeader>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-2">
-            {detail.invoices.slice(0, 3).map((invoice) => <div key={invoice.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-slate-400">{invoice.transactionId}</span><InvoiceStatusBadge status={invoice.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(invoice.amount, invoice.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-slate-500">{formatDateTime(invoice.createdAt)}</span></div></div>)}
+            {detail.invoices.slice(0, 3).map((invoice) => <div key={invoice.id} className="rounded-2xl border border-background-border bg-background-panel p-3 text-sm text-text-primary"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-text-secondary">{invoice.transactionId}</span><InvoiceStatusBadge status={invoice.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(invoice.amount, invoice.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-text-muted">{formatDateTime(invoice.createdAt)}</span></div></div>)}
           </div>
           <div className="space-y-2">
-            {detail.payments.slice(0, 3).map((payment) => <div key={payment.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-3 text-sm text-slate-200"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-slate-400">{payment.transactionId}</span><PaymentStatusBadge status={payment.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(payment.amount, payment.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-slate-500">{formatDateTime(payment.createdAt)}</span></div></div>)}
+            {detail.payments.slice(0, 3).map((payment) => <div key={payment.id} className="rounded-2xl border border-background-border bg-background-panel p-3 text-sm text-text-primary"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs text-text-secondary">{payment.transactionId}</span><PaymentStatusBadge status={payment.status} /></div><div className="mt-2 flex items-center justify-between gap-3"><span>{formatCurrency(payment.amount, payment.currency || detail.account.currency || "USD")}</span><span className="font-mono text-xs text-text-muted">{formatDateTime(payment.createdAt)}</span></div></div>)}
           </div>
         </div>
       </Card>
-      <div className="mt-2 flex flex-wrap gap-2 border-t border-brand-500/15 pt-4">
+      <div className="mt-2 flex flex-wrap gap-2 border-t border-background-border pt-4">
         {detail.account.accountStatus !== "suspended" && onSuspend ? <Button variant="danger" onClick={onSuspend}>Suspend account</Button> : null}
         {detail.account.accountStatus === "suspended" && onReactivate ? <Button variant="outline" onClick={onReactivate}>Reactivate</Button> : null}
         {!detail.overview.gracePeriodActive && onApplyGracePeriod ? <Button variant="outline" onClick={onApplyGracePeriod}>Apply grace period</Button> : null}

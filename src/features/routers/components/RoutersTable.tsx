@@ -16,8 +16,8 @@ function ApiStateBadge({ state }: { state: RouterRow["apiConnectivity"]["state"]
   const styles = {
     healthy: "border-success/25 bg-success/10 text-success",
     failing: "border-danger/25 bg-danger/10 text-danger",
-    pending: "border-warning/25 bg-warning/10 text-warning",
-    unconfigured: "border-slate-500/20 bg-slate-500/10 text-slate-300",
+    pending: "border-warning/25 bg-warning/10 text-primary",
+    unconfigured: "border-slate-500/20 bg-slate-500/10 text-text-secondary",
   } as const;
 
   return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium uppercase tracking-[0.18em] ${styles[state]}`}>{state}</span>;
@@ -72,32 +72,32 @@ export function RoutersTable({
         <div className="space-y-1">
           <button
             type="button"
-            className="inline-flex items-center gap-2 font-medium text-slate-100 transition hover:text-brand-100"
+            className="inline-flex items-center gap-2 font-medium text-text-primary transition hover:text-primary"
             onClick={(event) => {
               event.stopPropagation();
               openFullPage(row.original);
             }}
           >
-            {navigatingRouterId === row.original.id ? <Loader2 className="h-4 w-4 animate-spin text-brand-100" /> : null}
+            {navigatingRouterId === row.original.id ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : null}
             {row.original.name}
           </button>
-          <p className="font-mono text-xs text-slate-500">{row.original.id}</p>
+          <p className="font-mono text-xs text-text-muted">{row.original.id}</p>
         </div>
       ),
     },
     {
       header: "Customer",
-      cell: ({ row }) => row.original.customer ? <div><p className="text-sm text-slate-200">{row.original.customer.name}</p><p className="text-xs text-slate-500">{row.original.customer.email}</p></div> : <span className="text-sm text-slate-500">Unassigned</span>,
+      cell: ({ row }) => row.original.customer ? <div><p className="text-sm text-text-primary">{row.original.customer.name}</p><p className="text-xs text-text-muted">{row.original.customer.email}</p></div> : <span className="text-sm text-text-muted">Unassigned</span>,
     },
     { header: "Status", cell: ({ row }) => <RouterStatusBadge status={row.original.status} /> },
     { header: "Setup", cell: ({ row }) => <RouterSetupBadge status={row.original.setupStatus} /> },
     { header: "Tunnel", cell: ({ row }) => <RouterTunnelHealthBadge status={row.original.healthSummary.state} /> },
-    { header: "VPN IP", cell: ({ row }) => <span className="font-mono text-xs text-slate-300">{row.original.vpnIp}</span> },
-    { header: "Server", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.serverNode}</span> },
+    { header: "VPN IP", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{row.original.vpnIp}</span> },
+    { header: "Server", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.serverNode}</span> },
     { header: "Ports", cell: ({ row }) => <div className="flex flex-wrap gap-1"><RouterPortStatusBadge status={row.original.winboxPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.sshPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.apiPort ? "assigned" : "missing"} /></div> },
     { header: "API", cell: ({ row }) => <ApiStateBadge state={row.original.apiConnectivity.state} /> },
-    { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastSeen)}</span> },
-    { header: "Last handshake", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastHandshake)}</span> },
+    { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastSeen)}</span> },
+    { header: "Last handshake", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastHandshake)}</span> },
     {
       header: "Actions",
       cell: ({ row }) => (

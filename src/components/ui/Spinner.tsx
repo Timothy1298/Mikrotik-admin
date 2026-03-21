@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils/cn";
 
 export function Spinner({ className }: { className?: string }) {
-  return <span className={cn("inline-block h-5 w-5 animate-spin rounded-full border-2 border-brand-500 border-r-transparent", className)} />;
+  return <span className={cn("inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-r-transparent", className)} />;
 }

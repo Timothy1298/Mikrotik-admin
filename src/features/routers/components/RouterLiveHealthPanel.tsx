@@ -32,12 +32,12 @@ export function RouterLiveHealthPanel({ routerId }: { routerId: string }) {
         <MetricTile label="Board Name" value={health?.boardName || "Unavailable"} />
         <MetricTile label="RouterOS Version" value={health?.routerosVersion || "Unavailable"} />
         <MetricTile label="Uptime" value={health?.uptime || "Unavailable"} />
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">CPU Load</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">CPU Load</p>
             <Badge tone={cpuTone}>{health?.cpuLoad != null ? `${health.cpuLoad}%` : "N/A"}</Badge>
           </div>
-          <p className="mt-3 text-sm text-slate-100">{health?.cpuLoad != null ? `${health.cpuLoad}%` : "Unavailable"}</p>
+          <p className="mt-3 text-sm text-text-primary">{health?.cpuLoad != null ? `${health.cpuLoad}%` : "Unavailable"}</p>
         </div>
         <MetricTile
           label="Free Memory"
@@ -50,16 +50,16 @@ export function RouterLiveHealthPanel({ routerId }: { routerId: string }) {
         <MetricTile label="Free Storage" value={health?.freeHddSpace != null ? formatBytes(health.freeHddSpace) : "Unavailable"} />
       </div>
 
-      <p className="text-xs text-slate-500">Last updated {lastUpdated}.</p>
+      <p className="text-xs text-text-muted">Last updated {lastUpdated}.</p>
     </Card>
   );
 }
 
 function MetricTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-3 text-sm text-slate-100">{value}</p>
+    <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{label}</p>
+      <p className="mt-3 text-sm text-text-primary">{value}</p>
     </div>
   );
 }

@@ -41,10 +41,10 @@ export function IncidentDetailsModal({
             </div>
           </CardHeader>
           <div className="grid gap-3 md:grid-cols-2">
-            <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Severity</p><div className="mt-2"><IncidentSeverityBadge severity={incident.severity} /></div></div>
-            <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Status</p><div className="mt-2"><HealthStatusBadge status={incident.status} /></div></div>
-            <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Source</p><p className="mt-2 text-sm text-slate-100">{incident.sourceType} / {incident.source}</p></div>
-            <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Last seen</p><p className="mt-2 text-sm text-slate-100">{formatDateTime(incident.lastSeenAt)}</p></div>
+            <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Severity</p><div className="mt-2"><IncidentSeverityBadge severity={incident.severity} /></div></div>
+            <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Status</p><div className="mt-2"><HealthStatusBadge status={incident.status} /></div></div>
+            <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Source</p><p className="mt-2 text-sm text-text-primary">{incident.sourceType} / {incident.source}</p></div>
+            <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Last seen</p><p className="mt-2 text-sm text-text-primary">{formatDateTime(incident.lastSeenAt)}</p></div>
           </div>
         </Card>
 
@@ -55,7 +55,7 @@ export function IncidentDetailsModal({
               <CardDescription>Current affected resources</CardDescription>
             </div>
           </CardHeader>
-          <div className="space-y-3 text-sm text-slate-200">
+          <div className="space-y-3 text-sm text-text-primary">
             <p>{incident.impact.affectedRouters} routers affected</p>
             <p>{incident.impact.affectedUsers} users affected</p>
             {incident.relatedRouter ? <p>Router: {incident.relatedRouter.name}</p> : null}
@@ -75,20 +75,20 @@ export function IncidentDetailsModal({
           </CardHeader>
           <div className="space-y-3">
             {incident.notes.map((note) => (
-              <div key={note.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={note.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-center justify-between gap-3">
                   <Badge tone="info">{note.category}</Badge>
-                  <span className="font-mono text-xs text-slate-500">{dayjs(note.createdAt).fromNow()}</span>
+                  <span className="font-mono text-xs text-text-muted">{dayjs(note.createdAt).fromNow()}</span>
                 </div>
-                <p className="mt-3 text-slate-100">{note.body}</p>
-                <p className="mt-2 text-xs text-slate-500">by {note.author} • {formatDateTime(note.createdAt)}</p>
+                <p className="mt-3 text-text-primary">{note.body}</p>
+                <p className="mt-2 text-xs text-text-muted">by {note.author} • {formatDateTime(note.createdAt)}</p>
               </div>
             ))}
           </div>
         </Card>
       ) : null}
 
-      <div className="mt-2 flex flex-wrap gap-2 border-t border-brand-500/15 pt-2">
+      <div className="mt-2 flex flex-wrap gap-2 border-t border-background-border pt-2">
         {incident.status === "open" && onAcknowledge ? <Button variant="outline" onClick={onAcknowledge}>Acknowledge</Button> : null}
         {incident.status !== "resolved" && onResolve ? <Button variant="danger" onClick={onResolve}>Resolve</Button> : null}
         {incident.status === "resolved" && onMarkReviewed ? <Button variant="outline" onClick={onMarkReviewed}>Mark reviewed</Button> : null}

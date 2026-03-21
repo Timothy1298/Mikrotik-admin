@@ -30,20 +30,20 @@ export function PppoeSecretsTable({
       header: "Subscriber",
       cell: ({ row }) => (
         <div className="space-y-1">
-          <p className="font-medium text-slate-100">{row.original.name}</p>
-          <p className="text-xs text-slate-500">{row.original.comment || "No comment"}</p>
+          <p className="font-medium text-text-primary">{row.original.name}</p>
+          <p className="text-xs text-text-muted">{row.original.comment || "No comment"}</p>
         </div>
       ),
     },
     { header: "Profile", cell: ({ row }) => <HotspotProfilesBadge profile={row.original.profile} /> },
-    { header: "Service", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.service || "pppoe"}</span> },
-    { header: "Remote Address", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.remoteAddress || "Dynamic"}</span> },
+    { header: "Service", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.service || "pppoe"}</span> },
+    { header: "Remote Address", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.remoteAddress || "Dynamic"}</span> },
     {
       header: "Status",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className={`h-2.5 w-2.5 rounded-full ${row.original.online ? "bg-success animate-pulse" : row.original.isDisabled ? "bg-slate-500" : "bg-warning"}`} />
-          <span className="text-sm text-slate-200">{row.original.online ? "online" : row.original.isDisabled ? "disabled" : "offline"}</span>
+          <span className="text-sm text-text-primary">{row.original.online ? "online" : row.original.isDisabled ? "disabled" : "offline"}</span>
         </div>
       ),
     },

@@ -1,6 +1,5 @@
 .surface-card {
-  @apply rounded-3xl border border-brand-500/15 text-slate-100 backdrop-blur;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(56, 189, 248, 0.05));
+  @apply rounded-2xl border border-background-border bg-background-panel text-text-primary shadow-panel;
 }
 
 .surface-card-3d {
@@ -11,41 +10,38 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.16) 0%, transparent 42%);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.06) 0%, transparent 32%);
   pointer-events: none;
 }
 
 .app-grid-bg {
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.16) 0%, transparent 42%),
-    linear-gradient(90deg, #080e1f 0%, #0a1220 60%, #080e1f 100%);
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08) 0%, transparent 26%),
+    linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
 }
 
 .glass-border {
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .surface-active {
-  background: linear-gradient(100deg, rgba(37, 99, 235, 0.22) 0%, rgba(56, 189, 248, 0.08) 100%);
-  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.45);
 }
 
 .surface-active-child {
-  background: linear-gradient(100deg, rgba(37, 99, 235, 0.18) 0%, rgba(56, 189, 248, 0.06) 100%);
-  border-color: rgba(56, 189, 248, 0.24);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .surface-hover {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.16);
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
-.icon-block-primary {
-  background: linear-gradient(135deg, #1d4ed8, #0284c7);
-  color: #e0f2fe;
-}
-
+.icon-block-primary,
 .icon-block-highlight {
-  background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
-  color: #ffffff;
+  background: rgba(59, 130, 246, 0.16);
+  color: #f9fafb;
+  border: 1px solid rgba(59, 130, 246, 0.28);
 }

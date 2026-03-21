@@ -38,17 +38,17 @@ export function UserServicesPanel({ user }: { user: UserDetail }) {
           <Badge tone="info">{services.supportTier}</Badge>
         </div>
         <div className="grid gap-3">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">Billable routers</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-100">{services.billableRouters}</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted">Billable routers</p>
+            <p className="mt-2 text-2xl font-semibold text-text-primary">{services.billableRouters}</p>
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">Allocated public ports</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-100">{services.allocatedPublicPorts}</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted">Allocated public ports</p>
+            <p className="mt-2 text-2xl font-semibold text-text-primary">{services.allocatedPublicPorts}</p>
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">Total routers</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-100">{services.totalRouters}</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted">Total routers</p>
+            <p className="mt-2 text-2xl font-semibold text-text-primary">{services.totalRouters}</p>
           </div>
         </div>
       </div>

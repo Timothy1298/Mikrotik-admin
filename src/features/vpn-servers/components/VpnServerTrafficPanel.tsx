@@ -40,15 +40,15 @@ export function VpnServerTrafficPanel({ server, trafficDetail }: { server: VpnSe
       {trafficDetail?.trafficByPeer?.length ? (
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium text-slate-100">Per-peer traffic</p>
-            <Link className="text-sm text-brand-100 transition hover:text-white" to={appRoutes.vpnServerDetail(server.id)}>
+            <p className="text-sm font-medium text-text-primary">Per-peer traffic</p>
+            <Link className="text-sm text-primary transition hover:text-text-primary" to={appRoutes.vpnServerDetail(server.id)}>
               Show all peers →
             </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-brand-500/15 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <tr className="border-b border-background-border text-xs uppercase tracking-[0.18em] text-text-muted">
                   <th className="px-3 py-3 font-medium">Peer reference</th>
                   <th className="px-3 py-3 font-medium">RX</th>
                   <th className="px-3 py-3 font-medium">TX</th>
@@ -57,11 +57,11 @@ export function VpnServerTrafficPanel({ server, trafficDetail }: { server: VpnSe
               </thead>
               <tbody>
                 {trafficDetail.trafficByPeer.slice(0, 10).map((peer) => (
-                  <tr key={peer.peerId} className="border-b border-brand-500/10 text-slate-200 last:border-b-0">
-                    <td className="px-3 py-3 font-medium text-slate-100">{peer.reference}</td>
+                  <tr key={peer.peerId} className="border-b border-primary/15 text-text-primary last:border-b-0">
+                    <td className="px-3 py-3 font-medium text-text-primary">{peer.reference}</td>
                     <td className="px-3 py-3">{formatBytes(peer.transferRx)}</td>
                     <td className="px-3 py-3">{formatBytes(peer.transferTx)}</td>
-                    <td className="px-3 py-3 text-slate-400">{peer.lastHandshake ? dayjs(peer.lastHandshake).fromNow() : "Never"}</td>
+                    <td className="px-3 py-3 text-text-secondary">{peer.lastHandshake ? dayjs(peer.lastHandshake).fromNow() : "Never"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -75,9 +75,9 @@ export function VpnServerTrafficPanel({ server, trafficDetail }: { server: VpnSe
 
 function MetricCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-3 text-sm text-slate-100">{value}</p>
+    <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{label}</p>
+      <p className="mt-3 text-sm text-text-primary">{value}</p>
     </div>
   );
 }
@@ -85,12 +85,12 @@ function MetricCell({ label, value }: { label: string; value: string }) {
 function UtilizationCell({ label, value }: { label: string; value: number | null }) {
   const tone = value == null ? "neutral" : value >= 90 ? "danger" : value >= 70 ? "warning" : "success";
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+    <div className="rounded-2xl border border-background-border bg-background-panel p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+        <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{label}</p>
         <Badge tone={tone}>{value != null ? `${Math.round(value)}%` : "—"}</Badge>
       </div>
-      <p className="mt-3 text-sm text-slate-100">{value != null ? `${Math.round(value)}%` : "Unavailable"}</p>
+      <p className="mt-3 text-sm text-text-primary">{value != null ? `${Math.round(value)}%` : "Unavailable"}</p>
     </div>
   );
 }

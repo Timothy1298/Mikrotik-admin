@@ -11,7 +11,7 @@ export function PaymentDetailsModal({ open, payment, onClose }: { open: boolean;
     <Modal open={open} title={payment.transactionId} description={payment.description} onClose={onClose}>
       <Card>
         <CardHeader><div><CardTitle>Payment details</CardTitle><CardDescription>Payment status, timestamps, and failure context.</CardDescription></div></CardHeader>
-        <div className="space-y-3 text-sm text-slate-200">
+        <div className="space-y-3 text-sm text-text-primary">
           <div className="flex items-center justify-between"><span>Account</span><span>{payment.account?.name || "Unknown"}</span></div>
           <div className="flex items-center justify-between"><span>Amount</span><span>{formatCurrency(payment.amount, payment.currency || "USD")}</span></div>
           <div className="flex items-center justify-between"><span>Status</span><PaymentStatusBadge status={payment.status} /></div>

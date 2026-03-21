@@ -304,15 +304,15 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       return (
         <div className="grid gap-3">
           {diagnosticsQuery.data.issues.map((issue) => (
-            <button key={`${issue.code}-${issue.resourceId}`} type="button" onClick={() => openDetail({ kind: "diagnostic", item: issue })} className={cn("rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]", issue.severity === "critical" ? "border-l-4 border-l-danger" : issue.severity === "high" ? "border-l-4 border-l-warning" : issue.severity === "medium" ? "border-l-4 border-l-brand-400" : "")}>
+            <button key={`${issue.code}-${issue.resourceId}`} type="button" onClick={() => openDetail({ kind: "diagnostic", item: issue })} className={cn("rounded-2xl border border-background-border bg-background-panel p-4 text-left transition hover:border-primary/40 hover:bg-primary/10", issue.severity === "critical" ? "border-l-4 border-l-danger" : issue.severity === "high" ? "border-l-4 border-l-primary" : issue.severity === "medium" ? "border-l-4 border-l-brand-400" : "")}>
               <div className="flex items-center justify-between gap-3">
-                <p className="font-medium text-slate-100">{issue.resourceName}</p>
+                <p className="font-medium text-text-primary">{issue.resourceName}</p>
                 <div className="flex items-center gap-2">
                   <Badge tone="info">{issue.resourceType}</Badge>
                   <IncidentSeverityBadge severity={issue.severity} />
                 </div>
               </div>
-              <p className="mt-2 text-sm text-slate-400">{issue.message}</p>
+              <p className="mt-2 text-sm text-text-secondary">{issue.message}</p>
             </button>
           ))}
         </div>
@@ -324,21 +324,21 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
     return (
       <div className="grid gap-3">
         {(activityQuery.data?.items || []).map((item) => (
-          <button key={item.id} type="button" onClick={() => openDetail({ kind: "activity", item })} className={cn("rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-left transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]", item.severity === "critical" || item.severity === "high" ? "border-l-2 border-l-danger" : item.severity === "medium" ? "border-l-2 border-l-warning" : "")}>
+          <button key={item.id} type="button" onClick={() => openDetail({ kind: "activity", item })} className={cn("rounded-2xl border border-background-border bg-background-panel p-4 text-left transition hover:border-primary/40 hover:bg-primary/10", item.severity === "critical" || item.severity === "high" ? "border-l-2 border-l-danger" : item.severity === "medium" ? "border-l-2 border-l-primary" : "")}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
-                <span className="icon-block-primary rounded-2xl p-2 text-slate-100">
+                <span className="icon-block-primary rounded-2xl p-2 text-text-primary">
                   {item.source === "admin" ? <UserCog className="h-4 w-4" /> : item.source === "router" ? <Router className="h-4 w-4" /> : item.source === "incident" ? <AlertTriangle className="h-4 w-4" /> : item.source === "support" ? <LifeBuoy className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
                 </span>
                 <div>
-                  <p className="font-medium text-slate-100">{item.summary}</p>
+                  <p className="font-medium text-text-primary">{item.summary}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Badge tone="info">{item.source}</Badge>
-                    <span className="text-sm text-slate-400">{item.type.replace(/_/g, " ")}</span>
+                    <span className="text-sm text-text-secondary">{item.type.replace(/_/g, " ")}</span>
                   </div>
                 </div>
               </div>
-              <span className="font-mono text-xs text-slate-500">{dayjs(item.timestamp).fromNow()}</span>
+              <span className="font-mono text-xs text-text-muted">{dayjs(item.timestamp).fromNow()}</span>
             </div>
           </button>
         ))}
@@ -363,10 +363,10 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       <Card>
         <DataToolbar>
           <div className="flex items-center gap-3">
-            <div className="icon-block-primary rounded-2xl p-2 text-slate-100"><Icon className="h-4 w-4" /></div>
+            <div className="icon-block-primary rounded-2xl p-2 text-text-primary"><Icon className="h-4 w-4" /></div>
             <div>
-              <p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p>
-              <p className="font-mono text-xs text-slate-500">{sectionMeta.description}</p>
+              <p className="text-sm font-medium text-text-primary">{sectionMeta.title}</p>
+              <p className="font-mono text-xs text-text-muted">{sectionMeta.description}</p>
             </div>
           </div>
           <RefreshButton loading={routerSummaryQuery.isFetching || vpnSummaryQuery.isFetching || peerSummaryQuery.isFetching || trafficSummaryQuery.isFetching || customerImpactQuery.isFetching || provisioningSummaryQuery.isFetching || incidentsQuery.isFetching || diagnosticsQuery.isFetching || activityQuery.isFetching} onClick={() => {

@@ -38,7 +38,7 @@ export function UserActionDialog({
         onChange={(event) => setReason(event.target.value)}
         placeholder={reasonPlaceholder}
       />
-      <p className="text-sm text-slate-500">{requireReason ? 'Reason is required for this action.' : 'Optional but recommended for audit clarity.'}</p>
+      <p className="text-sm text-text-muted">{requireReason ? 'Reason is required for this action.' : 'Optional but recommended for audit clarity.'}</p>
       <div className="flex justify-end gap-3">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button

@@ -22,9 +22,9 @@ export function ResellersPage() {
       />
       <Card>
         <div className="space-y-3 p-8 text-center">
-          <Users2 className="mx-auto h-12 w-12 text-slate-600" />
-          <p className="text-lg font-medium text-slate-200">Reseller Management</p>
-          <p className="mx-auto max-w-md text-sm text-slate-400">
+          <Users2 className="mx-auto h-12 w-12 text-text-muted" />
+          <p className="text-lg font-medium text-text-primary">Reseller Management</p>
+          <p className="mx-auto max-w-md text-sm text-text-secondary">
             Reseller account management, plan pool allocation, price markup configuration, and commission settlement are planned for a future release. This section will allow ISP franchise operators and sub-distributors to manage their own subscriber pools independently.
           </p>
           <div>

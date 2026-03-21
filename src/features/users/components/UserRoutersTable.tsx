@@ -42,7 +42,7 @@ export function UserRoutersTable({ user, onAddRouter }: { user: UserDetail; onAd
       {routersQuery.isError ? <InlineError message="Router data could not be refreshed. Showing the last loaded account snapshot." /> : null}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="font-mono text-slate-500">
+          <thead className="font-mono text-text-muted">
             <tr>
               <th className="pb-3">Router</th><th className="pb-3">Status</th><th className="pb-3">VPN IP</th><th className="pb-3">Ports</th><th className="pb-3">Last seen</th><th className="pb-3">Transfer</th>
             </tr>
@@ -50,12 +50,12 @@ export function UserRoutersTable({ user, onAddRouter }: { user: UserDetail; onAd
           <tbody className="divide-y divide-brand-500/15">
             {routers.map((router) => (
               <tr key={router.id}>
-                <td className="py-4"><div><Link className="font-medium text-brand-100 hover:underline" to={appRoutes.routerDetail(router.id)}>{router.name}</Link><p className="font-mono text-xs text-slate-500">{formatDateTime(router.createdAt)}</p></div></td>
+                <td className="py-4"><div><Link className="font-medium text-primary hover:underline" to={appRoutes.routerDetail(router.id)}>{router.name}</Link><p className="font-mono text-xs text-text-muted">{formatDateTime(router.createdAt)}</p></div></td>
                 <td className="py-4"><UserStatusBadge status={router.status} /></td>
-                <td className="py-4 font-mono text-slate-300">{router.vpnIp}</td>
-                <td className="py-4 font-mono text-slate-300">W {router.ports.winbox} / S {router.ports.ssh} / A {router.ports.api}</td>
-                <td className="py-4 font-mono text-slate-300">{formatDateTime(router.lastSeen)}</td>
-                <td className="py-4 font-mono text-slate-300">↓ {formatBytes(router.transferRx)} / ↑ {formatBytes(router.transferTx)}</td>
+                <td className="py-4 font-mono text-text-secondary">{router.vpnIp}</td>
+                <td className="py-4 font-mono text-text-secondary">W {router.ports.winbox} / S {router.ports.ssh} / A {router.ports.api}</td>
+                <td className="py-4 font-mono text-text-secondary">{formatDateTime(router.lastSeen)}</td>
+                <td className="py-4 font-mono text-text-secondary">↓ {formatBytes(router.transferRx)} / ↑ {formatBytes(router.transferTx)}</td>
               </tr>
             ))}
           </tbody>

@@ -79,10 +79,10 @@ export function MonitoringOverviewPage() {
             </div>
           </CardHeader>
           <div className="grid gap-3">
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.monitoringIncidentsAlerts}>Open incidents <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.monitoringRouterHealth}>Router health <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.monitoringVpnServerHealth}>VPN server health <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.monitoringDiagnostics}>Diagnostics <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.monitoringIncidentsAlerts}>Open incidents <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.monitoringRouterHealth}>Router health <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.monitoringVpnServerHealth}>VPN server health <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.monitoringDiagnostics}>Diagnostics <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </Card>
       </div>
@@ -97,12 +97,12 @@ export function MonitoringOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {incidentsQuery.isPending ? <SectionLoader /> : incidentsQuery.isError ? <ErrorState title="Unable to load incidents" description="Retry after confirming the incident endpoint is available." onAction={() => void incidentsQuery.refetch()} /> : (incidentsQuery.data?.items || []).length ? incidentsQuery.data?.items.map((incident) => (
-              <div key={incident.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={incident.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{incident.title}</p>
-                    <p className="text-sm text-slate-400">{incident.type.replace(/_/g, " ")} • {incident.status}</p>
-                    <p className="mt-1 font-mono text-xs text-slate-500">{dayjs(incident.firstDetectedAt).fromNow()}</p>
+                    <p className="font-medium text-text-primary">{incident.title}</p>
+                    <p className="text-sm text-text-secondary">{incident.type.replace(/_/g, " ")} • {incident.status}</p>
+                    <p className="mt-1 font-mono text-xs text-text-muted">{dayjs(incident.firstDetectedAt).fromNow()}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <IncidentSeverityBadge severity={incident.severity} />
@@ -123,13 +123,13 @@ export function MonitoringOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {customersQuery.isPending ? <SectionLoader /> : customersQuery.isError ? <ErrorState title="Unable to load affected customers" description="Retry after confirming customer impact data is available." onAction={() => void customersQuery.refetch()} /> : (customersQuery.data?.items || []).length ? customersQuery.data?.items.map((item) => (
-              <div key={item.user.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={item.user.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{item.user.name || item.user.email}</p>
-                    <p className="text-sm text-slate-400">{item.offlineRouters} offline • {item.unhealthyRouters} unhealthy</p>
+                    <p className="font-medium text-text-primary">{item.user.name || item.user.email}</p>
+                    <p className="text-sm text-text-secondary">{item.offlineRouters} offline • {item.unhealthyRouters} unhealthy</p>
                   </div>
-                  <Users className="h-4 w-4 text-brand-100" />
+                  <Users className="h-4 w-4 text-primary" />
                 </div>
               </div>
             )) : <EmptyState icon={Users} title="No affected customers" description="No customers are currently flagged as impacted by live issues." />}

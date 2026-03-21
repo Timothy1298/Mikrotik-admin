@@ -78,21 +78,21 @@ export function SupportOverviewPage() {
         <Card>
           <CardHeader><div><CardTitle>Queue summary</CardTitle><CardDescription>Core support backlog signals from the real admin support overview.</CardDescription></div></CardHeader>
           <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Resolved: {overview.resolvedTickets}</div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Closed: {overview.closedTickets}</div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Linked incidents: {overview.ticketsLinkedToIncidents}</div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Billing-linked: {overview.ticketsLinkedToBillingIssues}</div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Router-linked: {overview.ticketsLinkedToRouterIssues}</div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">SLA breached: {overview.slaBreachedTickets}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Resolved: {overview.resolvedTickets}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Closed: {overview.closedTickets}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Linked incidents: {overview.ticketsLinkedToIncidents}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Billing-linked: {overview.ticketsLinkedToBillingIssues}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Router-linked: {overview.ticketsLinkedToRouterIssues}</div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">SLA breached: {overview.slaBreachedTickets}</div>
           </div>
         </Card>
         <Card>
           <CardHeader><div><CardTitle>Quick jumps</CardTitle><CardDescription>Open the highest-signal support queues directly from overview.</CardDescription></div></CardHeader>
           <div className="grid gap-3">
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.supportTickets}>All Tickets <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.supportUnassigned}>Unassigned Queue <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.supportEscalated}>Escalated <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.supportStale}>Stale / Aging <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.supportTickets}>All Tickets <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.supportUnassigned}>Unassigned Queue <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.supportEscalated}>Escalated <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.supportStale}>Stale / Aging <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </Card>
       </div>
@@ -106,9 +106,9 @@ export function SupportOverviewPage() {
           <CardHeader><div><CardTitle>Assignee workload</CardTitle><CardDescription>Current open ticket burden by support operator.</CardDescription></div></CardHeader>
           <div className="space-y-3">
             {workloadQuery.isPending ? <SectionLoader /> : workloadQuery.isError ? <ErrorState title="Unable to load support workload" description="Retry after confirming the assignee workload endpoint is available." onAction={() => void workloadQuery.refetch()} /> : (workloadQuery.data || []).length ? workloadQuery.data?.slice(0, 6).map((item) => (
-              <div key={item.assignee?.id || "unassigned"} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <p className="font-medium text-slate-100">{item.assignee?.name || "Unassigned"}</p>
-                <p className="mt-1 text-sm text-slate-400">{item.openTickets} open · {item.escalatedTickets} escalated · {item.staleTickets} stale</p>
+              <div key={item.assignee?.id || "unassigned"} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="font-medium text-text-primary">{item.assignee?.name || "Unassigned"}</p>
+                <p className="mt-1 text-sm text-text-secondary">{item.openTickets} open · {item.escalatedTickets} escalated · {item.staleTickets} stale</p>
               </div>
             )) : <EmptyState icon={UserCog} title="No workload data" description="No assignee workload is currently available." />}
           </div>
@@ -120,9 +120,9 @@ export function SupportOverviewPage() {
           <CardHeader><div><CardTitle>Stale tickets</CardTitle><CardDescription>Support tickets that have gone idle and need follow-up.</CardDescription></div></CardHeader>
           <div className="space-y-3">
             {staleQuery.isPending ? <SectionLoader /> : staleQuery.isError ? <ErrorState title="Unable to load stale tickets" description="Retry after confirming the stale queue endpoint is available." onAction={() => void staleQuery.refetch()} /> : (staleQuery.data?.items || []).length ? staleQuery.data?.items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <p className="font-medium text-slate-100">{item.subject}</p>
-                <p className="mt-1 text-sm text-slate-400">{item.customer?.email || "No customer"} · idle {item.age.idleHours}h</p>
+              <div key={item.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="font-medium text-text-primary">{item.subject}</p>
+                <p className="mt-1 text-sm text-text-secondary">{item.customer?.email || "No customer"} · idle {item.age.idleHours}h</p>
               </div>
             )) : <EmptyState icon={Clock3} title="No stale tickets" description="There are no stale tickets in the current queue." />}
           </div>
@@ -131,9 +131,9 @@ export function SupportOverviewPage() {
           <CardHeader><div><CardTitle>Escalated tickets</CardTitle><CardDescription>Escalated support issues with higher operational visibility.</CardDescription></div></CardHeader>
           <div className="space-y-3">
             {escalatedQuery.isPending ? <SectionLoader /> : escalatedQuery.isError ? <ErrorState title="Unable to load escalated tickets" description="Retry after confirming the escalated queue endpoint is available." onAction={() => void escalatedQuery.refetch()} /> : (escalatedQuery.data?.items || []).length ? escalatedQuery.data?.items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-                <p className="font-medium text-slate-100">{item.subject}</p>
-                <p className="mt-1 text-sm text-slate-400">{item.customer?.email || "No customer"} · {item.priority} priority</p>
+              <div key={item.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="font-medium text-text-primary">{item.subject}</p>
+                <p className="mt-1 text-sm text-text-secondary">{item.customer?.email || "No customer"} · {item.priority} priority</p>
               </div>
             )) : <EmptyState icon={LifeBuoy} title="No escalated tickets" description="There are no escalated tickets in the current queue." />}
           </div>

@@ -14,10 +14,10 @@ export function VpnServerHealthPanel({ server }: { server: VpnServerDetail }) {
         </div>
       </CardHeader>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Health</p><div className="mt-3"><VpnServerHealthBadge status={server.health.status} /></div></div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Capacity</p><div className="mt-3"><VpnServerLoadBadge overloaded={server.loadCapacity.overloaded} nearCapacity={server.loadCapacity.nearCapacity} /></div></div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Last heartbeat</p><p className="mt-3 text-sm text-slate-100">{formatDateTime(server.lastHeartbeatAt)}</p></div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Telemetry</p><p className="mt-3 text-sm text-slate-100">{server.health.staleTelemetry ? "stale telemetry" : "current telemetry"}</p></div>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Health</p><div className="mt-3"><VpnServerHealthBadge status={server.health.status} /></div></div>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Capacity</p><div className="mt-3"><VpnServerLoadBadge overloaded={server.loadCapacity.overloaded} nearCapacity={server.loadCapacity.nearCapacity} /></div></div>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Last heartbeat</p><p className="mt-3 text-sm text-text-primary">{formatDateTime(server.lastHeartbeatAt)}</p></div>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Telemetry</p><p className="mt-3 text-sm text-text-primary">{server.health.staleTelemetry ? "stale telemetry" : "current telemetry"}</p></div>
       </div>
       {server.recentIssues.length ? <div className="mt-4 flex flex-wrap gap-2">{server.recentIssues.map((issue) => <span key={issue.code} className="rounded-xl border border-danger/20 bg-danger/10 px-3 py-1 text-xs text-danger">{issue.message}</span>)}</div> : null}
     </Card>

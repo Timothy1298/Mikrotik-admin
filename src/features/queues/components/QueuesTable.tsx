@@ -31,15 +31,15 @@ export function QueuesTable({
       header: "Name",
       cell: ({ row }) => (
         <div className="space-y-1">
-          <p className="font-medium text-slate-100">{row.original.name}</p>
-          <p className="text-xs text-slate-500">{row.original.queueType === "pcq" ? "PCQ-backed queue" : "Simple queue"}</p>
+          <p className="font-medium text-text-primary">{row.original.name}</p>
+          <p className="text-xs text-text-muted">{row.original.queueType === "pcq" ? "PCQ-backed queue" : "Simple queue"}</p>
         </div>
       ),
     },
-    { header: "Target IP", cell: ({ row }) => <span className="font-mono text-sm text-slate-400">{row.original.target}</span> },
-    { header: "Download Limit", cell: ({ row }) => <span className="text-sm text-slate-200">{formatLimit(row.original.maxDownloadKbps)}</span> },
-    { header: "Upload Limit", cell: ({ row }) => <span className="text-sm text-slate-200">{formatLimit(row.original.maxUploadKbps)}</span> },
-    { header: "Comment", cell: ({ row }) => <span className="text-sm text-slate-400">{row.original.comment || "No comment"}</span> },
+    { header: "Target IP", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.target}</span> },
+    { header: "Download Limit", cell: ({ row }) => <span className="text-sm text-text-primary">{formatLimit(row.original.maxDownloadKbps)}</span> },
+    { header: "Upload Limit", cell: ({ row }) => <span className="text-sm text-text-primary">{formatLimit(row.original.maxUploadKbps)}</span> },
+    { header: "Comment", cell: ({ row }) => <span className="text-sm text-text-secondary">{row.original.comment || "No comment"}</span> },
     {
       header: "Actions",
       cell: ({ row }) => (

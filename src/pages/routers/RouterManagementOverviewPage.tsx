@@ -100,10 +100,10 @@ export function RouterManagementOverviewPage() {
             </div>
           </CardHeader>
           <div className="grid gap-3">
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.routersOffline}>Offline Routers <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.routersProvisioningQueue}>Provisioning Queue <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.routersUnhealthyTunnels}>Unhealthy Tunnels <ArrowRight className="h-4 w-4" /></Link>
-            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-sm font-medium text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-100" to={appRoutes.routersDiagnosticsReview}>Diagnostics & Review <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.routersOffline}>Offline Routers <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.routersProvisioningQueue}>Provisioning Queue <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.routersUnhealthyTunnels}>Unhealthy Tunnels <ArrowRight className="h-4 w-4" /></Link>
+            <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.routersDiagnosticsReview}>Diagnostics & Review <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </Card>
       </div>
@@ -118,13 +118,13 @@ export function RouterManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {recentRoutersQuery.isPending ? <SectionLoader /> : recentRoutersQuery.isError ? <ErrorState title="Unable to load recent routers" description="Retry after confirming the admin routers list endpoint is available." onAction={() => void recentRoutersQuery.refetch()} /> : (recentRoutersQuery.data?.items || []).length ? recentRoutersQuery.data?.items.map((router) => (
-              <div key={router.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={router.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{router.name}</p>
-                    <p className="text-sm text-slate-400">{router.customer?.name || "No customer"} • {router.vpnIp}</p>
+                    <p className="font-medium text-text-primary">{router.name}</p>
+                    <p className="text-sm text-text-secondary">{router.customer?.name || "No customer"} • {router.vpnIp}</p>
                   </div>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(router.createdAt)}</span>
+                  <span className="font-mono text-xs text-text-muted">{formatDateTime(router.createdAt)}</span>
                 </div>
               </div>
             )) : <EmptyState icon={Router} title="No recent routers" description="Recently created routers will appear here as provisioning continues." />}
@@ -140,13 +140,13 @@ export function RouterManagementOverviewPage() {
           </CardHeader>
           <div className="space-y-3">
             {attentionRoutersQuery.isPending ? <SectionLoader /> : attentionRoutersQuery.isError ? <ErrorState title="Unable to load attention routers" description="Retry after confirming the router attention query is available." onAction={() => void attentionRoutersQuery.refetch()} /> : (attentionRoutersQuery.data?.items || []).length ? attentionRoutersQuery.data?.items.map((router) => (
-              <div key={router.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={router.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-slate-100">{router.name}</p>
-                    <p className="text-sm text-slate-400">{router.healthSummary.state} • {router.serverNode}</p>
+                    <p className="font-medium text-text-primary">{router.name}</p>
+                    <p className="text-sm text-text-secondary">{router.healthSummary.state} • {router.serverNode}</p>
                   </div>
-                  <span className="font-mono text-xs text-slate-500">{formatDateTime(router.lastSeen)}</span>
+                  <span className="font-mono text-xs text-text-muted">{formatDateTime(router.lastSeen)}</span>
                 </div>
               </div>
             )) : <EmptyState icon={AlertTriangle} title="Watchlist is clear" description="No unhealthy or flagged routers currently require urgent review." />}

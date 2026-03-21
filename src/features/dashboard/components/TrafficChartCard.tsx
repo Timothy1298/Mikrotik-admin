@@ -38,7 +38,7 @@ export function TrafficChartCard({ routerId, title, hours = 24 }: TrafficChartCa
     <AnalyticsChartCard
       title={title}
       description={`Router CPU load and aggregate interface traffic for the last ${hours} hour${hours === 1 ? "" : "s"}.`}
-      action={<div className="text-xs text-slate-400">Live telemetry</div>}
+      action={<div className="text-xs text-text-secondary">Live telemetry</div>}
     >
       {metricsQuery.isPending ? (
         <div className="space-y-3">

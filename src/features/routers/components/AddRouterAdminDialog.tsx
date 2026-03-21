@@ -119,11 +119,11 @@ function ClaimProvisioningPanel({
 
   return (
     <div className="space-y-5">
-      <Card className="space-y-4 border-brand-500/25">
+      <Card className="space-y-4 border-primary/30">
         <CardHeader>
           <div>
-            <CardTitle className="flex items-center gap-2 text-slate-100">
-              <ShieldCheck className="h-5 w-5 text-brand-100" />
+            <CardTitle className="flex items-center gap-2 text-text-primary">
+              <ShieldCheck className="h-5 w-5 text-primary" />
               Claim-based onboarding
             </CardTitle>
             <CardDescription>
@@ -191,30 +191,30 @@ function ClaimProvisioningPanel({
       </Card>
 
       {claimState ? (
-        <Card className="space-y-4 border-brand-500/20 bg-[rgba(37,99,235,0.08)]">
+        <Card className="space-y-4 border-primary/20 bg-primary/10">
           <CardHeader>
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-100">
-                <CheckCircle2 className="h-5 w-5 text-brand-100" />
+              <CardTitle className="flex items-center gap-2 text-text-primary">
+                <CheckCircle2 className="h-5 w-5 text-primary" />
                 Claim ready
               </CardTitle>
               <CardDescription>Run the script below on the MikroTik router. Once it calls home, the claim will move to detected status and can be adopted.</CardDescription>
             </div>
           </CardHeader>
           <div className="space-y-4">
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Claim token</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Claim token</p>
                 <CopyButton value={claimState.token} />
               </div>
-              <p className="mt-2 font-mono text-sm text-slate-100 break-all">{claimState.token}</p>
+              <p className="mt-2 font-mono text-sm text-text-primary break-all">{claimState.token}</p>
             </div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Bootstrap script</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Bootstrap script</p>
                 <CopyButton value={claimState.bootstrapScript} />
               </div>
-              <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-black/20 p-3 text-xs text-slate-200">{claimState.bootstrapScript}</pre>
+              <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-background-main/60 p-3 text-xs text-text-primary">{claimState.bootstrapScript}</pre>
             </div>
           </div>
         </Card>
@@ -233,22 +233,22 @@ function ClaimProvisioningPanel({
         {claimsQuery.isPending ? <SectionLoader /> : claimsQuery.isError ? <InlineError message="Unable to load router claims." /> : (
           <div className="space-y-3">
             {visibleClaims.length ? visibleClaims.map((claim) => (
-              <div key={claim.id} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+              <div key={claim.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium text-slate-100">{claim.requestedName}</p>
+                      <p className="font-medium text-text-primary">{claim.requestedName}</p>
                       <Badge tone={statusTone(claim.status) as "success" | "info" | "danger" | "warning"}>{claim.status}</Badge>
                       {claim.detected.matchedExpectedAddress === true ? <Badge tone="success">IP match</Badge> : null}
                       {claim.detected.matchedExpectedAddress === false ? <Badge tone="warning">IP mismatch</Badge> : null}
                     </div>
-                    <p className="text-sm text-slate-400">{claim.user?.name || "Unknown subscriber"} • {claim.user?.email || "No email"} • {claim.serverNode}</p>
-                    <div className="flex flex-wrap gap-4 text-xs text-slate-500">
+                    <p className="text-sm text-text-secondary">{claim.user?.name || "Unknown subscriber"} • {claim.user?.email || "No email"} • {claim.serverNode}</p>
+                    <div className="flex flex-wrap gap-4 text-xs text-text-muted">
                       <span>Created {formatDateTime(claim.createdAt)}</span>
                       <span>Expires {formatDateTime(claim.expiresAt)}</span>
                       {claim.claimedAt ? <span>Detected {formatDateTime(claim.claimedAt)}</span> : null}
                     </div>
-                    <div className="flex flex-wrap gap-4 text-xs text-slate-400">
+                    <div className="flex flex-wrap gap-4 text-xs text-text-secondary">
                       <span className="inline-flex items-center gap-1"><Wifi className="h-3.5 w-3.5" /> Source IP: {claim.detected.sourceIp || "waiting for callback"}</span>
                       <span>Identity: {claim.detected.identity || "not reported"}</span>
                       {claim.expectedAddressHint ? <span>Expected IP: {claim.expectedAddressHint}</span> : null}
@@ -275,7 +275,7 @@ function ClaimProvisioningPanel({
                 </div>
               </div>
             )) : (
-              <div className="rounded-2xl border border-dashed border-brand-500/15 p-6 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-background-border p-6 text-sm text-text-muted">
                 No onboarding claims yet. Generate a claim above to start the secure adoption flow.
               </div>
             )}
@@ -374,16 +374,16 @@ function DirectProvisioningPanel({
         {inlineError ? <InlineError message={inlineError} /> : null}
 
         {createRouterMutation.data ? (
-          <div className="rounded-2xl border border-brand-500/20 bg-[rgba(37,99,235,0.08)] p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-brand-100">
+          <div className="rounded-2xl border border-primary/20 bg-primary/10 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary">
               <CheckCircle2 className="h-4 w-4" />
               <span>Router provisioned</span>
             </div>
-            <div className="mt-3 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
-              <p>VPN IP: <span className="font-mono text-slate-100">{createRouterMutation.data.vpnIp}</span></p>
-              <p>Status: <span className="text-slate-100">{createRouterMutation.data.status}</span></p>
-              <p>Winbox: <span className="font-mono text-slate-100">{createRouterMutation.data.ports.winbox}</span></p>
-              <p>SSH/API: <span className="font-mono text-slate-100">{createRouterMutation.data.ports.ssh} / {createRouterMutation.data.ports.api}</span></p>
+            <div className="mt-3 grid gap-3 text-sm text-text-secondary md:grid-cols-2">
+              <p>VPN IP: <span className="font-mono text-text-primary">{createRouterMutation.data.vpnIp}</span></p>
+              <p>Status: <span className="text-text-primary">{createRouterMutation.data.status}</span></p>
+              <p>Winbox: <span className="font-mono text-text-primary">{createRouterMutation.data.ports.winbox}</span></p>
+              <p>SSH/API: <span className="font-mono text-text-primary">{createRouterMutation.data.ports.ssh} / {createRouterMutation.data.ports.api}</span></p>
             </div>
           </div>
         ) : null}

@@ -40,13 +40,13 @@ export function SubscriptionsTable({
   onAddFlag: (row: BillingSubscriptionRow) => void;
 }) {
   const columns = useMemo<ColumnDef<BillingSubscriptionRow>[]>(() => [
-    { header: "Account", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.account?.name || "Unknown"}</p><p className="text-xs text-slate-500">{row.original.account?.email}</p></div> },
-    { header: "Plan", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.planName}</span> },
+    { header: "Account", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.account?.name || "Unknown"}</p><p className="text-xs text-text-muted">{row.original.account?.email}</p></div> },
+    { header: "Plan", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.planName}</span> },
     { header: "Subscription", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.subscriptionStatus} /> },
     { header: "Trial", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.trialStatus} /> },
-    { header: "Billable routers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.billableRouterCount}</span> },
-    { header: "Recurring", cell: ({ row }) => <span className="text-sm text-slate-200">{formatCurrency(row.original.priceSummary, row.original.account?.currency || "USD")}</span> },
-    { header: "Next billing", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.nextBillingDate)}</span> },
+    { header: "Billable routers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.billableRouterCount}</span> },
+    { header: "Recurring", cell: ({ row }) => <span className="text-sm text-text-primary">{formatCurrency(row.original.priceSummary, row.original.account?.currency || "USD")}</span> },
+    { header: "Next billing", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.nextBillingDate)}</span> },
     { header: "Risk", cell: ({ row }) => <BillingRiskBadge overdue={row.original.overdue} /> },
     {
       header: "Actions",

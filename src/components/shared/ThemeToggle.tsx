@@ -11,9 +11,15 @@ export function ThemeToggle() {
   ] as const;
 
   return (
-    <div className="inline-flex rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-1">
+    <div className="inline-flex rounded-xl border border-background-border bg-background-panel p-1">
       {modes.map(({ value, icon: Icon }) => (
-        <Button key={value} variant={theme === value ? "primary" : "ghost"} size="icon" className="h-9 w-9" onClick={() => setTheme(value)}>
+        <Button
+          key={value}
+          variant={theme === value ? "primary" : "ghost"}
+          size="icon"
+          className="h-9 w-9"
+          onClick={() => setTheme(value)}
+        >
           <Icon className="h-4 w-4" />
         </Button>
       ))}

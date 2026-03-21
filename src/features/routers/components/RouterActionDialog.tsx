@@ -37,7 +37,7 @@ export function RouterActionDialog({
   return (
     <Modal open={open} title={title} description={description} onClose={onClose}>
       <Textarea label={reasonLabel} value={reason} onChange={(event) => setReason(event.target.value)} placeholder={reasonPlaceholder} />
-      <p className="text-sm text-slate-500">{requireReason ? "Reason is required for this router action." : "Optional but recommended for audit clarity."}</p>
+      <p className="text-sm text-text-muted">{requireReason ? "Reason is required for this router action." : "Optional but recommended for audit clarity."}</p>
       <div className="flex justify-end gap-3">
         <Button variant="ghost" onClick={onClose}>Cancel</Button>
         <Button variant={confirmVariant} isLoading={loading} disabled={requireReason && !reason.trim()} onClick={() => onConfirm(reason.trim())}>

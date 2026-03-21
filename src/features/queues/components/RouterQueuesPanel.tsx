@@ -38,30 +38,30 @@ export function RouterQueuesPanel({ routerId }: { routerId: string }) {
       </CardHeader>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Total queues</p>
-          <p className="mt-3 text-2xl font-semibold text-slate-100">{stats.total}</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Total queues</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{stats.total}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Active</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Active</p>
             <Wifi className="h-4 w-4 text-success" />
           </div>
-          <p className="mt-3 text-2xl font-semibold text-slate-100">{stats.active}</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{stats.active}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Total download</p>
-            <Gauge className="h-4 w-4 text-brand-100" />
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Total download</p>
+            <Gauge className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-3 text-lg font-semibold text-slate-100">{formatLimit(stats.totalDownloadKbps)}</p>
+          <p className="mt-3 text-lg font-semibold text-text-primary">{formatLimit(stats.totalDownloadKbps)}</p>
         </div>
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Total upload</p>
-            <Network className="h-4 w-4 text-brand-100" />
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Total upload</p>
+            <Network className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-3 text-lg font-semibold text-slate-100">{formatLimit(stats.totalUploadKbps)}</p>
+          <p className="mt-3 text-lg font-semibold text-text-primary">{formatLimit(stats.totalUploadKbps)}</p>
         </div>
       </div>
 

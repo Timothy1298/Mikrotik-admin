@@ -28,33 +28,27 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     ref,
   ) => {
     const [visible, setVisible] = useState(false);
-    const inputId = useMemo(
-      () => id ?? `password-${Math.random().toString(36).slice(2, 9)}`,
-      [id],
-    );
+    const inputId = useMemo(() => id ?? `password-${Math.random().toString(36).slice(2, 9)}`, [id]);
 
     return (
       <div className={cn("space-y-2", containerClassName)}>
         {label ? (
-          <label
-            htmlFor={inputId}
-            className="flex items-center gap-1 text-sm font-medium text-slate-200"
-          >
+          <label htmlFor={inputId} className="flex items-center gap-1 text-sm font-medium text-text-secondary">
             <span>{label}</span>
-            {required ? <span className="text-brand-100">*</span> : null}
+            {required ? <span className="text-primary">*</span> : null}
           </label>
         ) : null}
 
         <div
           className={cn(
-            "group flex h-12 items-center rounded-2xl border bg-[rgba(8,14,31,0.9)] px-3 transition",
+            "group flex h-11 items-center rounded-lg border bg-background-panel px-3 transition-colors",
             error
               ? "border-danger/30 focus-within:border-danger/30"
-              : "border-brand-500/15 focus-within:border-brand-500/35 hover:border-brand-500/25",
+              : "border-background-border focus-within:border-primary/50 hover:border-primary/30",
             disabled ? "opacity-60" : "",
           )}
         >
-          <LockKeyhole className="mr-3 h-4 w-4 text-slate-500 transition group-focus-within:text-brand-100" />
+          <LockKeyhole className="mr-3 h-4 w-4 text-text-muted transition group-focus-within:text-primary" />
           <input
             {...props}
             id={inputId}
@@ -62,14 +56,14 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             type={visible ? "text" : "password"}
             disabled={disabled}
             className={cn(
-              "h-full w-full bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-500",
+              "h-full w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted",
               className,
             )}
           />
           <button
             type="button"
             onClick={() => setVisible((state) => !state)}
-            className="ml-3 rounded-full border border-transparent p-1 text-slate-500 transition hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)] hover:text-slate-200"
+            className="ml-3 rounded-full border border-transparent p-1 text-text-muted transition hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary"
             aria-label={visible ? "Hide password" : "Show password"}
             tabIndex={-1}
           >
@@ -79,7 +73,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {!error && capsLockOn ? <p className="text-sm text-danger">Caps Lock is on</p> : null}
-        {!error && hint ? <p className="text-sm text-slate-500">{hint}</p> : null}
+        {!error && hint ? <p className="text-sm text-text-muted">{hint}</p> : null}
       </div>
     );
   },

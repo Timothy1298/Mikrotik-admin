@@ -7,14 +7,14 @@ import { formatDateTime } from "@/lib/formatters/date";
 
 export function VpnServerHealthTable({ rows, onOpen }: { rows: VpnServerRow[]; onOpen: (row: VpnServerRow) => void }) {
   const columns = useMemo<ColumnDef<VpnServerRow>[]>(() => [
-    { header: "Server", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.name}</p><p className="font-mono text-xs text-slate-500">{row.original.nodeId}</p></div> },
-    { header: "Region", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.region}</span> },
+    { header: "Server", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.name}</p><p className="font-mono text-xs text-text-muted">{row.original.nodeId}</p></div> },
+    { header: "Region", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.region}</span> },
     { header: "Health", cell: ({ row }) => <HealthStatusBadge status={row.original.healthSummary.status} /> },
     { header: "Status", cell: ({ row }) => <HealthStatusBadge status={row.original.status} /> },
     { header: "Maintenance", cell: ({ row }) => <HealthStatusBadge status={row.original.maintenanceMode ? "maintenance" : "active"} /> },
-    { header: "Routers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.routerCount}</span> },
-    { header: "Peers", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.activePeerCount}</span> },
-    { header: "Heartbeat", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastHeartbeatAt)}</span> },
+    { header: "Routers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.routerCount}</span> },
+    { header: "Peers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.activePeerCount}</span> },
+    { header: "Heartbeat", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastHeartbeatAt)}</span> },
   ], []);
 
   return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No VPN servers found" emptyDescription="No VPN servers matched the current monitoring filters." />;

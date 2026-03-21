@@ -13,7 +13,7 @@ export function AnalyticsChartCard({
 }) {
   return (
     <Card className="surface-card-3d overflow-hidden p-0">
-      <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+      <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
         <CardHeader className="mb-5 items-start gap-3">
           <div>
             <CardTitle>{title}</CardTitle>

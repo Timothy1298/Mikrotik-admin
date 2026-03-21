@@ -13,14 +13,19 @@ export function Switch({ checked, label, className, ...props }: SwitchProps) {
         type="button"
         className={cn(
           "relative h-7 w-12 rounded-full border transition",
-          checked ? "border-brand-500/35 bg-[linear-gradient(135deg,#2563eb_0%,#38bdf8_100%)]" : "border-brand-500/15 bg-[rgba(8,14,31,0.9)]",
+          checked ? "border-primary/40 bg-primary" : "border-background-border bg-background-panel",
           className,
         )}
         {...props}
       >
-        <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white transition", checked ? "left-6" : "left-1")} />
+        <span
+          className={cn(
+            "absolute top-1 h-5 w-5 rounded-full bg-text-primary transition",
+            checked ? "left-6" : "left-1",
+          )}
+        />
       </button>
-      {label ? <span className="text-sm text-slate-300">{label}</span> : null}
+      {label ? <span className="text-sm text-text-secondary">{label}</span> : null}
     </div>
   );
 }

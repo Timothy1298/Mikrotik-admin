@@ -27,7 +27,7 @@ export function RouterInterfacesPanel({ routerId }: { routerId: string }) {
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-brand-500/15 text-xs uppercase tracking-[0.18em] text-slate-500">
+              <tr className="border-b border-background-border text-xs uppercase tracking-[0.18em] text-text-muted">
                 <th className="px-3 py-3 font-medium">Name</th>
                 <th className="px-3 py-3 font-medium">Type</th>
                 <th className="px-3 py-3 font-medium">Running</th>
@@ -37,8 +37,8 @@ export function RouterInterfacesPanel({ routerId }: { routerId: string }) {
             </thead>
             <tbody>
               {interfaces.map((item) => (
-                <tr key={`${item.name}-${item.type}`} className="border-b border-brand-500/10 text-slate-200 last:border-b-0">
-                  <td className="px-3 py-3 font-medium text-slate-100">{item.name}</td>
+                <tr key={`${item.name}-${item.type}`} className="border-b border-primary/15 text-text-primary last:border-b-0">
+                  <td className="px-3 py-3 font-medium text-text-primary">{item.name}</td>
                   <td className="px-3 py-3">{item.type}</td>
                   <td className="px-3 py-3">
                     <span className="inline-flex items-center gap-2">
@@ -47,7 +47,7 @@ export function RouterInterfacesPanel({ routerId }: { routerId: string }) {
                     </span>
                   </td>
                   <td className="px-3 py-3">{item.disabled ? "Yes" : "No"}</td>
-                  <td className="px-3 py-3 text-slate-400">{item.comment || "—"}</td>
+                  <td className="px-3 py-3 text-text-secondary">{item.comment || "—"}</td>
                 </tr>
               ))}
             </tbody>

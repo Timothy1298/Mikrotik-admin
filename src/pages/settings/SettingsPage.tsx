@@ -66,10 +66,10 @@ const settingsViews = {
 
 function SummaryItem({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{label}</p>
-      <p className="mt-2 text-sm font-medium text-slate-100">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
+    <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">{label}</p>
+      <p className="mt-2 text-sm font-medium text-text-primary">{value}</p>
+      {hint ? <p className="mt-1 text-xs text-text-muted">{hint}</p> : null}
     </div>
   );
 }
@@ -325,12 +325,12 @@ export function SettingsPage() {
               </Badge>
             </CardHeader>
             {!isAdminAccount ? (
-              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+              <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm leading-6 text-text-secondary">
                 Authenticator-based two-factor authentication is restricted to admin console accounts. Non-admin users can continue using the standard account login flow.
               </div>
             ) : currentTwoFactorEnabled ? (
               <form className="space-y-4" onSubmit={handleDisableTwoFactor}>
-                <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm leading-6 text-text-secondary">
                   Two-factor authentication is active. You will be prompted for an authenticator code after entering your password.
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -353,19 +353,19 @@ export function SettingsPage() {
               </form>
             ) : twoFactorSetup ? (
               <div className="space-y-4">
-                <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm leading-6 text-text-secondary">
                   Scan the QR code below with your authenticator app. If scanning fails, use the manual entry key as the fallback.
                 </div>
                 <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-                  <div className="rounded-3xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+                  <div className="rounded-3xl border border-background-border bg-background-panel p-4">
                     {twoFactorQrCode ? (
                       <img
                         src={twoFactorQrCode}
                         alt="Authenticator app QR code"
-                        className="mx-auto h-auto w-full rounded-2xl border border-brand-500/15 bg-[#0b1220] p-3"
+                        className="mx-auto h-auto w-full rounded-2xl border border-background-border bg-[#0b1220] p-3"
                       />
                     ) : (
-                      <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-center text-sm text-slate-400">
+                      <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-center text-sm text-text-secondary">
                         QR generation is unavailable. Use the manual setup key instead.
                       </div>
                     )}
@@ -375,7 +375,7 @@ export function SettingsPage() {
                       <SummaryItem label="Issuer" value={twoFactorSetup.issuer} />
                       <SummaryItem label="Manual entry key" value={twoFactorSetup.manualEntryKey} />
                     </div>
-                    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm leading-6 text-slate-400">
+                    <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm leading-6 text-text-secondary">
                       <p>Recommended: open Google Authenticator, Microsoft Authenticator, Authy, or 1Password and scan this QR code.</p>
                       <p className="mt-2">Fallback: choose manual setup in the app and paste the secret key if scanning does not work.</p>
                     </div>
@@ -411,7 +411,7 @@ export function SettingsPage() {
               </div>
             ) : (
               <form className="space-y-4" onSubmit={handleStartTwoFactorSetup}>
-                <p className="text-sm leading-6 text-slate-400">
+                <p className="text-sm leading-6 text-text-secondary">
                   Use an authenticator app such as Google Authenticator, Microsoft Authenticator, Authy, or 1Password. You can disable 2FA later from this same page using your password and a valid authenticator code.
                 </p>
                 <PasswordInput
@@ -490,7 +490,7 @@ export function SettingsPage() {
               <SummaryItem label="Server region" value={platformQuery.data.serverRegion} />
               <SummaryItem label="App version" value={platformQuery.data.appVersion} />
             </div>
-            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4 text-sm text-slate-400">
+            <div className="rounded-2xl border border-background-border bg-background-elevated/80 p-4 text-sm text-text-secondary">
               <p>These values are configured via environment variables on the server. Contact your system administrator to modify them.</p>
               <p className="mt-3">Audit logs are retained indefinitely. Configure log retention in server environment variables (`LOG_RETENTION_DAYS`).</p>
             </div>
@@ -507,7 +507,7 @@ export function SettingsPage() {
             <CardDescription>{view.description}</CardDescription>
           </div>
         </CardHeader>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-text-secondary">
           This area has its own dedicated page. Use the shortcut card on the right or the settings tabs above to open it.
         </p>
       </Card>
@@ -560,18 +560,18 @@ export function SettingsPage() {
 
           <div className="grid gap-2">
             {settingsLinks.map((link) => (
-              <Link key={link.path} to={link.path} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] px-4 py-3 text-sm text-slate-200 transition hover:border-brand-500/35 hover:bg-[rgba(37,99,235,0.08)]">
+              <Link key={link.path} to={link.path} className="rounded-2xl border border-background-border bg-background-elevated/80 px-4 py-3 text-sm text-text-primary transition hover:border-primary/40 hover:bg-primary/10">
                 {link.label}
               </Link>
             ))}
           </div>
 
-          <div className="rounded-2xl border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.08),rgba(56,189,248,0.04))] p-4">
+          <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
             <div className="flex items-start gap-3">
-              <Shield className="mt-0.5 h-5 w-5 text-brand-100" />
+              <Shield className="mt-0.5 h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm font-semibold text-slate-100">Operational note</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="text-sm font-semibold text-text-primary">Operational note</p>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">
                   The final module sweep adds profile mutation, admin account management, and service-plan management. Reseller tooling remains a future release.
                 </p>
               </div>

@@ -219,14 +219,14 @@ export function ServicePlansPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(360px,0.9fr)]">
         <div className="grid gap-4">
           {planCards.length ? planCards.map((plan) => (
-            <Card key={plan.id} className={selectedPlanId === plan.id ? "border-brand-500/35" : undefined}>
+            <Card key={plan.id} className={selectedPlanId === plan.id ? "border-primary/40" : undefined}>
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <button type="button" className="text-left" onClick={() => setSelectedPlanId(plan.id)}>
-                      <h3 className="text-lg font-semibold text-slate-100">{plan.name}</h3>
+                      <h3 className="text-lg font-semibold text-text-primary">{plan.name}</h3>
                     </button>
-                    <p className="mt-1 text-sm text-slate-400">{plan.description || "No description provided."}</p>
+                    <p className="mt-1 text-sm text-text-secondary">{plan.description || "No description provided."}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge tone="info">{plan.planType}</Badge>
@@ -236,10 +236,10 @@ export function ServicePlansPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Price</p><p className="mt-2 text-sm text-slate-100">{formatCurrency(plan.price, plan.currency)} / {plan.validityDays} days</p></div>
-                  <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Speed</p><p className="mt-2 text-sm text-slate-100">↓ {formatSpeed(plan.speedDownloadKbps)} / ↑ {formatSpeed(plan.speedUploadKbps)}</p></div>
-                  <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Data Cap</p><p className="mt-2 text-sm text-slate-100">{plan.dataCapGB === 0 ? "Unlimited" : `${plan.dataCapGB} GB`}</p></div>
-                  <div><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Subscribers</p><p className="mt-2 text-sm text-slate-100">{plan.subscriberCount} subscribers</p></div>
+                  <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Price</p><p className="mt-2 text-sm text-text-primary">{formatCurrency(plan.price, plan.currency)} / {plan.validityDays} days</p></div>
+                  <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Speed</p><p className="mt-2 text-sm text-text-primary">↓ {formatSpeed(plan.speedDownloadKbps)} / ↑ {formatSpeed(plan.speedUploadKbps)}</p></div>
+                  <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Data Cap</p><p className="mt-2 text-sm text-text-primary">{plan.dataCapGB === 0 ? "Unlimited" : `${plan.dataCapGB} GB`}</p></div>
+                  <div><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Subscribers</p><p className="mt-2 text-sm text-text-primary">{plan.subscriberCount} subscribers</p></div>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -257,8 +257,8 @@ export function ServicePlansPage() {
           )) : (
             <Card>
               <div className="space-y-3 p-8 text-center">
-                <h3 className="text-lg font-semibold text-slate-100">No service plans yet</h3>
-                <p className="mx-auto max-w-md text-sm text-slate-400">
+                <h3 className="text-lg font-semibold text-text-primary">No service plans yet</h3>
+                <p className="mx-auto max-w-md text-sm text-text-secondary">
                   The service plan endpoint is reachable, but there are no plans in the database yet. Create the first plan to start managing vouchers and package pricing.
                 </p>
                 <div className="flex justify-center">
@@ -280,10 +280,10 @@ export function ServicePlansPage() {
           </CardHeader>
 
           {!selectedPlan ? (
-            <p className="text-sm text-slate-500">Choose a service plan from the left to manage voucher batches.</p>
+            <p className="text-sm text-text-muted">Choose a service plan from the left to manage voucher batches.</p>
           ) : (
             <>
-              <div className="space-y-3 rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.66)] p-4">
+              <div className="space-y-3 rounded-2xl border border-background-border bg-background-elevated/80 p-4">
                 <Input label="Quantity" type="number" min="1" max="500" value={voucherQuantity} onChange={(event) => setVoucherQuantity(event.target.value)} />
                 <Input label="Validity Days (optional)" type="number" min="1" value={voucherValidityDays} onChange={(event) => setVoucherValidityDays(event.target.value)} />
                 <div className="flex gap-3">
@@ -311,9 +311,9 @@ export function ServicePlansPage() {
               />
 
               {vouchersQuery.isPending ? <SectionLoader /> : vouchersQuery.isError ? <ErrorState title="Unable to load vouchers" description="Retry after confirming voucher endpoints are available." onAction={() => void vouchersQuery.refetch()} /> : (
-                <div className="overflow-hidden rounded-2xl border border-brand-500/15">
+                <div className="overflow-hidden rounded-2xl border border-background-border">
                   <table className="min-w-full divide-y divide-brand-500/10 text-sm">
-                    <thead className="bg-[rgba(8,14,31,0.9)] text-left text-slate-400">
+                    <thead className="bg-background-panel text-left text-text-secondary">
                       <tr>
                         <th className="px-4 py-3">Code</th>
                         <th className="px-4 py-3">Status</th>
@@ -323,9 +323,9 @@ export function ServicePlansPage() {
                     <tbody className="divide-y divide-brand-500/10">
                       {(vouchersQuery.data?.items || []).map((voucher) => (
                         <tr key={voucher.id}>
-                          <td className="px-4 py-3 font-mono text-slate-200">{voucher.code}</td>
+                          <td className="px-4 py-3 font-mono text-text-primary">{voucher.code}</td>
                           <td className="px-4 py-3"><Badge tone={voucher.status === "unused" ? "success" : voucher.status === "revoked" ? "danger" : "warning"}>{voucher.status}</Badge></td>
-                          <td className="px-4 py-3 font-mono text-slate-400">{formatDateTime(voucher.expiresAt)}</td>
+                          <td className="px-4 py-3 font-mono text-text-secondary">{formatDateTime(voucher.expiresAt)}</td>
                         </tr>
                       ))}
                     </tbody>

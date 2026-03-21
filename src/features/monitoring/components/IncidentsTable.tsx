@@ -23,12 +23,12 @@ export function IncidentsTable({
   onAddNote: (row: MonitoringIncident) => void;
 }) {
   const columns = useMemo<ColumnDef<MonitoringIncident>[]>(() => [
-    { header: "Incident", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.title}</p><p className="font-mono text-xs text-slate-500">{row.original.incidentKey}</p></div> },
-    { header: "Type", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.type.replace(/_/g, " ")}</span> },
+    { header: "Incident", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.title}</p><p className="font-mono text-xs text-text-muted">{row.original.incidentKey}</p></div> },
+    { header: "Type", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.type.replace(/_/g, " ")}</span> },
     { header: "Severity", cell: ({ row }) => <IncidentSeverityBadge severity={row.original.severity} /> },
     { header: "Status", cell: ({ row }) => <HealthStatusBadge status={row.original.status} /> },
-    { header: "Impact", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.impact.affectedRouters} routers / {row.original.impact.affectedUsers} users</span> },
-    { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastSeenAt)}</span> },
+    { header: "Impact", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.impact.affectedRouters} routers / {row.original.impact.affectedUsers} users</span> },
+    { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastSeenAt)}</span> },
     {
       header: "Actions",
       cell: ({ row }) => (

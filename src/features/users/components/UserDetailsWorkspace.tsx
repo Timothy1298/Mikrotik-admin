@@ -68,17 +68,17 @@ export function UserDetailsWorkspace({
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-semibold text-slate-100">{user.profile.name}</h2>
+              <h2 className="text-2xl font-semibold text-text-primary">{user.profile.name}</h2>
               <UserStatusBadge status={user.state.accountStatus} />
               <SubscriptionStatusBadge status={user.state.subscriptionStatus} />
               <UserStatusBadge status={user.state.verificationStatus} />
               <UserStatusBadge status={user.state.riskStatus} />
               <Badge tone="info">{user.profile.supportTier}</Badge>
             </div>
-            <p className="text-sm text-slate-400">{user.profile.email} • {user.profile.company} • {user.profile.country}</p>
+            <p className="text-sm text-text-secondary">{user.profile.email} • {user.profile.company} • {user.profile.country}</p>
           </div>
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Secondary tools</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Secondary tools</p>
             <div className="flex flex-wrap gap-2">
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.userDetail(user.id))}>Open full page</Button> : null}
             {canManageUsers ? <Button variant="outline" leftIcon={<Pencil className="h-4 w-4" />} onClick={onEditProfile}>Edit Profile</Button> : null}
@@ -92,7 +92,7 @@ export function UserDetailsWorkspace({
         </div>
         {canManageUsers ? (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Primary actions</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Primary actions</p>
         <UserQuickActions
           user={user}
           onSuspend={onSuspend}

@@ -45,11 +45,11 @@ export function SupportActionDialog({
     <Modal open={open} title={title} description={description} onClose={onClose}>
       {select ? <Select label={select.label} value={select.value} onChange={(event) => select.onValueChange(event.target.value)} options={select.options} /> : null}
       {textarea && cannedResponses?.length ? (
-        <label className="grid gap-2 text-sm text-slate-200">
-          <span className="font-medium text-slate-300">Insert canned response</span>
+        <label className="grid gap-2 text-sm text-text-primary">
+          <span className="font-medium text-text-secondary">Insert canned response</span>
           <div className="relative">
             <select
-              className="h-12 w-full appearance-none rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 text-slate-100 outline-none transition focus:border-brand-500/35"
+              className="h-12 w-full appearance-none rounded-2xl border border-background-border bg-background-panel px-4 text-text-primary outline-none transition focus:border-primary/40"
               defaultValue=""
               onChange={(event) => {
                 const selected = cannedResponses.find((item) => item.id === event.target.value);

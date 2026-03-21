@@ -17,11 +17,11 @@ export function DisconnectSessionDialog({
 }) {
   return (
     <Modal open={open} onClose={onClose} title="Disconnect hotspot session" description="Terminate the selected hotspot session immediately from the router.">
-      <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-300">
+      <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-secondary">
         {session ? (
           <p>
-            Disconnect <span className="font-medium text-slate-100">{session.username || "unknown user"}</span> at{" "}
-            <span className="font-mono text-slate-100">{session.ip || "unknown IP"}</span>.
+            Disconnect <span className="font-medium text-text-primary">{session.username || "unknown user"}</span> at{" "}
+            <span className="font-mono text-text-primary">{session.ip || "unknown IP"}</span>.
           </p>
         ) : (
           <p>No active session selected.</p>

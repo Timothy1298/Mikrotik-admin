@@ -9,13 +9,13 @@ export function AdminLayout() {
   const crumbs = location.pathname.split("/").filter(Boolean);
 
   return (
-    <div className="app-grid-bg h-screen overflow-hidden">
-      <div className="flex h-screen w-full overflow-hidden">
+    <div className="app-grid-bg min-h-screen bg-background-main text-text-primary">
+      <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="flex min-h-screen min-w-0 flex-1 flex-col overflow-hidden xl:pl-[260px]">
           <AppTopbar />
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-4 sm:px-4 md:px-5 lg:px-6">
-            <div className="mx-auto flex w-full max-w-none flex-col gap-5">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 pt-4 sm:px-5 lg:px-6">
+            <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
               <Breadcrumbs items={crumbs} />
               <AppContent>
                 <Outlet />

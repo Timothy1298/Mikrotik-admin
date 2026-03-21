@@ -78,8 +78,8 @@ export function DiscoveredRouterUserPickerDialog({
                 type="button"
                 className={`flex w-full items-start justify-between gap-4 rounded-2xl border px-4 py-4 text-left transition ${
                   isSelected
-                    ? "border-brand-500/35 bg-[rgba(37,99,235,0.12)]"
-                    : "border-brand-500/15 bg-[rgba(8,14,31,0.9)] hover:border-brand-500/25 hover:bg-[rgba(37,99,235,0.08)]"
+                    ? "border-primary/40 bg-primary/15"
+                    : "border-background-border bg-background-panel hover:border-primary/30 hover:bg-primary/10"
                 }`}
                 onClick={() => {
                   onSelect({
@@ -95,9 +95,9 @@ export function DiscoveredRouterUserPickerDialog({
                 }}
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-100">{user.name}</p>
-                  <p className="mt-1 break-words text-sm text-slate-400">{user.email}</p>
-                  <p className="mt-2 text-xs text-slate-500">{user.company || "No company"} • {user.routersCount} router{user.routersCount === 1 ? "" : "s"}</p>
+                  <p className="text-sm font-medium text-text-primary">{user.name}</p>
+                  <p className="mt-1 break-words text-sm text-text-secondary">{user.email}</p>
+                  <p className="mt-2 text-xs text-text-muted">{user.company || "No company"} • {user.routersCount} router{user.routersCount === 1 ? "" : "s"}</p>
                 </div>
                 <div className="flex shrink-0 flex-wrap justify-end gap-2">
                   <Badge tone={user.accountStatus === "active" ? "success" : "danger"}>{user.accountStatus}</Badge>

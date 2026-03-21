@@ -37,8 +37,8 @@ export function IssueRefundDialog({ open, loading, accountId, accountName, onClo
 
   return (
     <Modal open={open} title="Issue Refund / Credit Note" description="Record a refund after funds have already been returned to the subscriber." onClose={handleClose}>
-      <div className="rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm text-slate-200">This will record a refund transaction. Ensure the actual funds have been returned to the subscriber through your payment channel before recording.</div>
-      <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-200">Subscriber: <span className="font-semibold text-slate-100">{accountName}</span></div>
+      <div className="rounded-2xl border border-danger/25 bg-danger/10 p-4 text-sm text-text-primary">This will record a refund transaction. Ensure the actual funds have been returned to the subscriber through your payment channel before recording.</div>
+      <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Subscriber: <span className="font-semibold text-text-primary">{accountName}</span></div>
       <Input label="Original Transaction ID or Reference" hint="Leave blank for credit notes not tied to a specific transaction" value={originalTransactionId} onChange={(event) => setOriginalTransactionId(event.target.value)} />
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Refund Amount" type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} />

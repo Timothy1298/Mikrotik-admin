@@ -74,14 +74,14 @@ export function VpnServerDetailsWorkspace({
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-2xl font-semibold text-slate-100">{server.profile.name}</h2>
+              <h2 className="text-2xl font-semibold text-text-primary">{server.profile.name}</h2>
               <VpnServerStatusBadge status={server.profile.status} />
               <VpnServerHealthBadge status={server.health.status} />
               <VpnServerMaintenanceBadge active={server.profile.maintenanceMode} />
               <VpnServerLoadBadge overloaded={server.loadCapacity.overloaded} nearCapacity={server.loadCapacity.nearCapacity} />
               {server.flags.length ? <Badge tone="warning">{server.flags.length} flags</Badge> : null}
             </div>
-            <p className="text-sm text-slate-400">{server.profile.nodeId} • {server.profile.region} • {server.profile.hostname || server.profile.endpoint || "No hostname"}</p>
+            <p className="text-sm text-text-secondary">{server.profile.nodeId} • {server.profile.region} • {server.profile.hostname || server.profile.endpoint || "No hostname"}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.vpnServerDetail(server.id))}>Open full page</Button> : null}
@@ -92,10 +92,10 @@ export function VpnServerDetailsWorkspace({
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Routers</p><p className="mt-3 text-sm text-slate-100">{server.attachedRoutersCount}</p></div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Peers</p><p className="mt-3 text-sm text-slate-100">{server.attachedPeersCount}</p></div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Online routers</p><p className="mt-3 text-sm text-slate-100">{server.onlineRoutersCount}</p></div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4"><p className="text-xs uppercase tracking-[0.18em] text-slate-500">Created</p><p className="mt-3 text-sm text-slate-100">{formatDateTime(server.profile.createdAt)}</p></div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Routers</p><p className="mt-3 text-sm text-text-primary">{server.attachedRoutersCount}</p></div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Peers</p><p className="mt-3 text-sm text-text-primary">{server.attachedPeersCount}</p></div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Online routers</p><p className="mt-3 text-sm text-text-primary">{server.onlineRoutersCount}</p></div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Created</p><p className="mt-3 text-sm text-text-primary">{formatDateTime(server.profile.createdAt)}</p></div>
         </div>
         <div className="flex flex-wrap gap-2">
           {canManageServers ? (!server.profile.enabled ? <Button variant="outline" onClick={onReactivate}>Reactivate server</Button> : <Button variant="danger" onClick={onDisable}>Disable server</Button>) : null}

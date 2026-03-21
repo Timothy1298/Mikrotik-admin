@@ -169,17 +169,17 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
       <Card>
         <DataToolbar>
           <div className="flex items-center gap-3">
-            <div className="icon-block-primary rounded-2xl p-2 text-slate-100">
+            <div className="icon-block-primary rounded-2xl p-2 text-text-primary">
               <Icon className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-100">{sectionMeta.title}</p>
-              <p className="font-mono text-xs text-slate-500">{total} visible routers{activeFiltersCount ? ` • ${activeFiltersCount} active filters` : ""}</p>
+              <p className="text-sm font-medium text-text-primary">{sectionMeta.title}</p>
+              <p className="font-mono text-xs text-text-muted">{total} visible routers{activeFiltersCount ? ` • ${activeFiltersCount} active filters` : ""}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
             {section === "all" && can(user, permissions.routersManage) ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>Add Router</Button> : null}
-            {routersQuery.isFetching && !routersQuery.isPending ? <p className="font-mono text-xs text-slate-500">Refreshing data...</p> : null}
+            {routersQuery.isFetching && !routersQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
             <RefreshButton loading={routersQuery.isFetching || statsQuery.isFetching} onClick={() => { void routersQuery.refetch(); void statsQuery.refetch(); }} />
           </div>
         </DataToolbar>

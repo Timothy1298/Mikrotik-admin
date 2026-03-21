@@ -40,7 +40,9 @@ export function AppSidebar() {
   );
 
   useEffect(() => {
-    const matchedItem = visibleItems.find((item) => "children" in item && item.children?.some((child) => child.path === location.pathname));
+    const matchedItem = visibleItems.find(
+      (item) => "children" in item && item.children?.some((child) => child.path === location.pathname),
+    );
     if (matchedItem && "children" in matchedItem && matchedItem.children) {
       if (lastVisitedSidebarSubmenu[matchedItem.path] !== location.pathname) {
         rememberSidebarSubmenu(matchedItem.path, location.pathname);
@@ -51,32 +53,41 @@ export function AppSidebar() {
       return;
     }
 
-    const activeItem = visibleItems.find((item) => "children" in item && item.children && pathBelongsToItem(location.pathname, item.path));
+    const activeItem = visibleItems.find(
+      (item) => "children" in item && item.children && pathBelongsToItem(location.pathname, item.path),
+    );
     if (activeItem && expandedSidebarSection !== activeItem.path) {
       setExpandedSidebarSection(activeItem.path);
     }
-  }, [location.pathname, rememberSidebarSubmenu, setExpandedSidebarSection, visibleItems]);
+  }, [
+    expandedSidebarSection,
+    lastVisitedSidebarSubmenu,
+    location.pathname,
+    rememberSidebarSubmenu,
+    setExpandedSidebarSection,
+    visibleItems,
+  ]);
 
   return (
     <aside
-      className={`hidden h-screen shrink-0 border-r border-brand-500/15 bg-[rgba(8,14,31,0.9)] backdrop-blur xl:flex xl:flex-col ${
-        sidebarCollapsed ? "w-24" : "w-[292px]"
+      className={`fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-background-border bg-background-sidebar xl:flex xl:flex-col ${
+        sidebarCollapsed ? "w-24" : "w-[260px]"
       }`}
     >
       <div className="flex h-full flex-col px-4 py-5">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="icon-block-highlight rounded-2xl p-2.5">
+            <div className="icon-block-highlight rounded-xl p-2.5">
               <Shield className="h-5 w-5" />
             </div>
             {!sidebarCollapsed ? (
               <div className="min-w-0">
-                <p className="truncate font-semibold text-white">Mikrotik Admin</p>
-                <p className="truncate text-xs text-slate-500">Ops control center</p>
+                <p className="truncate font-semibold text-text-primary">Mikrotik Admin</p>
+                <p className="truncate text-xs text-text-secondary">Ops control center</p>
               </div>
             ) : null}
           </div>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0 text-slate-300">
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0">
             ≡
           </Button>
         </div>
@@ -91,10 +102,10 @@ export function AppSidebar() {
                       type="button"
                       onClick={() => setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path)}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-2xl border px-3 py-3 text-sm transition",
+                        "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-sm transition-colors",
                         pathBelongsToItem(location.pathname, item.path)
-                          ? "surface-active border-brand-500/35 text-slate-100"
-                          : "border-transparent text-slate-300 hover:border-brand-500/15 hover:bg-[rgba(37,99,235,0.08)] hover:text-white",
+                          ? "surface-active text-text-primary"
+                          : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
                         sidebarCollapsed && "justify-center",
                       )}
                     >
@@ -104,16 +115,23 @@ export function AppSidebar() {
                       </span>
                       {!sidebarCollapsed ? (
                         <ChevronDown
-                          className={cn("h-4 w-4 shrink-0 transition-transform", expandedSidebarSection === item.path && "rotate-180")}
+                          className={cn(
+                            "h-4 w-4 shrink-0 transition-transform",
+                            expandedSidebarSection === item.path && "rotate-180",
+                          )}
                         />
                       ) : null}
                     </button>
                     {!sidebarCollapsed && expandedSidebarSection === item.path ? (
-                      <div className="ml-6 space-y-1 border-l border-brand-500/15 pl-4">
+                      <div className="ml-6 space-y-1 border-l border-background-border pl-4">
                         {item.children.map((child) => {
                           const exactMatch = child.path === location.pathname;
                           const rememberedPath = lastVisitedSidebarSubmenu[item.path];
-                          const active = exactMatch || (!item.children.some((entry) => entry.path === location.pathname) && rememberedPath === child.path && pathBelongsToItem(location.pathname, item.path));
+                          const active =
+                            exactMatch ||
+                            (!item.children.some((entry) => entry.path === location.pathname) &&
+                              rememberedPath === child.path &&
+                              pathBelongsToItem(location.pathname, item.path));
                           return (
                             <SidebarNavItem
                               key={child.path}
@@ -129,7 +147,12 @@ export function AppSidebar() {
                     ) : null}
                   </>
                 ) : (
-                  <SidebarNavItem icon={item.icon} label={item.label} to={item.path} collapsed={sidebarCollapsed} />
+                  <SidebarNavItem
+                    icon={item.icon}
+                    label={item.label}
+                    to={item.path}
+                    collapsed={sidebarCollapsed}
+                  />
                 )}
               </div>
             ))}

@@ -13,8 +13,8 @@ function StatusBadge({ state }: { state: RouterDetail["apiAccess"]["state"] }) {
   const styles = {
     healthy: "border-success/25 bg-success/10 text-success",
     failing: "border-danger/25 bg-danger/10 text-danger",
-    pending: "border-warning/25 bg-warning/10 text-warning",
-    unconfigured: "border-slate-500/20 bg-slate-500/10 text-slate-300",
+    pending: "border-warning/25 bg-warning/10 text-primary",
+    unconfigured: "border-slate-500/20 bg-slate-500/10 text-text-secondary",
   } as const;
 
   return (
@@ -102,16 +102,16 @@ export function RouterApiAccessPanel({ router }: { router: RouterDetail }) {
       {inlineError ? <InlineError message={inlineError} /> : null}
 
       <div className="grid gap-4 xl:grid-cols-4">
-        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-slate-500">API health</p>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">API health</p>
           <div className="mt-3">
             <StatusBadge state={router.apiAccess.state} />
           </div>
-          <p className="mt-3 text-sm text-slate-400">{router.apiAccess.lastError || "No RouterOS API error recorded."}</p>
+          <p className="mt-3 text-sm text-text-secondary">{router.apiAccess.lastError || "No RouterOS API error recorded."}</p>
         </div>
         <Metric label="Last success" value={formatDateTime(router.apiAccess.lastSuccessAt)} icon={<CheckCircle2 className="h-4 w-4 text-success" />} />
         <Metric label="Last failure" value={formatDateTime(router.apiAccess.lastErrorAt)} icon={<ShieldAlert className="h-4 w-4 text-danger" />} />
-        <Metric label="RouterOS version" value={router.apiAccess.routerosVersion || "Unknown"} icon={<Network className="h-4 w-4 text-brand-100" />} />
+        <Metric label="RouterOS version" value={router.apiAccess.routerosVersion || "Unknown"} icon={<Network className="h-4 w-4 text-primary" />} />
       </div>
 
       <div className="flex flex-wrap justify-end gap-3">
@@ -125,36 +125,36 @@ export function RouterApiAccessPanel({ router }: { router: RouterDetail }) {
 
       {result ? (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Connection result</p>
-            <div className="mt-3 space-y-2 text-sm text-slate-300">
-              <p>Tested at: <span className="text-slate-100">{formatDateTime(result.testedAt)}</span></p>
-              <p>Board: <span className="text-slate-100">{result.resource.boardName || "Unknown"}</span></p>
-              <p>Platform: <span className="text-slate-100">{result.resource.platform || "Unknown"}</span></p>
-              <p>Version: <span className="text-slate-100">{result.resource.version || "Unknown"}</span></p>
-              <p>CPU load: <span className="text-slate-100">{result.resource.cpuLoad != null ? `${result.resource.cpuLoad}%` : "Unknown"}</span></p>
-              <p>Uptime: <span className="text-slate-100">{result.resource.uptime || "Unknown"}</span></p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Connection result</p>
+            <div className="mt-3 space-y-2 text-sm text-text-secondary">
+              <p>Tested at: <span className="text-text-primary">{formatDateTime(result.testedAt)}</span></p>
+              <p>Board: <span className="text-text-primary">{result.resource.boardName || "Unknown"}</span></p>
+              <p>Platform: <span className="text-text-primary">{result.resource.platform || "Unknown"}</span></p>
+              <p>Version: <span className="text-text-primary">{result.resource.version || "Unknown"}</span></p>
+              <p>CPU load: <span className="text-text-primary">{result.resource.cpuLoad != null ? `${result.resource.cpuLoad}%` : "Unknown"}</span></p>
+              <p>Uptime: <span className="text-text-primary">{result.resource.uptime || "Unknown"}</span></p>
             </div>
           </div>
-          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Interfaces discovered</p>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Interfaces discovered</p>
             <div className="mt-3 space-y-3">
               {result.interfaces.length ? result.interfaces.slice(0, 8).map((item) => (
-                <div key={`${item.name}-${item.type}`} className="flex items-center justify-between gap-3 rounded-2xl border border-brand-500/15 bg-black/10 px-4 py-3 text-sm">
+                <div key={`${item.name}-${item.type}`} className="flex items-center justify-between gap-3 rounded-2xl border border-background-border bg-black/10 px-4 py-3 text-sm">
                   <div>
-                    <p className="font-medium text-slate-100">{item.name}</p>
-                    <p className="text-xs text-slate-500">{item.type}</p>
+                    <p className="font-medium text-text-primary">{item.name}</p>
+                    <p className="text-xs text-text-muted">{item.type}</p>
                   </div>
-                  <span className={item.running && !item.disabled ? "text-success" : "text-slate-400"}>
+                  <span className={item.running && !item.disabled ? "text-success" : "text-text-secondary"}>
                     {item.disabled ? "disabled" : item.running ? "running" : "stopped"}
                   </span>
                 </div>
-              )) : <p className="text-sm text-slate-500">No interfaces were returned by RouterOS API.</p>}
+              )) : <p className="text-sm text-text-muted">No interfaces were returned by RouterOS API.</p>}
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-500">Run a RouterOS API test to fetch live system resource and interface data.</p>
+        <p className="text-sm text-text-muted">Run a RouterOS API test to fetch live system resource and interface data.</p>
       )}
     </Card>
   );
@@ -162,12 +162,12 @@ export function RouterApiAccessPanel({ router }: { router: RouterDetail }) {
 
 function Metric({ label, value, icon }: { label: string; value: string; icon: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+    <div className="rounded-2xl border border-background-border bg-background-panel p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+        <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{label}</p>
         {icon}
       </div>
-      <p className="mt-3 text-sm text-slate-100">{value}</p>
+      <p className="mt-3 text-sm text-text-primary">{value}</p>
     </div>
   );
 }
