@@ -52,8 +52,16 @@ export function UserRoutersTable({ user, onAddRouter }: { user: UserDetail; onAd
               <tr key={router.id}>
                 <td className="py-4"><div><Link className="font-medium text-primary hover:underline" to={appRoutes.routerDetail(router.id)}>{router.name}</Link><p className="font-mono text-xs text-text-muted">{formatDateTime(router.createdAt)}</p></div></td>
                 <td className="py-4"><UserStatusBadge status={router.status} /></td>
-                <td className="py-4 font-mono text-text-secondary">{router.vpnIp}</td>
-                <td className="py-4 font-mono text-text-secondary">W {router.ports.winbox} / S {router.ports.ssh} / A {router.ports.api}</td>
+                <td className="py-4 font-mono text-text-secondary">{router.vpnIp || '—'}</td>
+                <td className="py-4 font-mono text-text-secondary">
+                  {(() => {
+                    const ports = router.ports;
+                    const winbox = ports?.winbox ?? '—';
+                    const ssh = ports?.ssh ?? '—';
+                    const api = ports?.api ?? '—';
+                    return `W ${winbox} / S ${ssh} / A ${api}`;
+                  })()}
+                </td>
                 <td className="py-4 font-mono text-text-secondary">{formatDateTime(router.lastSeen)}</td>
                 <td className="py-4 font-mono text-text-secondary">↓ {formatBytes(router.transferRx)} / ↑ {formatBytes(router.transferTx)}</td>
               </tr>

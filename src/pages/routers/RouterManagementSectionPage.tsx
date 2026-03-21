@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Plus, Router, Server, ShieldAlert, WifiOff, Wrench } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -69,6 +69,23 @@ const sectionIcons: Record<RouterManagementSection, typeof Router> = {
   "notes-flags": ShieldAlert,
 };
 
+const defaultRouterFilters: Pick<RouterQuery, "limit" | "sortBy" | "sortOrder"> = {
+  limit: 50,
+  sortBy: "createdAt",
+  sortOrder: "desc",
+};
+
+function areRouterFiltersEqual(current: RouterQuery, next: RouterQuery) {
+  const currentEntries = Object.entries(current);
+  const nextEntries = Object.entries(next);
+
+  if (currentEntries.length !== nextEntries.length) {
+    return false;
+  }
+
+  return currentEntries.every(([key, value]) => next[key as keyof RouterQuery] === value);
+}
+
 function filterRowsForSection(section: RouterManagementSection, rows: RouterRow[]) {
   switch (section) {
     case "provisioning-queue":
@@ -86,10 +103,11 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const location = useLocation();
   const navigate = useNavigate();
   const sectionMeta = routerManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters || {};
+  const lockedFilters = sectionMeta.lockedFilters ?? {};
+  const sectionFilters = { ...lockedFilters, ...defaultRouterFilters };
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof RouterQuery>;
 
-  const [filters, setFilters] = useState<RouterQuery>({ ...lockedFilters, limit: 50, sortBy: "createdAt", sortOrder: "desc" });
+  const [filters, setFilters] = useState<RouterQuery>(sectionFilters);
   const [selectedRouter, setSelectedRouter] = useState<RouterRow | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<{ id?: string; flag: string; severity: string } | null>(null);
 
@@ -109,11 +127,15 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const removeFlagDisclosure = useDisclosure(false);
   const addRouterDisclosure = useDisclosure(false);
 
-  const effectiveFilters = { ...filters, ...lockedFilters };
+  const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const routersQuery = useRouters(effectiveFilters);
   const statsQuery = useRouterStats();
   const detailQuery = useRouter(selectedRouter?.id || "");
   const { data: user } = useCurrentUser(true);
+
+  useEffect(() => {
+    setFilters((current) => (areRouterFiltersEqual(current, sectionFilters) ? current : sectionFilters));
+  }, [section]);
 
   const disableMutation = useDisableRouter();
   const deleteMutation = useDeleteRouter();

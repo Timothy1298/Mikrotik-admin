@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, Router, Server, ShieldAlert, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -69,6 +69,25 @@ const sectionIcons: Record<VpnServerManagementSection, typeof Server> = {
   "diagnostics-review": ShieldAlert,
 };
 
+const defaultVpnServerFilters: Pick<VpnServerQuery, "limit" | "sortBy" | "sortOrder"> = {
+  limit: 50,
+  sortBy: "createdAt",
+  sortOrder: "desc",
+};
+
+const vpnServerPreviewParams = { limit: 8 } as const;
+
+function areFiltersEqual(current: VpnServerQuery, next: VpnServerQuery) {
+  const currentEntries = Object.entries(current);
+  const nextEntries = Object.entries(next);
+
+  if (currentEntries.length !== nextEntries.length) {
+    return false;
+  }
+
+  return currentEntries.every(([key, value]) => next[key as keyof VpnServerQuery] === value);
+}
+
 function filterRowsForSection(section: VpnServerManagementSection, rows: VpnServerRow[]) {
   switch (section) {
     case "router-distribution":
@@ -88,10 +107,11 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const location = useLocation();
   const navigate = useNavigate();
   const sectionMeta = vpnServerManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters || {};
+  const lockedFilters = sectionMeta.lockedFilters ?? {};
+  const sectionFilters = { ...lockedFilters, ...defaultVpnServerFilters };
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof VpnServerQuery>;
 
-  const [filters, setFilters] = useState<VpnServerQuery>({ ...lockedFilters, limit: 50, sortBy: "createdAt", sortOrder: "desc" });
+  const [filters, setFilters] = useState<VpnServerQuery>(sectionFilters);
   const [selectedServer, setSelectedServer] = useState<VpnServerRow | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<{ id?: string; flag: string; severity: string } | null>(null);
 
@@ -109,14 +129,18 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
 
-  const effectiveFilters = { ...filters, ...lockedFilters };
+  const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const serversQuery = useVpnServers(effectiveFilters);
   const statsQuery = useVpnServerStats();
   const detailQuery = useVpnServer(selectedServer?.id || "");
-  const routersQuery = useVpnServerRouters(selectedServer?.id || "", { limit: 8 });
-  const peersQuery = useVpnServerPeers(selectedServer?.id || "", { limit: 8 });
+  const routersQuery = useVpnServerRouters(selectedServer?.id || "", vpnServerPreviewParams);
+  const peersQuery = useVpnServerPeers(selectedServer?.id || "", vpnServerPreviewParams);
   const trafficDetailQuery = useVpnServerTrafficDetail(selectedServer?.id || "");
   const { data: user } = useCurrentUser(true);
+
+  useEffect(() => {
+    setFilters((current) => (areFiltersEqual(current, sectionFilters) ? current : sectionFilters));
+  }, [section]);
 
   const addMutation = useAddVpnServer();
   const disableMutation = useDisableVpnServer();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Flag, Plus, RefreshCw, ShieldAlert, Ticket, UserPlus2, Wallet } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
@@ -70,15 +70,34 @@ const sectionIcons: Record<UserManagementSection, typeof ShieldAlert> = {
   'internal-notes': Flag,
 };
 
+const defaultUserFilters: Pick<UsersQuery, 'page' | 'limit' | 'sortBy' | 'sortOrder'> = {
+  page: 1,
+  limit: 50,
+  sortBy: 'createdAt',
+  sortOrder: 'desc',
+};
+
+function areUserFiltersEqual(current: UsersQuery, next: UsersQuery) {
+  const currentEntries = Object.entries(current);
+  const nextEntries = Object.entries(next);
+
+  if (currentEntries.length !== nextEntries.length) {
+    return false;
+  }
+
+  return currentEntries.every(([key, value]) => next[key as keyof UsersQuery] === value);
+}
+
 export function UserManagementSectionPage({ section }: { section: UserManagementSection }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser(true);
   const sectionMeta = userManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters || {};
+  const lockedFilters = sectionMeta.lockedFilters ?? {};
+  const sectionFilters = { ...lockedFilters, ...defaultUserFilters };
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof UsersQuery>;
 
-  const [filters, setFilters] = useState<UsersQuery>({ ...lockedFilters, page: 1, limit: 50, sortBy: 'createdAt', sortOrder: 'desc' });
+  const [filters, setFilters] = useState<UsersQuery>(sectionFilters);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
   const [selectedFlag, setSelectedFlag] = useState<{ id?: string; flag: string; severity: string; description?: string; createdBy: string; createdAt: string } | null>(null);
 
@@ -97,10 +116,14 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const editProfileDisclosure = useDisclosure(false);
   const addSubscriberDisclosure = useDisclosure(false);
 
-  const effectiveFilters = { ...filters, ...lockedFilters };
+  const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const usersQuery = useUsers(effectiveFilters);
   const statsQuery = useUsersStats();
   const detailQuery = useUser(selectedUser?.id || '');
+
+  useEffect(() => {
+    setFilters((current) => (areUserFiltersEqual(current, sectionFilters) ? current : sectionFilters));
+  }, [section]);
 
   const suspendMutation = useSuspendUser();
   const reactivateMutation = useReactivateUser();

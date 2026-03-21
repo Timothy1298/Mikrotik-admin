@@ -71,7 +71,7 @@ export function UserManagementOverviewPage() {
         <MetricCard title="Support-linked users" value={String(stats.usersWithOpenSupportTickets)} progress={Math.min(100, stats.usersWithOpenSupportTickets * 10)} />
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-5">
         <Card>
           <CardHeader>
             <div>
@@ -79,7 +79,7 @@ export function UserManagementOverviewPage() {
               <CardDescription>Flagged, overdue, or support-impacted accounts that likely need an operator decision next.</CardDescription>
             </div>
           </CardHeader>
-          <div className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <StatCard title="Billing risk" value={String(stats.overdueBillingUsers)} description="Accounts with overdue subscription pressure." icon={Clock3} tone="warning" />
             <StatCard title="Security review" value={String(reviewUsersQuery.data?.pagination.total || 0)} description="Flagged accounts under manual or automated review." icon={ShieldAlert} tone="danger" />
             <StatCard title="Support impact" value={String(stats.usersWithOpenSupportTickets)} description="Users currently tied to active support workload." icon={Ticket} tone="info" />
@@ -93,7 +93,7 @@ export function UserManagementOverviewPage() {
               <CardDescription>Open the highest-signal user queues directly from the overview.</CardDescription>
             </div>
           </CardHeader>
-          <div className="grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersVerificationQueue}>Verification Queue <ArrowRight className="h-4 w-4" /></Link>
             <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersBillingRisk}>Billing Risk <ArrowRight className="h-4 w-4" /></Link>
             <Link className="inline-flex h-10 items-center justify-between rounded-2xl border border-background-border bg-background-panel px-4 text-sm font-medium text-text-primary transition hover:border-primary/40 hover:bg-primary/10 hover:text-text-primary" to={appRoutes.usersSecurityReview}>Security Review <ArrowRight className="h-4 w-4" /></Link>
@@ -102,7 +102,7 @@ export function UserManagementOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5">
         <Card>
           <CardHeader>
             <div>

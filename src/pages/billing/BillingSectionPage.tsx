@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, BarChart3, Clock3, CreditCard, Receipt, ShieldAlert, Wallet } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -127,6 +127,10 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const canCreateInvoice = can(currentUser, permissions.billingCreateInvoice);
   const canIssueRefund = can(currentUser, permissions.billingIssueRefund);
   const canExport = can(currentUser, permissions.billingExport);
+
+  useEffect(() => {
+    setFilters({ limit: 50, window: "30d" });
+  }, [section]);
 
   const subscriptionRows = useMemo(() => {
     const items = subscriptionsQuery.data?.items || [];

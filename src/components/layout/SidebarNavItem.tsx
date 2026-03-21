@@ -26,7 +26,7 @@ export function SidebarNavItem({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          "flex items-center justify-between rounded-xl border px-3 py-3 text-sm transition-colors",
+          "flex items-center justify-between rounded-xl border px-3 py-2 text-xs transition-colors",
           (active ?? isActive)
             ? "surface-active text-text-primary"
             : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
@@ -34,9 +34,9 @@ export function SidebarNavItem({
         )
       }
     >
-      <span className="flex items-center gap-3">
+      <span className="flex min-w-0 items-center gap-3">
         <Icon className="h-4 w-4" />
-        {!collapsed ? <span>{label}</span> : null}
+        {!collapsed ? <span className="leading-tight">{label}</span> : null}
       </span>
       {!collapsed && badge ? (
         <span className="rounded-full border border-background-border bg-background-elevated px-2 py-0.5 text-xs font-mono text-text-secondary">

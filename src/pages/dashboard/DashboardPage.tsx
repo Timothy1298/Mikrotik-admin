@@ -457,7 +457,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+      <div className="grid grid-cols-1 gap-5">
         <RouterStatusSummary isConnected={isConnected} />
         {featuredRouter ? (
           <TrafficChartCard routerId={featuredRouter.id} title={`Live Telemetry: ${featuredRouter.name}`} />
@@ -478,7 +478,7 @@ export function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5">
         <AnalyticsChartCard
           title="Network Health"
           description="Routers, subscribers, and billing posture in one operational summary."
@@ -575,7 +575,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
+      <div className="grid grid-cols-1 gap-5">
         <AnalyticsChartCard
           title="Transfer Traffic"
           description="RX / TX for recently active WireGuard peers"
@@ -656,7 +656,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <div className={cn("grid gap-5", showLogsSection ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]" : "grid-cols-1")}>
+      <div className="grid grid-cols-1 gap-5">
         {showLogsSection ? (
           <Card className="surface-card-3d overflow-hidden p-0">
             <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
@@ -711,7 +711,7 @@ export function DashboardPage() {
       </div>
 
       {(showBillingSection || showMonitoringSection) ? (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5">
           {showBillingSection ? (
             <Card className="surface-card-3d overflow-hidden p-0">
               <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">

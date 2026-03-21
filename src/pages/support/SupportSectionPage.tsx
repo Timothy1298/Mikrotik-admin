@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Clock3, LifeBuoy, Link2, MessageSquare, Plus, ShieldAlert, UserCog } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -137,6 +137,10 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
 
   const showManageActions = can(currentUser, permissions.supportManage);
   const showReplyActions = can(currentUser, permissions.supportReply);
+
+  useEffect(() => {
+    setFilters({ limit: 50, sortBy: "updatedAt", sortOrder: "desc" });
+  }, [section]);
 
   const rows = useMemo(() => {
     if (section === "unassigned") return unassignedQuery.data?.items || [];

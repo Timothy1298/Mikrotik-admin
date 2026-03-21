@@ -1,6 +1,6 @@
 import { ChevronDown, LogOut, Shield } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/app/store/auth.store";
 import { useUIStore } from "@/app/store/ui.store";
 import { navigationItems } from "@/config/navigation";
@@ -21,15 +21,25 @@ function pathBelongsToItem(pathname: string, path: string) {
   return pathname === path || pathname === basePath || pathname.startsWith(`${basePath}/`);
 }
 
+function getNavClassName(active: boolean, collapsed = false) {
+  return cn(
+    "flex min-w-0 items-center gap-3 rounded-xl border px-3 py-2.5 text-[13px] transition-colors",
+    active
+      ? "surface-active text-text-primary"
+      : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
+    collapsed && "justify-center",
+  );
+}
+
 export function AppSidebar() {
   const location = useLocation();
   const {
     sidebarCollapsed,
+    mobileSidebarOpen,
     toggleSidebar,
+    closeMobileSidebar,
     expandedSidebarSection,
     setExpandedSidebarSection,
-    lastVisitedSidebarSubmenu,
-    rememberSidebarSubmenu,
   } = useUIStore();
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
@@ -40,136 +50,222 @@ export function AppSidebar() {
   );
 
   useEffect(() => {
-    const matchedItem = visibleItems.find(
-      (item) => "children" in item && item.children?.some((child) => child.path === location.pathname),
-    );
-    if (matchedItem && "children" in matchedItem && matchedItem.children) {
-      if (lastVisitedSidebarSubmenu[matchedItem.path] !== location.pathname) {
-        rememberSidebarSubmenu(matchedItem.path, location.pathname);
-      }
-      if (expandedSidebarSection !== matchedItem.path) {
-        setExpandedSidebarSection(matchedItem.path);
-      }
-      return;
-    }
-
-    const activeItem = visibleItems.find(
-      (item) => "children" in item && item.children && pathBelongsToItem(location.pathname, item.path),
-    );
-    if (activeItem && expandedSidebarSection !== activeItem.path) {
-      setExpandedSidebarSection(activeItem.path);
-    }
-  }, [
-    expandedSidebarSection,
-    lastVisitedSidebarSubmenu,
-    location.pathname,
-    rememberSidebarSubmenu,
-    setExpandedSidebarSection,
-    visibleItems,
-  ]);
+    closeMobileSidebar();
+  }, [closeMobileSidebar, location.pathname]);
 
   return (
-    <aside
-      className={`fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-background-border bg-background-sidebar xl:flex xl:flex-col ${
-        sidebarCollapsed ? "w-24" : "w-[260px]"
-      }`}
-    >
-      <div className="flex h-full flex-col px-4 py-5">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="icon-block-highlight rounded-xl p-2.5">
-              <Shield className="h-5 w-5" />
-            </div>
-            {!sidebarCollapsed ? (
+    <>
+      {mobileSidebarOpen ? (
+        <div className="fixed inset-0 z-40 bg-background-main/70 backdrop-blur-sm xl:hidden" onClick={closeMobileSidebar} />
+      ) : null}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 shrink-0 border-r border-background-border bg-background-sidebar transition-transform xl:hidden",
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "flex w-[252px] flex-col",
+        )}
+      >
+        <div className="flex h-full flex-col px-4 py-5">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="icon-block-highlight rounded-xl p-2.5">
+                <Shield className="h-5 w-5" />
+              </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-text-primary">Mikrotik Admin</p>
                 <p className="truncate text-xs text-text-secondary">Ops control center</p>
               </div>
-            ) : null}
+            </div>
+            <Button variant="ghost" size="icon" onClick={closeMobileSidebar} className="shrink-0">
+              ×
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0">
-            ≡
-          </Button>
-        </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1">
-          <SidebarSection title="Operations" collapsed={sidebarCollapsed}>
-            {visibleItems.map((item) => (
-              <div key={item.path} className="space-y-1">
-                {"children" in item && item.children ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path)}
-                      className={cn(
-                        "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-sm transition-colors",
-                        pathBelongsToItem(location.pathname, item.path)
-                          ? "surface-active text-text-primary"
-                          : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
-                        sidebarCollapsed && "justify-center",
-                      )}
-                    >
-                      <span className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4" />
-                        {!sidebarCollapsed ? <span>{item.label}</span> : null}
-                      </span>
-                      {!sidebarCollapsed ? (
-                        <ChevronDown
+          <div className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1">
+            <SidebarSection title="Operations">
+              {visibleItems.map((item) => (
+                <div key={item.path} className="space-y-1">
+                  {(() => {
+                    const isItemActive = pathBelongsToItem(location.pathname, item.path);
+                    const isItemOpen = isItemActive || expandedSidebarSection === item.path;
+
+                    return "children" in item && item.children ? (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <NavLink
+                          to={item.path}
+                          onClick={closeMobileSidebar}
+                          className={getNavClassName(isItemActive)}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span className="leading-tight">{item.label}</span>
+                        </NavLink>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path);
+                          }}
                           className={cn(
-                            "h-4 w-4 shrink-0 transition-transform",
-                            expandedSidebarSection === item.path && "rotate-180",
+                            "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-text-secondary transition-colors hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
+                            isItemActive && "text-text-primary",
                           )}
-                        />
-                      ) : null}
-                    </button>
-                    {!sidebarCollapsed && expandedSidebarSection === item.path ? (
-                      <div className="ml-6 space-y-1 border-l border-background-border pl-4">
-                        {item.children.map((child) => {
-                          const exactMatch = child.path === location.pathname;
-                          const rememberedPath = lastVisitedSidebarSubmenu[item.path];
-                          const active =
-                            exactMatch ||
-                            (!item.children.some((entry) => entry.path === location.pathname) &&
-                              rememberedPath === child.path &&
-                              pathBelongsToItem(location.pathname, item.path));
-                          return (
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "h-4 w-4 shrink-0 transition-transform",
+                              isItemOpen && "rotate-180",
+                            )}
+                          />
+                        </button>
+                      </div>
+                      {isItemOpen ? (
+                        <div className="ml-6 space-y-1 border-l border-background-border pl-4">
+                          {item.children.map((child) => (
                             <SidebarNavItem
                               key={child.path}
                               icon={item.icon}
                               label={child.label}
                               to={child.path}
-                              active={active}
-                              onClick={() => rememberSidebarSubmenu(item.path, child.path)}
+                              active={child.path === location.pathname}
+                              onClick={closeMobileSidebar}
                             />
-                          );
-                        })}
-                      </div>
-                    ) : null}
-                  </>
-                ) : (
-                  <SidebarNavItem
-                    icon={item.icon}
-                    label={item.label}
-                    to={item.path}
-                    collapsed={sidebarCollapsed}
-                  />
-                )}
-              </div>
-            ))}
-          </SidebarSection>
-        </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <SidebarNavItem
+                      icon={item.icon}
+                      label={item.label}
+                      to={item.path}
+                      onClick={closeMobileSidebar}
+                    />
+                  );
+                  })()}
+                </div>
+              ))}
+            </SidebarSection>
+          </div>
 
-        <div className="pt-4">
-          <Button
-            variant="ghost"
-            className={`w-full ${sidebarCollapsed ? "justify-center" : "justify-start"}`}
-            leftIcon={<LogOut className="h-4 w-4" />}
-            onClick={() => void logout()}
-          >
-            {sidebarCollapsed ? "" : "Logout"}
-          </Button>
+          <div className="pt-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              leftIcon={<LogOut className="h-4 w-4" />}
+              onClick={() => void logout()}
+            >
+              Logout
+            </Button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 hidden shrink-0 border-r border-background-border bg-background-sidebar xl:flex xl:flex-col ${
+          sidebarCollapsed ? "w-24" : "w-[252px]"
+        }`}
+      >
+        <div className="flex h-full flex-col px-4 py-5">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="icon-block-highlight rounded-xl p-2.5">
+                <Shield className="h-5 w-5" />
+              </div>
+              {!sidebarCollapsed ? (
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-text-primary">Mikrotik Admin</p>
+                  <p className="truncate text-xs text-text-secondary">Ops control center</p>
+                </div>
+              ) : null}
+            </div>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0">
+              ≡
+            </Button>
+          </div>
+
+          <div className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1">
+            <SidebarSection title="Operations" collapsed={sidebarCollapsed}>
+              {visibleItems.map((item) => (
+                <div key={item.path} className="space-y-1">
+                  {(() => {
+                    const isItemActive = pathBelongsToItem(location.pathname, item.path);
+                    const isItemOpen = isItemActive || expandedSidebarSection === item.path;
+
+                    return "children" in item && item.children ? (
+                    <>
+                      <div className={cn("flex items-center gap-1", sidebarCollapsed && "justify-center")}>
+                        <NavLink
+                          to={item.path}
+                          className={getNavClassName(isItemActive, sidebarCollapsed)}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {!sidebarCollapsed ? <span className="leading-tight">{item.label}</span> : null}
+                        </NavLink>
+                        {!sidebarCollapsed ? (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path);
+                            }}
+                            className={cn(
+                              "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-text-secondary transition-colors hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
+                              isItemActive && "text-text-primary",
+                            )}
+                          >
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 shrink-0 transition-transform",
+                                isItemOpen && "rotate-180",
+                              )}
+                            />
+                          </button>
+                        ) : null}
+                      </div>
+                      {!sidebarCollapsed && isItemOpen ? (
+                        <div className="ml-6 space-y-1 border-l border-background-border pl-4">
+                          {item.children.map((child) => (
+                            <SidebarNavItem
+                              key={child.path}
+                              icon={item.icon}
+                              label={child.label}
+                              to={child.path}
+                              active={child.path === location.pathname}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <SidebarNavItem
+                      icon={item.icon}
+                      label={item.label}
+                      to={item.path}
+                      collapsed={sidebarCollapsed}
+                    />
+                  );
+                  })()}
+                </div>
+              ))}
+            </SidebarSection>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              variant="ghost"
+              className={`w-full ${sidebarCollapsed ? "justify-center" : "justify-start"}`}
+              leftIcon={<LogOut className="h-4 w-4" />}
+              onClick={() => void logout()}
+            >
+              {sidebarCollapsed ? "" : "Logout"}
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

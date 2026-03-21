@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, Fingerprint, ShieldAlert, ShieldQuestion, UserCog } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -113,6 +113,10 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const sessionsEnabled = ["sessions", "security-overview", "user-security-review"].includes(section);
   const reviewsEnabled = section === "reviews-notes";
   const timelineEnabled = section === "resource-timelines" && timelineResourceId.trim() !== "";
+
+  useEffect(() => {
+    setFilters({ limit: 50, page: 1 });
+  }, [section]);
 
   const activityQuery = useActivityLogs(filters, activityEnabled);
   const auditQuery = useAuditTrail(filters, auditEnabled);

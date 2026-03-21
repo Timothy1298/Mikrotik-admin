@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Activity, AlertTriangle, LifeBuoy, Router, Server, ShieldAlert, UserCog, Users, Wrench } from "lucide-react";
@@ -138,6 +138,10 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   const resolveMutation = useResolveIncident();
   const reviewedMutation = useMarkIncidentReviewed();
   const noteMutation = useAddIncidentNote();
+
+  useEffect(() => {
+    setFilters({ limit: 50, window: "24h" });
+  }, [section]);
 
   const Icon = sectionIcons[section];
 
