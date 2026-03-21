@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/Badge";
 const tones: Record<string, "info" | "success" | "warning" | "danger" | "neutral"> = {
   healthy: "success",
   fresh: "success",
+  management_only: "info",
   warning: "warning",
   stale: "warning",
   critical: "danger",

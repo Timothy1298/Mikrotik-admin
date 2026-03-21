@@ -61,6 +61,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.routersPortMappingIssues} element={<RouterManagementSectionPage section="port-mapping-issues" />} />
         <Route path={appRoutes.routersServerAssignment} element={<RouterManagementSectionPage section="server-assignment" />} />
         <Route path={appRoutes.routersDiagnosticsReview} element={<RouterManagementSectionPage section="diagnostics-review" />} />
+        <Route path={appRoutes.routersApiConnectivity} element={<RouterManagementSectionPage section="api-connectivity" />} />
         <Route path={appRoutes.routersNotesFlags} element={<RouterManagementSectionPage section="notes-flags" />} />
         <Route path={appRoutes.routerDetail()} element={<RouterDetailsPage />} />
         <Route path={appRoutes.vpnServersRoot} element={<Navigate to={appRoutes.vpnServersOverview} replace />} />

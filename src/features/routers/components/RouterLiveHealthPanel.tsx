@@ -26,7 +26,7 @@ export function RouterLiveHealthPanel({ routerId }: { routerId: string }) {
         {liveHealthQuery.isFetching ? <Spinner className="h-4 w-4" /> : null}
       </CardHeader>
 
-      {health && !health.reachable ? <InlineError message={health.error || "Live data unavailable — router not reachable over SSH"} /> : null}
+      {health && !health.reachable ? <InlineError message={health.error || "Live data unavailable — router not reachable over the configured management path"} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <MetricTile label="Board Name" value={health?.boardName || "Unavailable"} />

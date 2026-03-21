@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Radar, ScanSearch } from "lucide-react";
+import { CheckCircle2, Copy, Radar, ScanSearch, UserRound } from "lucide-react";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { InlineError } from "@/components/feedback/InlineError";
@@ -21,9 +21,14 @@ import type {
   CreateRouterResponse,
   RouterDiscoveryCandidate,
   RouterDiscoveryImportPayload,
+  RouterDiscoveryImportResult,
 } from "@/features/routers/types/router.types";
 import { RouterDiscoveryCandidateCard } from "@/features/routers/components/RouterDiscoveryCandidateCard";
 import { RouterDiscoveryMetadataPreview } from "@/features/routers/components/RouterDiscoveryMetadataPreview";
+import { DiscoveredRouterUserPickerDialog } from "@/features/routers/components/DiscoveredRouterUserPickerDialog";
+import type { UserRow } from "@/features/users/types/user.types";
+
+type SelectedImportUser = Pick<UserRow, "id" | "name" | "email" | "company" | "accountStatus" | "verificationStatus" | "routersCount">;
 
 export function RouterDiscoveryPanel({
   initialUserId = "",
@@ -50,14 +55,26 @@ export function RouterDiscoveryPanel({
     candidateId: "",
     userId: initialUserId || "",
     name: "",
+    connectionMode: "wireguard",
     serverNode: "wireguard",
     reason: "",
   });
+  const [selectedImportUser, setSelectedImportUser] = useState<SelectedImportUser | null>(null);
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<RouterDiscoveryImportResult | null>(null);
 
   useEffect(() => {
     setImportForm((current) => ({ ...current, userId: initialUserId || current.userId }));
+    if (!initialUserId) {
+      return;
+    }
+    setSelectedImportUser(null);
   }, [initialUserId]);
+
+  useEffect(() => {
+    setImportResult(null);
+  }, [sessionId, selectedCandidateId]);
 
   const resultsQuery = useRouterDiscoveryResults(sessionId || undefined);
   const activeSession = useMemo(() => {
@@ -142,14 +159,139 @@ export function RouterDiscoveryPanel({
         candidateId: selectedCandidate.id,
         userId: importForm.userId.trim(),
         name: (importForm.name || "").trim() || undefined,
+        connectionMode: importForm.connectionMode || "wireguard",
         serverNode: importForm.serverNode?.trim() || "wireguard",
         reason: importForm.reason?.trim() || undefined,
       });
-      onSuccess?.(result.router);
+      setImportResult(result);
+      setSelectedImportUser(null);
     } catch (error) {
       setInlineError(error instanceof Error ? error.message : "Failed to import discovered router");
     }
   };
+
+  const handleCopy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setInlineError(null);
+    } catch (error) {
+      setInlineError(`Failed to copy ${label}.`);
+    }
+  };
+
+  if (importResult) {
+    return (
+      <div className="space-y-5">
+        <Card className="space-y-4 border-brand-500/25">
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2 text-slate-100">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                Router imported successfully
+              </CardTitle>
+              <CardDescription>
+                The server-side peer and router record have been created. Complete the MikroTik-side setup below so the router can establish its WireGuard tunnel and the workspace actions can start working.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Router</p>
+              <p className="mt-2 text-sm text-slate-100">{importResult.router.name}</p>
+            </div>
+            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Assigned VPN IP</p>
+              <p className="mt-2 font-mono text-sm text-slate-100">{importResult.router.vpnIp || "Not assigned"}</p>
+            </div>
+            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Connection mode</p>
+              <p className="mt-2 break-words text-sm text-slate-100">
+                {importResult.router.connectionMode === "management_only" ? "Management only" : "Managed via WireGuard"}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Public ports</p>
+              <p className="mt-2 text-sm text-slate-100">
+                {importResult.router.connectionMode === "management_only"
+                  ? "Not allocated for management-only imports"
+                  : `Winbox ${importResult.router.ports.winbox} · SSH ${importResult.router.ports.ssh} · API ${importResult.router.ports.api}`}
+              </p>
+            </div>
+          </div>
+          {importResult.artifacts ? (
+            <div className="rounded-2xl border border-warning/20 bg-[rgba(245,158,11,0.08)] px-4 py-3 text-sm text-slate-200">
+              Paste this script into the MikroTik terminal. It creates the WireGuard interface, assigns the router IP, configures the server peer, and tests reachability to <span className="font-mono">10.0.0.1</span>.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-emerald-500/20 bg-[rgba(16,185,129,0.08)] px-4 py-3 text-sm text-slate-200">
+              This router was attached in management-only mode. No WireGuard script is required. The workspace will manage it using the verified local RouterOS access path.
+            </div>
+          )}
+          {inlineError ? <InlineError message={inlineError} /> : null}
+          {importResult.artifacts ? (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">MikroTik setup script</p>
+                    <p className="mt-1 text-xs text-slate-500">Run this on the router you just imported.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    leftIcon={<Copy className="h-4 w-4" />}
+                    onClick={() => void handleCopy(importResult.artifacts?.mikrotikScript || "", "MikroTik setup script")}
+                    disabled={!importResult.artifacts?.mikrotikScript}
+                  >
+                    Copy script
+                  </Button>
+                </div>
+                <Textarea
+                  label=""
+                  value={importResult.artifacts?.mikrotikScript || "No setup script returned."}
+                  readOnly
+                  className="min-h-[20rem] font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-200">WireGuard config reference</p>
+                    <p className="mt-1 text-xs text-slate-500">Useful if you need to compare the generated peer values manually.</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    leftIcon={<Copy className="h-4 w-4" />}
+                    onClick={() => void handleCopy(importResult.artifacts?.wireguardConfig || "", "WireGuard config")}
+                    disabled={!importResult.artifacts?.wireguardConfig}
+                  >
+                    Copy config
+                  </Button>
+                </div>
+                <Textarea
+                  label=""
+                  value={importResult.artifacts?.wireguardConfig || "No WireGuard config returned."}
+                  readOnly
+                  className="min-h-[14rem] font-mono text-xs"
+                />
+              </div>
+            </>
+          ) : null}
+          <div className="flex flex-wrap justify-end gap-3">
+            {onCancel ? (
+              <Button type="button" variant="ghost" onClick={onCancel}>
+                Close
+              </Button>
+            ) : null}
+            <Button type="button" onClick={() => onSuccess?.(importResult.router)}>
+              Done
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -331,12 +473,48 @@ export function RouterDiscoveryPanel({
             </div>
           </CardHeader>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Input
-              label="Subscriber user ID or email"
-              value={importForm.userId}
-              onChange={(event) => setImportForm((current) => ({ ...current, userId: event.target.value }))}
-              placeholder="subscriber@example.com"
-            />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-300">Assigned customer</p>
+                  <p className="mt-1 text-xs text-slate-500">Select the platform user that owns this router before import.</p>
+                </div>
+                <Button variant="outline" type="button" onClick={() => setUserPickerOpen(true)}>
+                  {selectedImportUser || importForm.userId ? "Change customer" : "Select customer"}
+                </Button>
+              </div>
+              <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-4">
+                {selectedImportUser ? (
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-100">{selectedImportUser.name}</p>
+                        <p className="mt-1 break-words text-sm text-slate-400">{selectedImportUser.email}</p>
+                        <p className="mt-2 text-xs text-slate-500">{selectedImportUser.company || "No company"} • {selectedImportUser.routersCount} router{selectedImportUser.routersCount === 1 ? "" : "s"}</p>
+                      </div>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Badge tone={selectedImportUser.accountStatus === "active" ? "success" : "danger"}>{selectedImportUser.accountStatus}</Badge>
+                        <Badge tone={selectedImportUser.verificationStatus === "verified" ? "success" : "warning"}>{selectedImportUser.verificationStatus}</Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500">Linked user ID: {selectedImportUser.id}</p>
+                  </div>
+                ) : importForm.userId ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-slate-200">
+                      <UserRound className="h-4 w-4 text-brand-100" />
+                      <span>Router will be linked to the current user context.</span>
+                    </div>
+                    <p className="text-xs text-slate-500">User reference: {importForm.userId}</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <UserRound className="h-4 w-4" />
+                    <span>No customer selected yet.</span>
+                  </div>
+                )}
+              </div>
+            </div>
             <Input
               label="Router name"
               value={importForm.name || ""}
@@ -350,6 +528,27 @@ export function RouterDiscoveryPanel({
               value={importForm.serverNode || "wireguard"}
               onChange={(event) => setImportForm((current) => ({ ...current, serverNode: event.target.value }))}
             />
+            <Select
+              label="Connection mode"
+              value={importForm.connectionMode || "wireguard"}
+              onChange={(event) =>
+                setImportForm((current) => ({
+                  ...current,
+                  connectionMode: event.target.value as "wireguard" | "management_only",
+                }))
+              }
+              options={[
+                { label: "Managed via WireGuard", value: "wireguard" },
+                { label: "Attach for management only", value: "management_only" },
+              ]}
+            />
+          </div>
+          <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] px-4 py-3 text-sm text-slate-300">
+            {importForm.connectionMode === "management_only"
+              ? "Management-only import keeps the router on its existing network path. No WireGuard peer, public proxy ports, or setup script are required."
+              : "WireGuard-managed import allocates a VPN IP, peer, and public proxy ports. You will need to apply the generated MikroTik setup script after import."}
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
             <Textarea
               label="Admin reason"
               value={importForm.reason || ""}
@@ -364,6 +563,17 @@ export function RouterDiscoveryPanel({
           </div>
         </Card>
       ) : null}
+
+      <DiscoveredRouterUserPickerDialog
+        open={userPickerOpen}
+        onClose={() => setUserPickerOpen(false)}
+        selectedUserId={selectedImportUser?.id || importForm.userId}
+        onSelect={(user) => {
+          setSelectedImportUser(user);
+          setImportForm((current) => ({ ...current, userId: user.id }));
+          setInlineError(null);
+        }}
+      />
     </div>
   );
 }

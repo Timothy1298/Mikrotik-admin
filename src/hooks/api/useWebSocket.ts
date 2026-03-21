@@ -1,0 +1,85 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { env } from "@/config/env";
+import { readStorage, storageKeys } from "@/lib/utils/storage";
+
+type WebSocketMessage = Record<string, unknown> | null;
+
+function getWebSocketUrl(token: string) {
+  const base = new URL(env.apiBaseUrl);
+  base.protocol = base.protocol === "https:" ? "wss:" : "ws:";
+  base.pathname = "/ws";
+  base.searchParams.set("token", token);
+  return base.toString();
+}
+
+export function useWebSocket(rooms: string[]) {
+  const [lastMessage, setLastMessage] = useState<WebSocketMessage>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const reconnectAttemptsRef = useRef(0);
+  const socketRef = useRef<WebSocket | null>(null);
+  const retryTimeoutRef = useRef<number | null>(null);
+  const roomsKey = useMemo(() => [...new Set(rooms)].sort().join("|"), [rooms]);
+  const stableRooms = useMemo(() => (roomsKey ? roomsKey.split("|") : []), [roomsKey]);
+
+  useEffect(() => {
+    const token = readStorage(storageKeys.accessToken);
+    if (!token) return undefined;
+
+    let cancelled = false;
+
+    const connect = () => {
+      if (cancelled) return;
+      const socket = new WebSocket(getWebSocketUrl(token));
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        if (cancelled) return;
+        reconnectAttemptsRef.current = 0;
+        setIsConnected(true);
+        stableRooms.forEach((room) => {
+          socket.send(JSON.stringify({ type: "subscribe", room }));
+        });
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          setLastMessage(JSON.parse(String(event.data || "{}")));
+        } catch {
+          setLastMessage(null);
+        }
+      };
+
+      socket.onclose = () => {
+        setIsConnected(false);
+        if (cancelled) return;
+        if (reconnectAttemptsRef.current >= 3) return;
+        const delay = 1000 * (2 ** reconnectAttemptsRef.current);
+        reconnectAttemptsRef.current += 1;
+        retryTimeoutRef.current = window.setTimeout(connect, delay);
+      };
+
+      socket.onerror = () => {
+        socket.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      setIsConnected(false);
+      if (retryTimeoutRef.current != null) {
+        window.clearTimeout(retryTimeoutRef.current);
+      }
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        stableRooms.forEach((room) => {
+          socketRef.current?.send(JSON.stringify({ type: "unsubscribe", room }));
+        });
+      }
+      socketRef.current?.close();
+      socketRef.current = null;
+    };
+  }, [roomsKey, stableRooms]);
+
+  return { lastMessage, isConnected };
+}

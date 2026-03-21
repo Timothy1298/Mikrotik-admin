@@ -21,7 +21,7 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[linear-gradient(0deg,rgba(8,14,31,0.9),transparent)] p-3 backdrop-blur-sm sm:p-6">
-      <div className={cn("surface-card-3d max-h-[calc(100vh-1.5rem)] w-full max-w-2xl animate-fade-up overflow-y-auto p-5 sm:max-h-[calc(100vh-3rem)] sm:p-6", maxWidthClass)}>
+      <div className={cn("surface-card-3d max-h-[calc(100vh-1.5rem)] w-full max-w-[min(96vw,72rem)] animate-fade-up overflow-y-auto p-5 sm:max-h-[calc(100vh-3rem)] sm:p-6", maxWidthClass)}>
         <div className="mb-6 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h2 className="break-words text-xl font-semibold text-white">{title}</h2>

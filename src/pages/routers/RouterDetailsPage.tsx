@@ -82,7 +82,7 @@ export function RouterDetailsPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title={router.profile.name} description="Route-driven router workspace for operational diagnostics, connectivity actions, and customer-impact context." meta={router.profile.vpnIp} />
+      <PageHeader title={router.profile.name} description="Route-driven router workspace for operational diagnostics, connectivity actions, and customer-impact context." meta={router.profile.vpnIp || undefined} />
 
       <RouterDetailsWorkspace
         router={router}

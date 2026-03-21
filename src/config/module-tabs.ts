@@ -24,6 +24,7 @@ export const routerManagementTabs = [
   { label: "Port Issues", value: appRoutes.routersPortMappingIssues },
   { label: "Server Assign", value: appRoutes.routersServerAssignment },
   { label: "Diagnostics", value: appRoutes.routersDiagnosticsReview },
+  { label: "API Connectivity", value: appRoutes.routersApiConnectivity },
   { label: "Notes", value: appRoutes.routersNotesFlags },
 ] as const;
 

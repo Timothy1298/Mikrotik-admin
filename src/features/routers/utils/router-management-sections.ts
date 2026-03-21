@@ -10,6 +10,7 @@ export type RouterManagementSection =
   | "port-mapping-issues"
   | "server-assignment"
   | "diagnostics-review"
+  | "api-connectivity"
   | "notes-flags";
 
 export const routerManagementSections: Record<RouterManagementSection, {
@@ -79,6 +80,13 @@ export const routerManagementSections: Record<RouterManagementSection, {
     route: appRoutes.routersDiagnosticsReview,
     emptyTitle: "No diagnostics review items found",
     emptyDescription: "No routers currently require diagnostics review.",
+  },
+  "api-connectivity": {
+    title: "API connectivity",
+    description: "Review routers missing RouterOS API credentials, waiting for first API verification, or failing authenticated API connection checks.",
+    route: appRoutes.routersApiConnectivity,
+    emptyTitle: "No RouterOS API issues found",
+    emptyDescription: "All visible routers currently have healthy or pending RouterOS API access.",
   },
   "notes-flags": {
     title: "Notes / flags",

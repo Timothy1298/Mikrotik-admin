@@ -12,6 +12,17 @@ import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTun
 import type { RouterRow } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
+function ApiStateBadge({ state }: { state: RouterRow["apiConnectivity"]["state"] }) {
+  const styles = {
+    healthy: "border-success/25 bg-success/10 text-success",
+    failing: "border-danger/25 bg-danger/10 text-danger",
+    pending: "border-warning/25 bg-warning/10 text-warning",
+    unconfigured: "border-slate-500/20 bg-slate-500/10 text-slate-300",
+  } as const;
+
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium uppercase tracking-[0.18em] ${styles[state]}`}>{state}</span>;
+}
+
 export function RoutersTable({
   rows,
   onOpenDetails,
@@ -26,6 +37,8 @@ export function RoutersTable({
   onMarkReviewed,
   onAddNote,
   onAddFlag,
+  emptyTitle = "No routers found",
+  emptyDescription = "Adjust your filters or provision a new router to populate the fleet.",
 }: {
   rows: RouterRow[];
   onOpenDetails: (row: RouterRow) => void;
@@ -40,6 +53,8 @@ export function RoutersTable({
   onMarkReviewed: (row: RouterRow) => void;
   onAddNote: (row: RouterRow) => void;
   onAddFlag: (row: RouterRow) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
 }) {
   const navigate = useNavigate();
   const [navigatingRouterId, setNavigatingRouterId] = useState<string | null>(null);
@@ -80,6 +95,7 @@ export function RoutersTable({
     { header: "VPN IP", cell: ({ row }) => <span className="font-mono text-xs text-slate-300">{row.original.vpnIp}</span> },
     { header: "Server", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.serverNode}</span> },
     { header: "Ports", cell: ({ row }) => <div className="flex flex-wrap gap-1"><RouterPortStatusBadge status={row.original.winboxPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.sshPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.apiPort ? "assigned" : "missing"} /></div> },
+    { header: "API", cell: ({ row }) => <ApiStateBadge state={row.original.apiConnectivity.state} /> },
     { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastSeen)}</span> },
     { header: "Last handshake", cell: ({ row }) => <span className="font-mono text-xs text-slate-400">{formatDateTime(row.original.lastHandshake)}</span> },
     {
@@ -107,5 +123,5 @@ export function RoutersTable({
     },
   ], [navigate, navigatingRouterId, onAddFlag, onAddNote, onDelete, onDisable, onMarkReviewed, onMoveServer, onOpenDetails, onReactivate, onRegenerateSetup, onReassignPorts, onReprovision, onResetPeer]);
 
-  return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle="No routers found" emptyDescription="Adjust your filters or provision a new router to populate the fleet." />;
+  return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle={emptyTitle} emptyDescription={emptyDescription} />;
 }

@@ -12,7 +12,7 @@ export function UserSecurityPanel({ user }: { user: UserDetail }) {
   const flags = security?.flags || [];
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+    <div className="grid gap-6">
       <Card>
         <CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>Security summary</CardTitle><CardDescription>Login history, failed attempts, and risk posture.</CardDescription></div><RefreshButton loading={securityQuery.isFetching} onClick={() => void securityQuery.refetch()} /></div></CardHeader>
         {securityQuery.isError ? <InlineError message="Security data could not be refreshed. Showing the last loaded account snapshot." /> : null}

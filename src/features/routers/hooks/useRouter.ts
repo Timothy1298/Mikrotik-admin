@@ -29,7 +29,9 @@ import {
   reprovisionRouter,
   runRouterCommand,
   resetRouterPeer,
+  setRouterCredentials,
   verifyDiscoveredRouter,
+  testRouterConnection,
 } from "@/features/routers/api/getRouters";
 
 export function useRouter(id: string) {
@@ -167,10 +169,12 @@ export function useDeleteRouter() {
 }
 
 export function usePingRouter() {
+  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => pingRouter(id),
-    onSuccess: (result) => {
+    mutationFn: ({ id, payload }: { id: string; payload?: { address?: string; count?: number } }) => pingRouter(id, payload),
+    onSuccess: async (result, variables) => {
       toast[result.reachable ? "success" : "error"](result.reachable ? "Ping successful" : "Ping failed - router unreachable");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Ping failed");
@@ -183,6 +187,36 @@ export function useRunRouterCommand() {
     mutationFn: ({ id, payload }: { id: string; payload: { command: string; reason: string } }) => runRouterCommand(id, payload),
     onError: (error: Error) => {
       toast.error(error.message || "Command execution failed");
+    },
+  });
+}
+
+export function useSetRouterCredentials() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { apiUsername: string; apiPassword?: string; apiPort: number; reason?: string } }) => setRouterCredentials(id, payload),
+    onSuccess: async (_, variables) => {
+      toast.success("RouterOS API credentials updated");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update RouterOS API credentials");
+    },
+  });
+}
+
+export function useTestRouterConnection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => testRouterConnection(id, reason),
+    onSuccess: async (_, variables) => {
+      toast.success("RouterOS API connection succeeded");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "RouterOS API connection failed");
     },
   });
 }

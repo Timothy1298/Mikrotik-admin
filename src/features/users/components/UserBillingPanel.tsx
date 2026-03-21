@@ -23,7 +23,7 @@ export function UserBillingPanel({ user }: { user: UserDetail }) {
   }));
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
+    <div className="grid gap-6">
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-start justify-between gap-3">

@@ -443,6 +443,7 @@ export function AddRouterAdminDialog({ open, onClose, initialUserId = "" }: { op
       title="Add Router"
       description="Choose discovery-assisted import, claim-based onboarding, or direct provisioning depending on how the router can be reached."
       onClose={onClose}
+      maxWidthClass="max-w-[min(98vw,88rem)]"
     >
       <RouterAdminCreateForm initialUserId={initialUserId} onCancel={onClose} onSuccess={() => onClose()} />
     </Modal>

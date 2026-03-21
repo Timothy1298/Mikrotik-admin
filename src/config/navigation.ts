@@ -38,6 +38,7 @@ export const navigationItems = [
       { label: "Add Router", path: appRoutes.routersAdd, icon: PlusCircle },
       { label: "Overview", path: appRoutes.routersOverview },
       { label: "Router Fleet", path: appRoutes.routersAll },
+      { label: "API Connectivity", path: appRoutes.routersApiConnectivity },
     ],
   },
   {

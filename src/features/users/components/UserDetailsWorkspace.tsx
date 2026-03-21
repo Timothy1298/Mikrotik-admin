@@ -107,10 +107,8 @@ export function UserDetailsWorkspace({
 
       <UserSummaryCards user={user} />
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <UserProfileCard user={user} onEdit={canManageUsers ? onEditProfile : undefined} />
-        <UserAccountHealthCard user={user} />
-      </div>
+      <UserProfileCard user={user} onEdit={canManageUsers ? onEditProfile : undefined} />
+      <UserAccountHealthCard user={user} />
 
       <UserServicesPanel user={user} />
       <UserRoutersTable user={user} onAddRouter={addRouterDisclosure.onOpen} />

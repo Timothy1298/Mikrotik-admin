@@ -31,9 +31,10 @@ export type RouterRow = {
     subscriptionState: string;
   } | null;
   status: string;
+  connectionMode?: "wireguard" | "management_only";
   setupStatus: string;
   connectionStatus: string;
-  vpnIp: string;
+  vpnIp: string | null;
   serverNode: string;
   winboxPort: number | null;
   sshPort: number | null;
@@ -49,6 +50,17 @@ export type RouterRow = {
   billingState: string;
   issueFlags: string[];
   unhealthy: boolean;
+  apiConnectivity: {
+    username: string;
+    apiPort: number;
+    hasPassword: boolean;
+    hasCredentials: boolean;
+    routerosVersion: string | null;
+    lastSuccessAt: string | null;
+    lastErrorAt: string | null;
+    lastError: string | null;
+    state: "healthy" | "failing" | "pending" | "unconfigured";
+  };
 };
 
 export type RouterDirectoryResponse = {
@@ -61,11 +73,21 @@ export type RouterDetail = {
   profile: {
     id: string;
     name: string;
-    vpnIp: string;
+    vpnIp: string | null;
+    connectionMode?: "wireguard" | "management_only";
     serverNode: string;
     status: string;
     setupStatus: string;
     connectionStatus: string;
+    localAddress: string | null;
+    hostname: string | null;
+    macAddress: string | null;
+    discoverySource: string | null;
+    openPorts: number[];
+    boardName: string | null;
+    model: string | null;
+    serialNumber: string | null;
+    routerosVersion: string | null;
     createdAt: string;
     updatedAt: string;
   };
@@ -77,11 +99,12 @@ export type RouterDetail = {
     proxyStatus?: Record<string, unknown>;
   };
   connectivity: {
+    connectionMode?: "wireguard" | "management_only";
     peerId: string | null;
     peerEnabled: boolean;
     peerName: string | null;
     serverNode: string;
-    vpnIp: string;
+    vpnIp: string | null;
     allowedIPs: string[] | string;
     publicKeyFingerprint: string | null;
     tunnelStatus: string;
@@ -94,6 +117,17 @@ export type RouterDetail = {
     rekeyEligible: boolean;
     reconciliationState: string;
   };
+  discovery: {
+    localAddress: string | null;
+    subnet: string | null;
+    hostname: string | null;
+    macAddress: string | null;
+    source: string | null;
+    openPorts: number[];
+    importedAt: string | null;
+  };
+  apiAccess: RouterRow["apiConnectivity"];
+  pingHistory: RouterPingResult[];
   monitoring: {
     online: boolean;
     status: string;
@@ -120,8 +154,10 @@ export type RouterDetail = {
     configGenerationStatus: string;
     provisioningError: string | null;
     assignedResources: {
-      vpnIp: string;
+      vpnIp: string | null;
+      localAddress: string | null;
       serverNode: string;
+      openPorts: number[];
       ports?: { winbox?: number; ssh?: number; api?: number };
     };
     timestamps: {
@@ -219,13 +255,57 @@ export type RouterPingResult = {
   packetsReceived?: number;
   packetLoss?: number;
   avgRtt?: number;
+  target?: string;
   error?: string;
+  actor?: string;
+  createdAt?: string;
 };
 
 export type RouterCommandResult = {
   success: boolean;
   output?: string;
   error?: string;
+};
+
+export type RouterApiConnectionTest = {
+  resource: {
+    cpuLoad: number | null;
+    freeMemory: number | null;
+    totalMemory: number | null;
+    uptime: string | null;
+    boardName: string | null;
+    version: string | null;
+    platform: string | null;
+    architectureName: string | null;
+    freeHddSpace: number | null;
+    totalHddSpace: number | null;
+    memoryUsage: number | null;
+  };
+  interfaces: Array<{
+    name: string;
+    type: string;
+    running: boolean;
+    disabled: boolean;
+    rxBytes: number;
+    txBytes: number;
+  }>;
+  testedAt: string;
+};
+
+export type RouterMetricPoint = {
+  routerId: string;
+  timestamp: string;
+  cpuLoad: number | null;
+  memUsedBytes: number | null;
+  memTotalBytes: number | null;
+  uptime: string | null;
+  interfaces: Array<{
+    name: string;
+    rxBps: number;
+    txBps: number;
+    running: boolean;
+  }>;
+  collectionMethod: string;
 };
 
 export type CreateRouterPayload = {
@@ -238,10 +318,24 @@ export type CreateRouterPayload = {
 export type CreateRouterResponse = {
   id: string;
   name: string;
-  vpnIp: string;
-  ports: { winbox: number; ssh: number; api: number };
+  vpnIp: string | null;
+  ports: { winbox: number | null; ssh: number | null; api: number | null };
   status: string;
+  connectionMode?: "wireguard" | "management_only";
   wireguardConfig?: string;
+};
+
+export type RouterSetupArtifacts = {
+  routerId: string;
+  generatedAt: string;
+  wireguardConfig: string;
+  mikrotikScript: string;
+  connectivity: {
+    endpoint: string;
+    serverPublicKey: string;
+    allowedIps: string[];
+    dns: string[];
+  };
 };
 
 export type RouterOnboardingClaim = {
@@ -385,5 +479,14 @@ export type RouterDiscoveryImportPayload = {
   userId: string;
   name?: string;
   serverNode?: string;
+  connectionMode?: "wireguard" | "management_only";
   reason?: string;
+};
+
+export type RouterDiscoveryImportResult = {
+  message: string;
+  router: CreateRouterResponse;
+  artifacts?: RouterSetupArtifacts | null;
+  session: RouterDiscoverySession;
+  candidate: RouterDiscoveryCandidate;
 };

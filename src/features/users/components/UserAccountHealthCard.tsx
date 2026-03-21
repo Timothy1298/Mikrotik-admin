@@ -11,7 +11,7 @@ export function UserAccountHealthCard({ user }: { user: UserDetail }) {
           <CardDescription>Operational status, billing pressure, and support burden at a glance.</CardDescription>
         </div>
       </CardHeader>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">Operational health</p>
           <div className="mt-3"><UserStatusBadge status={user.state.health} /></div>

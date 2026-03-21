@@ -4,12 +4,14 @@ import type {
   CreateRouterPayload,
   CreateRouterResponse,
   RouterCommandResult,
+  RouterApiConnectionTest,
   RouterDetail,
   RouterDirectoryResponse,
   RouterDirectoryStats,
   RouterInterface,
   RouterLiveHealth,
   RouterDiscoveryImportPayload,
+  RouterDiscoveryImportResult,
   RouterDiscoveryScanPayload,
   RouterDiscoverySession,
   RouterDiscoveryVerifyPayload,
@@ -18,6 +20,7 @@ import type {
   RouterOnboardingClaimPayload,
   RouterPingResult,
   RouterQuery,
+  RouterMetricPoint,
 } from "@/features/routers/types/router.types";
 
 export async function getRouters(params: RouterQuery) {
@@ -76,7 +79,7 @@ export async function verifyDiscoveredRouter(payload: RouterDiscoveryVerifyPaylo
 }
 
 export async function importDiscoveredRouter(payload: RouterDiscoveryImportPayload) {
-  const { data } = await apiClient.post<{ success: boolean; message: string; router: CreateRouterResponse; session: RouterDiscoverySession; candidate: RouterDiscoverySession["candidates"][number] }>(endpoints.admin.routerDiscoveryImport, payload);
+  const { data } = await apiClient.post<{ success: boolean } & RouterDiscoveryImportResult>(endpoints.admin.routerDiscoveryImport, payload);
   return data;
 }
 
@@ -135,8 +138,8 @@ export async function rebootRouter(id: string, reason?: string) {
   return data;
 }
 
-export async function pingRouter(id: string) {
-  const { data } = await apiClient.post<{ success: boolean; result?: RouterPingResult; reachable?: boolean; error?: string }>(endpoints.admin.pingRouter(id));
+export async function pingRouter(id: string, payload?: { address?: string; count?: number }) {
+  const { data } = await apiClient.post<{ success: boolean; result?: RouterPingResult; reachable?: boolean; error?: string }>(endpoints.admin.pingRouter(id), payload || {});
   if (!data.success) {
     return { reachable: Boolean(data.reachable), error: data.error || "Ping failed" } satisfies RouterPingResult;
   }
@@ -156,6 +159,21 @@ export async function getRouterInterfaces(id: string) {
 export async function getRouterLiveHealth(id: string) {
   const { data } = await apiClient.get<{ success: boolean; health: RouterLiveHealth }>(endpoints.admin.routerLiveHealth(id));
   return data.health;
+}
+
+export async function getRouterMetrics(id: string, hours = 24) {
+  const { data } = await apiClient.get<{ success: boolean; metrics: RouterMetricPoint[]; routerId: string }>(endpoints.admin.routerMetrics(id), { params: { hours } });
+  return data.metrics || [];
+}
+
+export async function setRouterCredentials(id: string, payload: { apiUsername: string; apiPassword?: string; apiPort: number; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: { apiUsername: string; apiPort: number; hasPassword: boolean } }>(endpoints.admin.routerSetCredentials(id), payload);
+  return data;
+}
+
+export async function testRouterConnection(id: string, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; data: RouterApiConnectionTest }>(endpoints.admin.routerTestConnection(id), { reason });
+  return data.data;
 }
 
 export async function addRouterNote(id: string, payload: { body: string; category: string; pinned?: boolean; reason?: string }) {

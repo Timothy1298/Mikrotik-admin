@@ -5,7 +5,17 @@ import { HealthStatusBadge } from "@/features/monitoring/components/HealthStatus
 import type { RouterRow } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
-export function RouterHealthTable({ rows, onOpen }: { rows: RouterRow[]; onOpen: (row: RouterRow) => void }) {
+export function RouterHealthTable({
+  rows,
+  onOpen,
+  emptyTitle = "No routers found",
+  emptyDescription = "No routers matched the current health filters.",
+}: {
+  rows: RouterRow[];
+  onOpen: (row: RouterRow) => void;
+  emptyTitle?: string;
+  emptyDescription?: string;
+}) {
   const columns = useMemo<ColumnDef<RouterRow>[]>(() => [
     { header: "Router", cell: ({ row }) => <div><p className="font-medium text-slate-100">{row.original.name}</p><p className="font-mono text-xs text-slate-500">{row.original.id}</p></div> },
     { header: "Customer", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.customer?.name || "Unassigned"}</span> },
@@ -17,5 +27,5 @@ export function RouterHealthTable({ rows, onOpen }: { rows: RouterRow[]; onOpen:
     { header: "Server", cell: ({ row }) => <span className="text-sm text-slate-200">{row.original.serverNode}</span> },
   ], []);
 
-  return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle="No routers found" emptyDescription="No routers matched the current health filters." />;
+  return <DataTable data={rows} columns={columns} onRowClick={onOpen} emptyTitle={emptyTitle} emptyDescription={emptyDescription} />;
 }

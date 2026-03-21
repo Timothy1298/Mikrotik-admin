@@ -30,6 +30,7 @@ export * from "./RouterPortsPanel";
 export * from "./RouterLiveHealthPanel";
 export * from "./RouterMonitoringPanel";
 export * from "./RouterPingPanel";
+export * from "./RouterApiAccessPanel";
 export * from "./RouterProvisioningPanel";
 export * from "./RouterTerminalPanel";
 export * from "./RouterActivityPanel";

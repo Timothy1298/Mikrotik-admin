@@ -37,7 +37,7 @@ export function UserServicesPanel({ user }: { user: UserDetail }) {
           ))}
           <Badge tone="info">{services.supportTier}</Badge>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3">
           <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-slate-500">Billable routers</p>
             <p className="mt-2 text-2xl font-semibold text-slate-100">{services.billableRouters}</p>

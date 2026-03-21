@@ -65,6 +65,7 @@ const sectionIcons: Record<RouterManagementSection, typeof Router> = {
   "port-mapping-issues": ShieldAlert,
   "server-assignment": Server,
   "diagnostics-review": ShieldAlert,
+  "api-connectivity": ShieldAlert,
   "notes-flags": ShieldAlert,
 };
 
@@ -73,7 +74,9 @@ function filterRowsForSection(section: RouterManagementSection, rows: RouterRow[
     case "provisioning-queue":
       return rows.filter((row) => ["pending", "awaiting_connection", "failed"].includes(row.setupStatus));
     case "diagnostics-review":
-      return rows.filter((row) => row.unhealthy || row.issueFlags.length > 0 || row.setupStatus === "failed" || !row.winboxPort || !row.sshPort || !row.apiPort);
+      return rows.filter((row) => row.unhealthy || row.issueFlags.length > 0 || row.setupStatus === "failed" || (row.connectionMode !== "management_only" && (!row.winboxPort || !row.sshPort || !row.apiPort)));
+    case "api-connectivity":
+      return rows.filter((row) => row.apiConnectivity.state !== "healthy");
     default:
       return rows;
   }
@@ -132,7 +135,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const unhealthyCount = rows.filter((row) => row.unhealthy).length;
   const offlineCount = rows.filter((row) => row.connectionStatus === "offline").length;
   const flaggedCount = rows.reduce((sum, row) => sum + row.issueFlags.length, 0);
-  const portIssueCount = rows.filter((row) => !row.winboxPort || !row.sshPort || !row.apiPort).length;
+  const portIssueCount = rows.filter((row) => row.connectionMode !== "management_only" && (!row.winboxPort || !row.sshPort || !row.apiPort)).length;
 
   const metrics = useMemo(() => [
     { title: "Visible routers", value: String(total), progress: Math.min(100, total) },
@@ -189,6 +192,8 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
           ) : (
             <RoutersTable
               rows={rows}
+              emptyTitle={sectionMeta.emptyTitle}
+              emptyDescription={sectionMeta.emptyDescription}
               onOpenDetails={openRouterContext}
               onDisable={(router) => { setSelectedRouter(router); disableDisclosure.onOpen(); }}
               onDelete={(router) => { setSelectedRouter(router); deleteDisclosure.onOpen(); }}

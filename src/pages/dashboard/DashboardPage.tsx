@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import {
@@ -40,10 +42,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { Spinner } from "@/components/ui/Spinner";
+import { queryKeys } from "@/config/queryKeys";
 import { appRoutes } from "@/config/routes";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
+import { TrafficChartCard } from "@/features/dashboard/components";
 import { useDashboardStats } from "@/features/dashboard/hooks";
+import { useRouterStats, useRouters } from "@/features/routers/hooks/useRouters";
 import type { DashboardQuickAction } from "@/features/dashboard/types";
+import { useWebSocket } from "@/hooks/api/useWebSocket";
 import { formatBytes } from "@/lib/formatters/bytes";
 import { formatCurrency } from "@/lib/formatters/currency";
 import { can } from "@/lib/permissions/can";
@@ -81,10 +87,81 @@ function getStatusTone(healthy: boolean, warning = false) {
   return warning ? "warning" as const : "danger" as const;
 }
 
+function RouterStatusSummary({
+  isConnected,
+}: {
+  isConnected: boolean;
+}) {
+  const routerStatsQuery = useRouterStats();
+  const stats = routerStatsQuery.data;
+
+  return (
+    <Card className="surface-card-3d overflow-hidden p-0">
+      <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+        <CardHeader>
+          <div>
+            <CardTitle>Router Status Summary</CardTitle>
+            <CardDescription>Fleet counts from the router workspace, refreshed by live websocket events and API polling.</CardDescription>
+          </div>
+          <Badge tone={isConnected ? "success" : "warning"}>{isConnected ? "WebSocket connected" : "Polling fallback"}</Badge>
+        </CardHeader>
+
+        {routerStatsQuery.isPending ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+                <div className="h-4 w-24 animate-pulse rounded-xl bg-brand-500/15" />
+                <div className="mt-4 h-8 w-14 animate-pulse rounded-xl bg-brand-500/15" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              { label: "Total Routers", value: stats?.totalRouters ?? 0, tone: "text-brand-100" },
+              { label: "Online Routers", value: stats?.onlineRouters ?? 0, tone: "text-success" },
+              { label: "Offline Routers", value: stats?.offlineRouters ?? 0, tone: "text-danger" },
+              { label: "Pending Setup", value: stats?.pendingSetupRouters ?? 0, tone: "text-warning" },
+            ].map((item) => (
+              <div key={item.label} className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
+                <p className={cn("mt-3 text-2xl font-semibold", item.tone)}>{item.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function DashboardPage() {
+  const queryClient = useQueryClient();
   const dashboardQuery = useDashboardStats();
   const currentUserQuery = useCurrentUser(true);
+  const featuredRoutersQuery = useRouters({ limit: 6, sortBy: "lastSeen", sortOrder: "desc" });
+  const { lastMessage, isConnected } = useWebSocket(["router:all"]);
   const user = currentUserQuery.data;
+
+  useEffect(() => {
+    if (!lastMessage || typeof lastMessage !== "object") return;
+
+    const messageType = typeof lastMessage.type === "string" ? lastMessage.type : null;
+    const routerId = typeof lastMessage.routerId === "string" ? lastMessage.routerId : null;
+
+    if (messageType === "router_status") {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      return;
+    }
+
+    if (messageType === "router_metric") {
+      if (routerId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.routerMetrics(routerId, 24) });
+      }
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    }
+  }, [lastMessage, queryClient]);
 
   if (dashboardQuery.isPending) {
     return <PageLoader />;
@@ -107,6 +184,9 @@ export function DashboardPage() {
   const incidents = dashboardQuery.data.incidents ?? { open: 0 };
   const support = dashboardQuery.data.support ?? { openTickets: 0 };
   const recentActivity = dashboardQuery.data.recentActivity ?? [];
+  const featuredRouter = featuredRoutersQuery.data?.items?.find((router) => router.status === "active")
+    ?? featuredRoutersQuery.data?.items?.[0]
+    ?? null;
 
   const connectedPeers = wireguard.connected ?? 0;
   const tunnelHealth = clients.total > 0 ? Math.round((clients.enabled / clients.total) * 100) : 0;
@@ -375,6 +455,27 @@ export function DashboardPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
+        <RouterStatusSummary isConnected={isConnected} />
+        {featuredRouter ? (
+          <TrafficChartCard routerId={featuredRouter.id} title={`Live Telemetry: ${featuredRouter.name}`} />
+        ) : (
+          <Card className="surface-card-3d overflow-hidden p-0">
+            <div className="rounded-[24px] border border-brand-500/15 bg-[linear-gradient(135deg,rgba(37,99,235,0.1),rgba(56,189,248,0.05))] p-4 md:p-5">
+              <CardHeader>
+                <div>
+                  <CardTitle>Live Telemetry</CardTitle>
+                  <CardDescription>Select or onboard a router to start collecting dashboard telemetry.</CardDescription>
+                </div>
+              </CardHeader>
+              <div className="flex min-h-[288px] items-center justify-center">
+                <EmptyState icon={Router} title="No router available" description="The live traffic chart appears once the platform has at least one router record." />
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">

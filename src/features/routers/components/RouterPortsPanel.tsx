@@ -4,15 +4,25 @@ import type { RouterDetail } from "@/features/routers/types/router.types";
 
 export function RouterPortsPanel({ router }: { router: RouterDetail }) {
   const ports = router.accessPorts;
+  const managementOnly = router.profile.connectionMode === "management_only";
 
   return (
     <Card>
       <CardHeader>
         <div>
           <CardTitle>Public access / ports</CardTitle>
-          <CardDescription>Winbox, SSH, and API mappings plus forwarding health visibility.</CardDescription>
+          <CardDescription>
+            {managementOnly
+              ? "Management-only routers use their existing local management path and do not require public proxy mappings."
+              : "Winbox, SSH, and API mappings plus forwarding health visibility."}
+          </CardDescription>
         </div>
       </CardHeader>
+      {managementOnly ? (
+        <div className="rounded-2xl border border-brand-500/15 bg-[rgba(8,14,31,0.9)] p-4 text-sm text-slate-300">
+          This router was attached for management only. Public proxy ports are not allocated. Use the stored local RouterOS API access path instead.
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         {[
           { key: "winbox", label: "Winbox", value: ports.winbox },

@@ -252,7 +252,7 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
     if (section === "router-health") {
       if (unhealthyRoutersQuery.isPending && offlineRoutersQuery.isPending && provisioningIssueRoutersQuery.isPending && staleRoutersQuery.isPending) return <TableLoader />;
       if (unhealthyRoutersQuery.isError) return <ErrorState title="Unable to load router health" description="Retry after confirming router monitoring endpoints are available." onAction={() => void unhealthyRoutersQuery.refetch()} />;
-      return <RouterHealthTable rows={routerRows} onOpen={(row) => openDetail({ kind: "router", item: row })} />;
+      return <RouterHealthTable rows={routerRows} onOpen={(row) => openDetail({ kind: "router", item: row })} emptyTitle={sectionMeta.emptyTitle} emptyDescription={sectionMeta.emptyDescription} />;
     }
     if (section === "vpn-server-health") {
       if (unhealthyServersQuery.isPending && overloadedServersQuery.isPending && staleServersQuery.isPending) return <TableLoader />;
