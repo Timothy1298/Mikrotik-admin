@@ -10,9 +10,10 @@ import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
+import { appRoutes } from "@/config/routes";
 import { supportTabs } from "@/config/module-tabs";
 import { cannedResponses } from "@/features/support/config/cannedResponses";
-import { CreateTicketDialog, SupportActionDialog, SupportFilters, TicketDetailsModal, TicketsTable } from "@/features/support/components";
+import { CreateTicketDialog, SupportActionDialog, SupportFilters, TicketsTable } from "@/features/support/components";
 import {
   useAddTicketFlag,
   useAddTicketNote,
@@ -33,7 +34,6 @@ import {
   useResolveTicket,
   useStaleQueue,
   useSupportAgents,
-  useTicket,
   useTickets,
   useTicketsByAssignee,
   useUnassignedQueue,
@@ -83,7 +83,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const [categoryValue, setCategoryValue] = useState("technical");
   const [assigneeValue, setAssigneeValue] = useState("");
 
-  const detailDisclosure = useDisclosure(false);
   const assignDisclosure = useDisclosure(false);
   const reassignDisclosure = useDisclosure(false);
   const unassignDisclosure = useDisclosure(false);
@@ -115,8 +114,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const workloadQuery = useAssigneeWorkload(byAssigneeEnabled);
   const agentsQuery = useSupportAgents();
   const assigneeTicketsQuery = useTicketsByAssignee(selectedAssigneeId, filters, byAssigneeEnabled && Boolean(selectedAssigneeId));
-  const selectedTicketDetailQuery = useTicket(selectedTicket?.id || "");
-
   const assignMutation = useAssignTicket();
   const reassignMutation = useReassignTicket();
   const unassignMutation = useUnassignTicket();
@@ -153,23 +150,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     return ticketsQuery.data?.items || [];
   }, [section, unassignedQuery.data?.items, escalatedQuery.data?.items, staleQuery.data?.items, ticketsQuery.data?.items, assigneeTicketsQuery.data?.items]);
 
-  const metrics = useMemo(() => {
-    if (section === "by-assignee") {
-      return [
-        { title: "Assignees", value: String((workloadQuery.data || []).length), progress: Math.min(100, (workloadQuery.data || []).length * 8) },
-        { title: "Selected queue", value: String(rows.length), progress: Math.min(100, rows.length) },
-        { title: "Open tickets", value: String(rows.filter((item) => ["open", "in_progress"].includes(item.status)).length), progress: Math.min(100, rows.filter((item) => ["open", "in_progress"].includes(item.status)).length * 6) },
-        { title: "Escalated", value: String(rows.filter((item) => item.escalated).length), progress: Math.min(100, rows.filter((item) => item.escalated).length * 10) },
-      ];
-    }
-    return [
-      { title: "Visible tickets", value: String(rows.length), progress: Math.min(100, rows.length) },
-      { title: "Awaiting admin", value: String(rows.filter((item) => item.lastReplySummary.awaiting === "awaiting_admin").length), progress: Math.min(100, rows.filter((item) => item.lastReplySummary.awaiting === "awaiting_admin").length * 8) },
-      { title: "Escalated", value: String(rows.filter((item) => item.escalated).length), progress: Math.min(100, rows.filter((item) => item.escalated).length * 10) },
-      { title: "VIP", value: String(rows.filter((item) => item.vip).length), progress: Math.min(100, rows.filter((item) => item.vip).length * 12) },
-    ];
-  }, [rows, section, workloadQuery.data]);
-
   const isPending =
     (ticketsEnabled && ticketsQuery.isPending)
     || (unassignedEnabled && unassignedQuery.isPending)
@@ -193,7 +173,7 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     setStatusValue(ticket.status);
     setCategoryValue(ticket.category);
     setSelectedFlagId(ticket.flags[0]?.id || "");
-    detailDisclosure.onOpen();
+    navigate(appRoutes.supportTicket(ticket.id));
   };
 
   const refreshCurrentSection = () => {
@@ -204,7 +184,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     if (byAssigneeEnabled) void workloadQuery.refetch();
     void agentsQuery.refetch();
     if (byAssigneeEnabled && selectedAssigneeId) void assigneeTicketsQuery.refetch();
-    if (selectedTicket) void selectedTicketDetailQuery.refetch();
   };
 
   return (
@@ -306,22 +285,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
           </div>
         </Card>
       )}
-
-      <TicketDetailsModal
-        open={detailDisclosure.open}
-        ticketId={selectedTicket?.id || ""}
-        onClose={detailDisclosure.onClose}
-        onReply={showReplyActions && selectedTicket ? () => { detailDisclosure.onClose(); replyDisclosure.onOpen(); } : undefined}
-        onAssign={showManageActions && selectedTicket && !selectedTicket.assignee ? () => { detailDisclosure.onClose(); assignDisclosure.onOpen(); } : undefined}
-        onReassign={showManageActions && selectedTicket?.assignee ? () => { detailDisclosure.onClose(); reassignDisclosure.onOpen(); } : undefined}
-        onEscalate={showManageActions && selectedTicket && !selectedTicket.escalated ? () => { detailDisclosure.onClose(); escalateDisclosure.onOpen(); } : undefined}
-        onDeEscalate={showManageActions && selectedTicket?.escalated ? () => { detailDisclosure.onClose(); deEscalateDisclosure.onOpen(); } : undefined}
-        onResolve={showManageActions && selectedTicket && selectedTicket.status !== "resolved" && selectedTicket.status !== "closed" ? () => { detailDisclosure.onClose(); resolveDisclosure.onOpen(); } : undefined}
-        onCloseTicket={showManageActions && selectedTicket && selectedTicket.status !== "closed" ? () => { detailDisclosure.onClose(); closeDisclosure.onOpen(); } : undefined}
-        onReopen={showManageActions && selectedTicket && (selectedTicket.status === "resolved" || selectedTicket.status === "closed") ? () => { detailDisclosure.onClose(); reopenDisclosure.onOpen(); } : undefined}
-        onAddNote={showReplyActions && selectedTicket ? () => { detailDisclosure.onClose(); noteDisclosure.onOpen(); } : undefined}
-        onAddFlag={showManageActions && selectedTicket ? () => { detailDisclosure.onClose(); flagDisclosure.onOpen(); } : undefined}
-      />
 
       <CreateTicketDialog open={addDisclosure.open} onClose={addDisclosure.onClose} />
 

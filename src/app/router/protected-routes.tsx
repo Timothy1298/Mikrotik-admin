@@ -3,19 +3,20 @@ import { RequireAuth, RequirePermission } from "@/app/router/guards";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { appRoutes } from "@/config/routes";
 import { permissions } from "@/lib/permissions/permissions";
-import { BillingPage } from "@/pages/billing/BillingPage";
+import { BillingAccountPage } from "@/pages/billing/BillingAccountPage";
 import { BillingOverviewPage } from "@/pages/billing/BillingOverviewPage";
 import { BillingSectionPage } from "@/pages/billing/BillingSectionPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { LogsSecurityOverviewPage } from "@/pages/logs-security/LogsSecurityOverviewPage";
 import { LogsSecuritySectionPage } from "@/pages/logs-security/LogsSecuritySectionPage";
+import { LogsSecurityWorkspacePage } from "@/pages/logs-security/LogsSecurityWorkspacePage";
 import { MonitoringOverviewPage } from "@/pages/monitoring/MonitoringOverviewPage";
 import { MonitoringSectionPage } from "@/pages/monitoring/MonitoringSectionPage";
+import { MonitoringWorkspacePage } from "@/pages/monitoring/MonitoringWorkspacePage";
 import { RouterManagementOverviewPage } from "@/pages/routers/RouterManagementOverviewPage";
 import { RouterManagementSectionPage } from "@/pages/routers/RouterManagementSectionPage";
 import { RouterDetailsPage } from "@/pages/routers/RouterDetailsPage";
 import { RouterAddPage } from "@/pages/routers/RouterAddPage";
-import { RoutersPage } from "@/pages/routers/RoutersPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
 import { AdminManagementPage } from "@/pages/settings/AdminManagementPage";
 import { ResellersPage } from "@/pages/settings/ResellersPage";
@@ -29,7 +30,6 @@ import { UserManagementSectionPage } from "@/pages/users/UserManagementSectionPa
 import { VpnServerManagementOverviewPage } from "@/pages/vpn-servers/VpnServerManagementOverviewPage";
 import { VpnServerManagementSectionPage } from "@/pages/vpn-servers/VpnServerManagementSectionPage";
 import { VpnServerDetailsPage } from "@/pages/vpn-servers/VpnServerDetailsPage";
-import { VpnServersPage } from "@/pages/vpn-servers/VpnServersPage";
 
 export function ProtectedRoutes() {
   return (
@@ -90,6 +90,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.monitoringIncidentsAlerts} element={<MonitoringSectionPage section="incidents-alerts" />} />
         <Route path={appRoutes.monitoringDiagnostics} element={<MonitoringSectionPage section="diagnostics" />} />
         <Route path={appRoutes.monitoringActivityFeed} element={<MonitoringSectionPage section="activity-feed" />} />
+        <Route path={appRoutes.monitoringWorkspace()} element={<MonitoringWorkspacePage />} />
         <Route path={appRoutes.billingRoot} element={<Navigate to={appRoutes.billingOverview} replace />} />
         <Route path={appRoutes.billing} element={<BillingOverviewPage />} />
         <Route path={appRoutes.billingOverview} element={<BillingOverviewPage />} />
@@ -103,6 +104,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.billingReports} element={<BillingSectionPage section="reports" />} />
         <Route path={appRoutes.billingActivity} element={<BillingSectionPage section="activity" />} />
         <Route path={appRoutes.billingNotesFlags} element={<BillingSectionPage section="notes-flags" />} />
+        <Route path={appRoutes.billingAccount()} element={<BillingAccountPage />} />
         <Route path={appRoutes.logsSecurityRoot} element={<Navigate to={appRoutes.logsSecurityOverview} replace />} />
         <Route path={appRoutes.logsSecurity} element={<LogsSecurityOverviewPage />} />
         <Route path={appRoutes.logsSecurityOverview} element={<LogsSecurityOverviewPage />} />
@@ -115,6 +117,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.logsSecurityUserSecurityReview} element={<LogsSecuritySectionPage section="user-security-review" />} />
         <Route path={appRoutes.logsSecurityResourceTimelines} element={<LogsSecuritySectionPage section="resource-timelines" />} />
         <Route path={appRoutes.logsSecurityReviewsNotes} element={<LogsSecuritySectionPage section="reviews-notes" />} />
+        <Route path={appRoutes.logsSecurityWorkspace()} element={<LogsSecurityWorkspacePage />} />
         <Route path={appRoutes.supportRoot} element={<Navigate to={appRoutes.supportOverview} replace />} />
         <Route path={appRoutes.support} element={<SupportOverviewPage />} />
         <Route path={appRoutes.supportOverview} element={<SupportOverviewPage />} />

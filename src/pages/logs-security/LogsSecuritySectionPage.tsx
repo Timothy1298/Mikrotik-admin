@@ -19,7 +19,6 @@ import {
   ActivityLogsTable,
   AuditTrailTable,
   LogsSecurityActionDialog,
-  LogsSecurityDetailsModal,
   LogsSecurityFilters,
   ResourceTimelineViewer,
   SecurityEventsTable,
@@ -89,7 +88,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const Icon = sectionIcons[section];
 
   const [filters, setFilters] = useState<LogsSecurityFilterState>({ limit: 50, page: 1 });
-  const [selectedDetail, setSelectedDetail] = useState<LogsSecurityDetailItem | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SecurityEventItem | null>(null);
   const [selectedSession, setSelectedSession] = useState<SessionItem | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -97,7 +95,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const [timelineResourceId, setTimelineResourceId] = useState("");
   const [securityOverviewTab, setSecurityOverviewTab] = useState<"events" | "sessions">("events");
 
-  const detailDisclosure = useDisclosure(false);
   const acknowledgeDisclosure = useDisclosure(false);
   const resolveDisclosure = useDisclosure(false);
   const reviewedDisclosure = useDisclosure(false);
@@ -144,52 +141,21 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const exportActivityMutation = useExportActivityLogs();
   const exportSecurityMutation = useExportSecurityEvents();
 
-  const getRouteForResource = (resourceType?: string | null, resourceId?: string | null) => {
-    if (!resourceId) return null;
-    switch (resourceType) {
-      case "user":
-      case "billing_account":
-        return appRoutes.userDetail(resourceId);
-      case "router":
-        return appRoutes.routerDetail(resourceId);
-      case "vpn_server":
-        return appRoutes.vpnServerDetail(resourceId);
-      case "support_ticket":
-        return appRoutes.supportTicket(resourceId);
-      default:
-        return null;
-    }
-  };
-
-  const navigateToWorkspace = (item: LogsSecurityDetailItem) => {
-    switch (item.kind) {
-      case "activity":
-        return getRouteForResource(item.item.resourceType, item.item.resourceId) || (item.item.targetUser?.id ? appRoutes.userDetail(item.item.targetUser.id) : null);
-      case "audit":
-        return getRouteForResource(item.item.resourceType, item.item.resourceId) || (item.item.targetAccount?.id ? appRoutes.userDetail(item.item.targetAccount.id) : null);
-      case "security-event":
-        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
-      case "suspicious":
-        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
-      case "session":
-        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
-      case "user-security":
-        return appRoutes.userDetail(item.item.user.id);
-      case "timeline":
-        return null;
-      default:
-        return null;
-    }
-  };
-
   const openDetail = (item: LogsSecurityDetailItem) => {
-    const route = navigateToWorkspace(item);
-    if (route) {
-      navigate(route);
-      return;
-    }
-    setSelectedDetail(item);
-    detailDisclosure.onOpen();
+    const itemId = item.kind === "activity"
+      ? item.item.id
+      : item.kind === "audit"
+        ? item.item.id
+        : item.kind === "security-event"
+          ? item.item.eventId
+          : item.kind === "suspicious"
+            ? ("eventId" in item.item ? item.item.eventId : item.item.user?.id || item.item.timestamp)
+            : item.kind === "session"
+              ? item.item.sessionId
+              : item.kind === "user-security"
+                ? item.item.user.id
+                : item.item.eventId;
+    navigate(appRoutes.logsSecurityWorkspace(item.kind, itemId), { state: { detail: item } });
   };
 
   const userReviewRows = useMemo<UserSecuritySummary[]>(() => {
@@ -324,9 +290,7 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
     return <SecurityEventsTable rows={reviewsQuery.data?.items || []} onOpen={(item) => openDetail({ kind: "security-event", item })} onAcknowledge={(item) => { setSelectedEvent(item); acknowledgeDisclosure.onOpen(); }} onResolve={(item) => { setSelectedEvent(item); resolveDisclosure.onOpen(); }} onMarkReviewed={(item) => { setSelectedEvent(item); reviewedDisclosure.onOpen(); }} />;
   };
 
-  const detailItem = selectedDetail?.kind === "user-security" && selectedUserSummaryQuery.data ? { kind: "user-security" as const, item: selectedUserSummaryQuery.data } : selectedDetail;
   const canExportLogs = can(currentUser, permissions.logsExport);
-  const canManageLogs = can(currentUser, permissions.logsManage);
   const showAddNote = ["security-events", "suspicious-activity", "user-security-review", "reviews-notes"].includes(section);
 
   return (
@@ -368,16 +332,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
         </DataToolbar>
         <div className="mt-4 p-0 md:p-0">{renderContent()}</div>
       </Card>
-
-      <LogsSecurityDetailsModal
-        open={detailDisclosure.open}
-        item={detailItem}
-        onClose={detailDisclosure.onClose}
-        onAcknowledge={selectedEvent ? () => { detailDisclosure.onClose(); acknowledgeDisclosure.onOpen(); } : undefined}
-        onResolve={selectedEvent && canManageLogs ? () => { detailDisclosure.onClose(); resolveDisclosure.onOpen(); } : undefined}
-        onMarkReviewed={selectedEvent ? () => { detailDisclosure.onClose(); reviewedDisclosure.onOpen(); } : undefined}
-        onAddNote={selectedEvent ? () => { detailDisclosure.onClose(); addNoteDisclosure.onOpen(); } : undefined}
-      />
 
       <LogsSecurityActionDialog open={acknowledgeDisclosure.open} title="Acknowledge security event" description="Record that this security event has been seen and triaged." confirmLabel="Acknowledge" loading={acknowledgeMutation.isPending} onClose={acknowledgeDisclosure.onClose} onConfirm={({ reason }) => selectedEvent && acknowledgeMutation.mutate([selectedEvent.eventId, reason] as never, { onSuccess: () => acknowledgeDisclosure.onClose() })} />
       <LogsSecurityActionDialog open={resolveDisclosure.open} title="Resolve security event" description="Mark the selected security event as resolved and capture context." confirmLabel="Resolve event" loading={resolveMutation.isPending} onClose={resolveDisclosure.onClose} onConfirm={({ reason }) => selectedEvent && resolveMutation.mutate([selectedEvent.eventId, reason] as never, { onSuccess: () => resolveDisclosure.onClose() })} />

@@ -145,43 +145,47 @@ export function TicketDetailsPage() {
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title={detail.ticket.subject} description="Support ticket workspace" meta={detail.ticket.ticketReference} />
+        <PageHeader title={detail.context.customer?.name || detail.ticket.customer?.name || detail.ticket.subject} description="User-classified support workspace for subscriber context, ticket handling, and operational follow-up." meta={detail.context.customer?.email || detail.ticket.ticketReference} />
         <RefreshButton loading={ticketQuery.isFetching || messagesQuery.isFetching || notesQuery.isFetching || flagsQuery.isFetching || activityQuery.isFetching} onClick={refreshAll} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>{detail.ticket.ticketReference}</CardTitle>
-            <CardDescription>{detail.ticket.customer?.email || "No customer email"} · opened {formatDateTime(detail.ticket.createdAt)}</CardDescription>
+      <Card className="space-y-5">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-semibold text-text-primary">{detail.context.customer?.name || detail.ticket.customer?.name || "Unknown subscriber"}</h2>
+              <TicketStatusBadge status={detail.ticket.status} />
+              <TicketPriorityBadge priority={detail.ticket.priority} />
+              <TicketCategoryBadge category={detail.ticket.category} />
+              <TicketEscalationBadge escalated={detail.ticket.escalated} />
+              <SLABadge breached={detail.ticket.sla.breached} remaining={detail.ticket.sla.resolutionRemainingHours} />
+            </div>
+            <p className="text-sm text-text-secondary">{detail.ticket.customer?.email || "No customer email"} • {detail.ticket.ticketReference}</p>
+            <p className="text-sm text-text-secondary">Focused ticket: {detail.ticket.subject}</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <TicketStatusBadge status={detail.ticket.status} />
-            <TicketPriorityBadge priority={detail.ticket.priority} />
-            <TicketCategoryBadge category={detail.ticket.category} />
-            <TicketEscalationBadge escalated={detail.ticket.escalated} />
-            <SLABadge breached={detail.ticket.sla.breached} remaining={detail.ticket.sla.resolutionRemainingHours} />
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Support tools</p>
+            <div className="flex flex-wrap gap-2">
+              {showReplyActions ? <Button variant="outline" onClick={() => document.getElementById("ticket-inline-reply")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Reply</Button> : null}
+              {showManageActions && !detail.ticket.assignee ? <Button variant="outline" onClick={assignDisclosure.onOpen}>Assign</Button> : null}
+              {showManageActions && detail.ticket.assignee ? <Button variant="outline" onClick={reassignDisclosure.onOpen}>Reassign</Button> : null}
+              {showManageActions && detail.ticket.assignee ? <Button variant="ghost" onClick={unassignDisclosure.onOpen}>Unassign</Button> : null}
+              {showManageActions && !detail.ticket.escalated ? <Button variant="outline" onClick={escalateDisclosure.onOpen}>Escalate</Button> : null}
+              {showManageActions && detail.ticket.escalated ? <Button variant="outline" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
+              {showManageActions && detail.ticket.status !== "resolved" && detail.ticket.status !== "closed" ? <Button variant="outline" onClick={resolveDisclosure.onOpen}>Resolve</Button> : null}
+              {showManageActions && detail.ticket.status !== "closed" ? <Button variant="ghost" onClick={closeDisclosure.onOpen}>Close</Button> : null}
+              {showManageActions && (detail.ticket.status === "resolved" || detail.ticket.status === "closed") ? <Button variant="outline" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
+              {showReplyActions ? <Button variant="ghost" onClick={noteDisclosure.onOpen}>Add Note</Button> : null}
+              {showManageActions ? <Button variant="ghost" onClick={flagDisclosure.onOpen}>Add Flag</Button> : null}
+              {showManageActions ? <Button variant="ghost" onClick={reviewedDisclosure.onOpen}>Mark Reviewed</Button> : null}
+            </div>
           </div>
-        </CardHeader>
+        </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Assignee: {detail.ticket.assignee?.name || "Unassigned"}</div>
           <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Team: {detail.ticket.assignedTeam}</div>
           <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Awaiting: {formatAwaiting(detail.ticket.awaitingState)}</div>
           <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">Age: {detail.ticket.age.ageHours}h old · {detail.ticket.age.idleHours}h idle</div>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {showReplyActions ? <Button variant="outline" onClick={() => document.getElementById("ticket-inline-reply")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Reply</Button> : null}
-          {showManageActions && !detail.ticket.assignee ? <Button variant="outline" onClick={assignDisclosure.onOpen}>Assign</Button> : null}
-          {showManageActions && detail.ticket.assignee ? <Button variant="outline" onClick={reassignDisclosure.onOpen}>Reassign</Button> : null}
-          {showManageActions && detail.ticket.assignee ? <Button variant="ghost" onClick={unassignDisclosure.onOpen}>Unassign</Button> : null}
-          {showManageActions && !detail.ticket.escalated ? <Button variant="outline" onClick={escalateDisclosure.onOpen}>Escalate</Button> : null}
-          {showManageActions && detail.ticket.escalated ? <Button variant="outline" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
-          {showManageActions && detail.ticket.status !== "resolved" && detail.ticket.status !== "closed" ? <Button variant="outline" onClick={resolveDisclosure.onOpen}>Resolve</Button> : null}
-          {showManageActions && detail.ticket.status !== "closed" ? <Button variant="ghost" onClick={closeDisclosure.onOpen}>Close</Button> : null}
-          {showManageActions && (detail.ticket.status === "resolved" || detail.ticket.status === "closed") ? <Button variant="outline" onClick={reopenDisclosure.onOpen}>Reopen</Button> : null}
-          {showReplyActions ? <Button variant="ghost" onClick={noteDisclosure.onOpen}>Add Note</Button> : null}
-          {showManageActions ? <Button variant="ghost" onClick={flagDisclosure.onOpen}>Add Flag</Button> : null}
-          {showManageActions ? <Button variant="ghost" onClick={reviewedDisclosure.onOpen}>Mark Reviewed</Button> : null}
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <div className={`rounded-2xl border p-3 text-sm ${detail.ticket.sla.responseBreached ? "border-danger/30 bg-danger/10 text-danger" : "border-background-border bg-background-panel text-text-primary"}`}>
@@ -196,11 +200,34 @@ export function TicketDetailsPage() {
         </div>
       </Card>
 
+      <div className="grid gap-5 xl:grid-cols-4">
+        <div className="rounded-3xl border border-background-border bg-background-surface p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Open tickets</p>
+          <p className="mt-3 text-3xl font-semibold text-text-primary">{detail.context.customer?.openTickets ?? 1}</p>
+          <p className="mt-2 text-sm text-text-secondary">Current customer support load.</p>
+        </div>
+        <div className="rounded-3xl border border-background-border bg-background-surface p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Routers</p>
+          <p className="mt-3 text-3xl font-semibold text-text-primary">{detail.context.customer?.routerCount ?? (detail.context.router ? 1 : 0)}</p>
+          <p className="mt-2 text-sm text-text-secondary">Infrastructure tied to this subscriber.</p>
+        </div>
+        <div className="rounded-3xl border border-background-border bg-background-surface p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Support tier</p>
+          <p className="mt-3 text-3xl font-semibold text-text-primary">{detail.context.customer?.supportTier || "standard"}</p>
+          <p className="mt-2 text-sm text-text-secondary">Customer support classification.</p>
+        </div>
+        <div className="rounded-3xl border border-background-border bg-background-surface p-5">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Account state</p>
+          <p className="mt-3 text-3xl font-semibold text-text-primary">{detail.context.customer?.accountStatus || "unknown"}</p>
+          <p className="mt-2 text-sm text-text-secondary">Subscriber operational state.</p>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <div>
             <CardTitle>Customer & Context</CardTitle>
-            <CardDescription>Subscriber context and linked operational resources.</CardDescription>
+            <CardDescription>Subscriber-first context and linked operational resources.</CardDescription>
           </div>
         </CardHeader>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

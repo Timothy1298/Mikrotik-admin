@@ -86,6 +86,7 @@ export const appRoutes = {
   logsSecurityUserSecurityReview: "/logs-security/user-security-review",
   logsSecurityResourceTimelines: "/logs-security/resource-timelines",
   logsSecurityReviewsNotes: "/logs-security/reviews-notes",
+  logsSecurityWorkspace: (kind = ":kind", id = ":id") => `/logs-security/workspace/${kind}/${id}`,
   supportRoot: "/support",
   support: "/support/overview",
   supportOverview: "/support/overview",

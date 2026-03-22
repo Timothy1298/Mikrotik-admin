@@ -146,7 +146,7 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const openAccount = (accountId: string) => {
     if (!accountId) return;
     setSelectedAccountId(accountId);
-    navigate(appRoutes.userDetail(accountId));
+    navigate(appRoutes.billingAccount(accountId));
   };
 
   const selectedInvoice = (invoicesQuery.data?.items || []).find((item) => item.id === selectedInvoiceId) || null;

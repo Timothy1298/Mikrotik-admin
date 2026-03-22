@@ -22,7 +22,6 @@ import {
   IncidentSeverityBadge,
   IncidentsTable,
   MarkIncidentReviewedModal,
-  MonitoringEventDetailsModal,
   MonitoringFilters,
   MonitoringTrendCard,
   PeerHealthTable,
@@ -89,10 +88,8 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   const sectionMeta = monitoringSections[section];
   const [filters, setFilters] = useState<MonitoringFilterState>({ limit: 50, window: "24h" });
   const [selectedIncident, setSelectedIncident] = useState<MonitoringIncident | null>(null);
-  const [selectedDetail, setSelectedDetail] = useState<MonitoringDetailItem | null>(null);
 
   const incidentDisclosure = useDisclosure(false);
-  const eventDisclosure = useDisclosure(false);
   const acknowledgeDisclosure = useDisclosure(false);
   const resolveDisclosure = useDisclosure(false);
   const reviewedDisclosure = useDisclosure(false);
@@ -172,67 +169,18 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   }, [stalePeersQuery.data?.items, unhealthyPeersQuery.data?.items]);
 
   const openIncident = (incident: MonitoringIncident) => {
-    if (incident.relatedRouter?.id) {
-      navigate(appRoutes.routerDetail(incident.relatedRouter.id));
-      return;
-    }
-    if (incident.relatedUser?.id) {
-      navigate(appRoutes.userDetail(incident.relatedUser.id));
-      return;
-    }
-    if (incident.relatedServer?.id) {
-      navigate(appRoutes.vpnServerDetail(incident.relatedServer.id));
-      return;
-    }
-    setSelectedIncident(incident);
-    incidentDisclosure.onOpen();
-  };
-
-  const getWorkspaceRoute = (detail: MonitoringDetailItem) => {
-    switch (detail.kind) {
-      case "router":
-        return appRoutes.routerDetail(detail.item.id);
-      case "vpn-server":
-        return appRoutes.vpnServerDetail(detail.item.id);
-      case "peer":
-        return detail.item.router?.id ? appRoutes.routerDetail(detail.item.router.id) : (detail.item.user?.id ? appRoutes.userDetail(detail.item.user.id) : null);
-      case "customer":
-        return detail.item.user?.id ? appRoutes.userDetail(detail.item.user.id) : null;
-      case "traffic-router":
-        return appRoutes.routerDetail(detail.item.id);
-      case "traffic-server":
-        return appRoutes.vpnServerDetail(detail.item.nodeId);
-      case "diagnostic":
-        if (detail.item.resourceType === "router") return appRoutes.routerDetail(detail.item.resourceId);
-        if (detail.item.resourceType === "user" || detail.item.resourceType === "billing_account") return appRoutes.userDetail(detail.item.resourceId);
-        if (detail.item.resourceType === "vpn_server") return appRoutes.vpnServerDetail(detail.item.resourceId);
-        return null;
-      case "activity":
-        if (detail.item.resource?.type === "router") return appRoutes.routerDetail(detail.item.resource.id);
-        if (detail.item.resource?.type === "user" || detail.item.resource?.type === "billing_account") return appRoutes.userDetail(detail.item.resource.id);
-        if (detail.item.resource?.type === "vpn_server") return appRoutes.vpnServerDetail(detail.item.resource.id);
-        return null;
-      case "incident":
-        return detail.item.relatedRouter?.id
-          ? appRoutes.routerDetail(detail.item.relatedRouter.id)
-          : detail.item.relatedUser?.id
-            ? appRoutes.userDetail(detail.item.relatedUser.id)
-            : detail.item.relatedServer?.id
-              ? appRoutes.vpnServerDetail(detail.item.relatedServer.id)
-              : null;
-      default:
-        return null;
-    }
+    navigate(appRoutes.monitoringWorkspace("incident", incident.id), { state: { incident } });
   };
 
   const openDetail = (detail: MonitoringDetailItem) => {
-    const route = getWorkspaceRoute(detail);
-    if (route) {
-      navigate(route);
-      return;
-    }
-    setSelectedDetail(detail);
-    eventDisclosure.onOpen();
+    const itemId = detail.kind === "traffic-server"
+      ? detail.item.nodeId
+      : detail.kind === "diagnostic"
+        ? detail.item.resourceId
+        : detail.kind === "activity"
+          ? detail.item.id
+          : detail.item.id;
+    navigate(appRoutes.monitoringWorkspace(detail.kind, itemId), { state: { detail } });
   };
 
   const renderContent = () => {
@@ -398,7 +346,6 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
       </Card>
 
       <IncidentDetailsModal open={incidentDisclosure.open} incident={selectedIncidentDetail || null} onClose={incidentDisclosure.onClose} onAcknowledge={() => { incidentDisclosure.onClose(); acknowledgeDisclosure.onOpen(); }} onResolve={() => { incidentDisclosure.onClose(); resolveDisclosure.onOpen(); }} onMarkReviewed={() => { incidentDisclosure.onClose(); reviewedDisclosure.onOpen(); }} onAddNote={() => { incidentDisclosure.onClose(); noteDisclosure.onOpen(); }} />
-      <MonitoringEventDetailsModal open={eventDisclosure.open} detail={selectedDetail} onClose={eventDisclosure.onClose} />
 
       <AcknowledgeIncidentModal open={acknowledgeDisclosure.open} loading={acknowledgeMutation.isPending} onClose={acknowledgeDisclosure.onClose} onConfirm={(reason) => selectedIncident && acknowledgeMutation.mutate([selectedIncident.id, reason] as never, { onSuccess: () => acknowledgeDisclosure.onClose() })} />
       <ResolveIncidentModal open={resolveDisclosure.open} loading={resolveMutation.isPending} onClose={resolveDisclosure.onClose} onConfirm={(reason) => selectedIncident && resolveMutation.mutate([selectedIncident.id, reason] as never, { onSuccess: () => resolveDisclosure.onClose() })} />
