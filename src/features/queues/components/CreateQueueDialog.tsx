@@ -12,6 +12,9 @@ type QueueForm = {
   downloadUnit: "kbps" | "Mbps";
   uploadValue: number;
   uploadUnit: "kbps" | "Mbps";
+  queueType: "simple" | "pcq";
+  pcqDownloadProfile: string;
+  pcqUploadProfile: string;
   comment: string;
 };
 
@@ -42,9 +45,13 @@ export function CreateQueueDialog({
       downloadUnit: "Mbps",
       uploadValue: 5,
       uploadUnit: "Mbps",
+      queueType: "simple",
+      pcqDownloadProfile: "",
+      pcqUploadProfile: "",
       comment: "",
     },
   });
+  const queueType = watch("queueType");
 
   return (
     <Modal open={open} onClose={() => { reset(); onClose(); }} title="Create queue" description="Create a manual simple queue for a specific target IP or CIDR on this router.">
@@ -53,17 +60,45 @@ export function CreateQueueDialog({
           setError("target", { message: "Enter a valid IP address or CIDR target" });
           return;
         }
+        if (values.queueType === "pcq" && !values.pcqDownloadProfile.trim() && !values.pcqUploadProfile.trim()) {
+          setError("pcqDownloadProfile", { message: "Set at least one PCQ profile" });
+          return;
+        }
         onConfirm({
           name: values.name.trim(),
           target: values.target.trim(),
           maxDownloadKbps: toKbps(values.downloadValue, values.downloadUnit),
           maxUploadKbps: toKbps(values.uploadValue, values.uploadUnit),
+          queueType: values.queueType,
+          pcqDownloadProfile: values.queueType === "pcq" ? values.pcqDownloadProfile.trim() : "",
+          pcqUploadProfile: values.queueType === "pcq" ? values.pcqUploadProfile.trim() : "",
           comment: values.comment || "",
         });
       })}>
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Name" error={errors.name?.message} {...register("name", { required: "Queue name is required" })} />
           <Input label="Target IP/CIDR" error={errors.target?.message} {...register("target", { required: "Target IP is required" })} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Select
+            label="Queue type"
+            options={[{ label: "Simple", value: "simple" }, { label: "PCQ", value: "pcq" }]}
+            value={queueType}
+            {...register("queueType")}
+          />
+          <Input
+            label="PCQ download profile"
+            placeholder="pcq-download-default"
+            disabled={queueType !== "pcq"}
+            error={errors.pcqDownloadProfile?.message}
+            {...register("pcqDownloadProfile")}
+          />
+          <Input
+            label="PCQ upload profile"
+            placeholder="pcq-upload-default"
+            disabled={queueType !== "pcq"}
+            {...register("pcqUploadProfile")}
+          />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid grid-cols-[minmax(0,1fr)_180px] gap-3">

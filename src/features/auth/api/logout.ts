@@ -1,6 +1,7 @@
-import { clearPersistedSession } from "@/features/auth/utils/auth-storage";
+import { apiClient } from "@/lib/api/client";
+import { endpoints } from "@/lib/api/endpoints";
 
 export async function logout() {
-  clearPersistedSession();
+  await apiClient.post(endpoints.auth.logout);
   return true;
 }

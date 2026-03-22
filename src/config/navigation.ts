@@ -38,6 +38,7 @@ export const navigationItems = [
       { label: "Add Router", path: appRoutes.routersAdd, icon: PlusCircle },
       { label: "Overview", path: appRoutes.routersOverview },
       { label: "Router Fleet", path: appRoutes.routersAll },
+      { label: "Live Operations", path: appRoutes.routersLiveOperations },
       { label: "API Connectivity", path: appRoutes.routersApiConnectivity },
     ],
   },
@@ -69,6 +70,7 @@ export const navigationItems = [
     children: [
       { label: "Overview", path: appRoutes.billingOverview },
       { label: "Workspace", path: appRoutes.billingSubscriptions },
+      { label: "Collections & Enforcement", path: appRoutes.billingOverdueRisk },
       { label: "Financial Reports", path: appRoutes.billingReports, icon: BarChart3 },
     ],
   },

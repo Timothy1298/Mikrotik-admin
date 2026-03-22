@@ -13,6 +13,7 @@ export type AuthUser = {
 export type LoginPayload = {
   email: string;
   password: string;
+  rememberDevice: boolean;
 };
 
 export type TwoFactorLoginPayload = {
@@ -21,8 +22,8 @@ export type TwoFactorLoginPayload = {
 };
 
 export type AuthSession = {
-  token: string;
   user: AuthUser;
+  sessionExpiresAt: string | null;
 };
 
 export type TwoFactorChallenge = {

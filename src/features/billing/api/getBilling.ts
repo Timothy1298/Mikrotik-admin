@@ -195,3 +195,28 @@ export async function removeBillingFlag(accountId: string, flagId: string, reaso
   const { data } = await apiClient.delete<{ success: boolean; message: string }>(endpoints.admin.billingRemoveFlag(accountId, flagId), { data: { reason } });
   return data;
 }
+
+export async function enforceBillingSubscriptions(reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; report: { checked: number; suspended: number; skipped: number; errors: number } }>(endpoints.admin.billingEnforce, { reason });
+  return data;
+}
+
+export async function suspendSubscription(subscriptionId: string, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; subscriptionId: string; status: string }>(endpoints.admin.billingSubscriptionSuspend(subscriptionId), { reason });
+  return data;
+}
+
+export async function reactivateSubscription(subscriptionId: string, payload?: { amount?: number; paymentMethod?: string; reference?: string; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; subscriptionId: string; status: string }>(endpoints.admin.billingSubscriptionReactivate(subscriptionId), payload || {});
+  return data;
+}
+
+export async function initiateMpesaPayment(payload: { subscriptionId: string; phoneNumber: string; amount: number }) {
+  const { data } = await apiClient.post<{ success: boolean; checkoutRequestId: string; responseCode?: string; responseDescription?: string; transactionId?: string }>(endpoints.payments.mpesaInitiate, payload);
+  return data;
+}
+
+export async function queryMpesaPayment(checkoutRequestId: string) {
+  const { data } = await apiClient.post<{ success: boolean; status: string; result: { ResultCode?: string | number; ResultDesc?: string; CheckoutRequestID?: string } }>(endpoints.payments.mpesaQuery, { checkoutRequestId });
+  return data;
+}

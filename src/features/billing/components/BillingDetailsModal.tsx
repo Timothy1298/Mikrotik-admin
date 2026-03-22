@@ -1,3 +1,4 @@
+import { ShieldAlert, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -8,8 +9,9 @@ import type { BillingAccountDetail } from "@/features/billing/types/billing.type
 import { formatCurrency } from "@/lib/formatters/currency";
 import { formatDateTime } from "@/lib/formatters/date";
 
-export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSuspend, onReactivate, onApplyGracePeriod, onResendInvoice, onRecordPayment, onCreateInvoice }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void; onExtendTrial?: () => void; onSuspend?: () => void; onReactivate?: () => void; onApplyGracePeriod?: () => void; onResendInvoice?: () => void; onRecordPayment?: () => void; onCreateInvoice?: () => void }) {
+export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSuspend, onReactivate, onApplyGracePeriod, onResendInvoice, onRecordPayment, onCreateInvoice, onPayNow, onRunEnforcement }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void; onExtendTrial?: () => void; onSuspend?: () => void; onReactivate?: () => void; onApplyGracePeriod?: () => void; onResendInvoice?: () => void; onRecordPayment?: () => void; onCreateInvoice?: () => void; onPayNow?: () => void; onRunEnforcement?: () => void }) {
   if (!open || !detail) return null;
+  const paymentActionVisible = ["past_due", "expired", "suspended"].includes(detail.overview.subscriptionStatus) || detail.overview.openInvoices > 0;
   return (
     <Modal open={open} title={detail.account.name} description={detail.account.email} onClose={onClose}>
       <div className="grid gap-4 md:grid-cols-2">
@@ -35,6 +37,35 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
         </Card>
       </div>
       <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>Collections & automation</CardTitle>
+              <CardDescription>Recover overdue subscriptions and trigger enforcement directly from this billing workspace.</CardDescription>
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-3 text-text-secondary">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+          </div>
+        </CardHeader>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            <div className="flex items-center justify-between gap-3">
+              <span>Subscription state</span>
+              <SubscriptionStatusBadge status={detail.overview.subscriptionStatus} />
+            </div>
+            <p className="mt-3 text-xs text-text-muted">Use M-Pesa recovery when a subscriber is suspended, expired, or has open invoices pending collection.</p>
+          </div>
+          <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            <div className="flex items-center justify-between gap-3">
+              <span>Automation</span>
+              <span>{detail.entitlements.suspendedForBilling ? "Restricted" : "Watching"}</span>
+            </div>
+            <p className="mt-3 text-xs text-text-muted">Run enforcement manually if you want to re-check overdue subscriptions immediately instead of waiting for the scheduled cron.</p>
+          </div>
+        </div>
+      </Card>
+      <Card>
         <CardHeader><div><CardTitle>Recent invoices / payments</CardTitle><CardDescription>Latest transaction preview from the billing account workspace.</CardDescription></div></CardHeader>
         <div className="grid gap-3 md:grid-cols-2">
           <div className="space-y-2">
@@ -51,6 +82,8 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
         {!detail.overview.gracePeriodActive && onApplyGracePeriod ? <Button variant="outline" onClick={onApplyGracePeriod}>Apply grace period</Button> : null}
         {detail.overview.subscriptionStatus === "trial" && onExtendTrial ? <Button variant="outline" onClick={onExtendTrial}>Extend trial</Button> : null}
         {detail.overview.openInvoices > 0 && onResendInvoice ? <Button variant="outline" onClick={onResendInvoice}>Resend invoice</Button> : null}
+        {paymentActionVisible && onPayNow ? <Button leftIcon={<Smartphone className="h-4 w-4" />} onClick={onPayNow}>Pay now</Button> : null}
+        {onRunEnforcement ? <Button variant="outline" leftIcon={<ShieldAlert className="h-4 w-4" />} onClick={onRunEnforcement}>Run enforcement</Button> : null}
         {onRecordPayment ? <Button onClick={onRecordPayment}>Record payment</Button> : null}
         {onCreateInvoice ? <Button variant="outline" onClick={onCreateInvoice}>Create invoice</Button> : null}
       </div>

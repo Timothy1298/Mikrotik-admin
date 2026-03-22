@@ -33,6 +33,7 @@ export function LoginForm() {
   const [progressStage, setProgressStage] = useState<"idle" | "validating" | "redirecting">("idle");
   const [challenge, setChallenge] = useState<TwoFactorChallenge | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(true);
   const startedAtRef = useRef<number>(0);
   const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? appRoutes.dashboard;
   const {
@@ -54,7 +55,10 @@ export function LoginForm() {
     });
 
     try {
-      const session = await mutation.mutateAsync(values);
+      const session = await mutation.mutateAsync({
+        ...values,
+        rememberDevice,
+      });
       const validatingElapsed = Date.now() - startedAtRef.current;
       const remainingValidation = Math.max(0, MIN_VALIDATING_MS - validatingElapsed);
       if (remainingValidation > 0) {
@@ -72,7 +76,7 @@ export function LoginForm() {
       }
 
       const resolvedSession = session as AuthSession;
-      setSession(resolvedSession.token, resolvedSession.user);
+      setSession(resolvedSession.user, resolvedSession.sessionExpiresAt);
       queryClient.setQueryData(queryKeys.me, resolvedSession.user);
       setProgressStage("redirecting");
       toast.success("Credentials verified. Redirecting to dashboard...", {
@@ -118,7 +122,7 @@ export function LoginForm() {
         await new Promise((resolve) => window.setTimeout(resolve, remainingValidation));
       }
 
-      setSession(session.token, session.user);
+      setSession(session.user, session.sessionExpiresAt);
       queryClient.setQueryData(queryKeys.me, session.user);
       setProgressStage("redirecting");
       toast.success("Two-factor verified. Redirecting to dashboard...", {
@@ -200,7 +204,11 @@ export function LoginForm() {
           />
 
           <div className="flex items-center justify-between gap-4 text-sm text-text-secondary">
-            <Checkbox label="Remember this device" />
+            <Checkbox
+              label="Remember this device"
+              checked={rememberDevice}
+              onChange={(event) => setRememberDevice(event.target.checked)}
+            />
             <span className="text-xs uppercase tracking-[0.18em] text-primary">Encrypted session</span>
           </div>
 

@@ -32,7 +32,11 @@ export function QueuesTable({
       cell: ({ row }) => (
         <div className="space-y-1">
           <p className="font-medium text-text-primary">{row.original.name}</p>
-          <p className="text-xs text-text-muted">{row.original.queueType === "pcq" ? "PCQ-backed queue" : "Simple queue"}</p>
+          <p className="text-xs text-text-muted">
+            {row.original.queueType === "pcq"
+              ? `PCQ-backed queue${row.original.pcqUploadProfile || row.original.pcqDownloadProfile ? ` (${row.original.pcqUploadProfile || "default"}/${row.original.pcqDownloadProfile || "default"})` : ""}`
+              : "Simple queue"}
+          </p>
         </div>
       ),
     },

@@ -8,7 +8,6 @@ import { me } from "@/features/auth/api/me";
 
 function AppBootstrap() {
   const hydrate = useAuthStore((state) => state.hydrate);
-  const token = useAuthStore((state) => state.token);
   const hydrated = useAuthStore((state) => state.hydrated);
   const setSession = useAuthStore((state) => state.setSession);
   const clearSession = useAuthStore((state) => state.clearSession);
@@ -27,15 +26,10 @@ function AppBootstrap() {
     let cancelled = false;
 
     const bootstrap = async () => {
-      if (!token) {
-        setBootstrapped(true);
-        return;
-      }
-
       try {
-        const user = await me();
+        const session = await me();
         if (!cancelled) {
-          setSession(token, user);
+          setSession(session.user, session.sessionExpiresAt);
         }
       } catch {
         if (!cancelled) {
@@ -53,7 +47,7 @@ function AppBootstrap() {
     return () => {
       cancelled = true;
     };
-  }, [bootstrapped, clearSession, hydrated, setBootstrapped, setSession, token]);
+  }, [bootstrapped, clearSession, hydrated, setBootstrapped, setSession]);
 
   if (!hydrated || !bootstrapped) {
     return <AppLoader />;

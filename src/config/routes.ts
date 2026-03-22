@@ -31,6 +31,7 @@ export const appRoutes = {
   routersServerAssignment: "/routers/server-assignment",
   routersDiagnosticsReview: "/routers/diagnostics-review",
   routersApiConnectivity: "/routers/api-connectivity",
+  routersLiveOperations: "/routers/all",
   routersNotesFlags: "/routers/notes-flags",
   routerDetail: (id = ":id") => `/routers/${id}`,
   vpnServersRoot: "/vpn-servers",

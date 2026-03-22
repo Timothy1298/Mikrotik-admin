@@ -13,6 +13,7 @@ export * from "./PaymentsTable";
 export * from "./RecordPaymentDialog";
 export * from "./CreateInvoiceDialog";
 export * from "./IssueRefundDialog";
+export * from "./MpesaPaymentWidget";
 export * from "./BillingReportsSection";
 export * from "./SubscriptionsTable";
 export * from "./SubscriptionStatusBadge";

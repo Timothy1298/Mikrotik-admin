@@ -36,11 +36,11 @@ export function useUpdateAdminProfile() {
     mutationFn: updateAdminProfile,
     onSuccess: async (data, variables) => {
       const auth = useAuthStore.getState();
-      if (auth.token && auth.user) {
-        auth.setSession(auth.token, {
+      if (auth.user) {
+        auth.setSession({
           ...auth.user,
           name: data.user.name || variables.name || auth.user.name,
-        });
+        }, auth.sessionExpiresAt);
       }
       toast.success("Profile updated successfully");
       await queryClient.invalidateQueries({ queryKey: queryKeys.me });
@@ -82,11 +82,11 @@ export function useEnableTwoFactor() {
     mutationFn: enableTwoFactor,
     onSuccess: async (data) => {
       const auth = useAuthStore.getState();
-      if (auth.token && auth.user) {
-        auth.setSession(auth.token, {
+      if (auth.user) {
+        auth.setSession({
           ...auth.user,
           twoFactorEnabled: true,
-        });
+        }, auth.sessionExpiresAt);
       }
       toast.success(data.message || "Two-factor authentication enabled");
       await queryClient.invalidateQueries({ queryKey: queryKeys.me });
@@ -104,11 +104,11 @@ export function useDisableTwoFactor() {
     mutationFn: disableTwoFactor,
     onSuccess: async (data) => {
       const auth = useAuthStore.getState();
-      if (auth.token && auth.user) {
-        auth.setSession(auth.token, {
+      if (auth.user) {
+        auth.setSession({
           ...auth.user,
           twoFactorEnabled: false,
-        });
+        }, auth.sessionExpiresAt);
       }
       toast.success(data.message || "Two-factor authentication disabled");
       await queryClient.invalidateQueries({ queryKey: queryKeys.me });

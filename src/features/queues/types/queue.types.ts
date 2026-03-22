@@ -28,6 +28,9 @@ export type QueuePayload = {
   maxDownloadKbps: number;
   maxUploadKbps: number;
   comment?: string;
+  queueType?: "simple" | "pcq";
+  pcqDownloadProfile?: string;
+  pcqUploadProfile?: string;
 };
 
 export type ApplyPlanPayload = {

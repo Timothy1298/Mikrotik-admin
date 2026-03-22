@@ -2,7 +2,6 @@ import type { AxiosError, AxiosInstance } from "axios";
 import { showSessionExpiredToast } from "@/features/auth/components/SessionExpiredToast";
 import { useAuthStore } from "@/app/store/auth.store";
 import { ApiError } from "@/lib/api/errors";
-import { storageKeys, readStorage, removeStorage } from "@/lib/utils/storage";
 
 let hasShownSessionExpired = false;
 
@@ -18,24 +17,14 @@ function normalizeError(error: AxiosError<{ error?: string; details?: string; me
 }
 
 export function attachInterceptors(client: AxiosInstance) {
-  client.interceptors.request.use((config) => {
-    const token = readStorage(storageKeys.accessToken);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  });
-
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError<{ error?: string; details?: string; message?: string }>) => {
-      const hadSessionToken = Boolean(readStorage(storageKeys.accessToken));
+      const hadSessionToken = Boolean(useAuthStore.getState().user);
       const requestUrl = String(error.config?.url || "");
       const isAuthRequest = requestUrl.includes("/api/auth/");
 
       if (error.response?.status === 401) {
-        removeStorage(storageKeys.accessToken);
-        removeStorage(storageKeys.user);
         useAuthStore.getState().clearSession();
         if (hadSessionToken && !isAuthRequest && !hasShownSessionExpired) {
           hasShownSessionExpired = true;

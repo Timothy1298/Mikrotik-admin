@@ -1,3 +1,3 @@
 export async function refreshToken() {
-  return null;
+  throw new Error("Token refresh is not used in cookie-backed sessions");
 }

@@ -1,37 +1,26 @@
 import { create } from "zustand";
 import type { AuthUser } from "@/types/auth/auth.types";
-import { removeStorage, readStorage, storageKeys, writeStorage } from "@/lib/utils/storage";
 
 type AuthState = {
-  token: string | null;
   user: AuthUser | null;
+  sessionExpiresAt: string | null;
   hydrated: boolean;
-  setSession: (token: string, user: AuthUser) => void;
+  setSession: (user: AuthUser, sessionExpiresAt: string | null) => void;
   clearSession: () => void;
   hydrate: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: null,
   user: null,
+  sessionExpiresAt: null,
   hydrated: false,
-  setSession: (token, user) => {
-    writeStorage(storageKeys.accessToken, token);
-    writeStorage(storageKeys.user, JSON.stringify(user));
-    set({ token, user, hydrated: true });
+  setSession: (user, sessionExpiresAt) => {
+    set({ user, sessionExpiresAt, hydrated: true });
   },
   clearSession: () => {
-    removeStorage(storageKeys.accessToken);
-    removeStorage(storageKeys.user);
-    set({ token: null, user: null, hydrated: true });
+    set({ user: null, sessionExpiresAt: null, hydrated: true });
   },
   hydrate: () => {
-    const token = readStorage(storageKeys.accessToken);
-    const user = readStorage(storageKeys.user);
-    set({
-      token,
-      user: user ? (JSON.parse(user) as AuthUser) : null,
-      hydrated: true,
-    });
+    set({ hydrated: true });
   },
 }));

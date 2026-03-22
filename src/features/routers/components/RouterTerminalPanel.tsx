@@ -1,84 +1,177 @@
-import { useState } from "react";
-import { ShieldAlert, TerminalSquare } from "lucide-react";
-import { InlineError } from "@/components/feedback/InlineError";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, PlugZap } from "lucide-react";
+import { Terminal } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
+import { WebLinksAddon } from "@xterm/addon-web-links";
+import "@xterm/xterm/css/xterm.css";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
-import { useRunRouterCommand } from "@/features/routers/hooks/useRouter";
-import { permissions } from "@/lib/permissions/permissions";
+import { env } from "@/config/env";
 import { can } from "@/lib/permissions/can";
+import { permissions } from "@/lib/permissions/permissions";
+import { storageKeys } from "@/lib/utils/storage";
 
 export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const { data: user } = useCurrentUser(true);
-  const runCommandMutation = useRunRouterCommand();
-  const [command, setCommand] = useState("");
-  const [reason, setReason] = useState("");
-  const [output, setOutput] = useState("");
-  const [inlineError, setInlineError] = useState<string | null>(null);
+  const terminalHostRef = useRef<HTMLDivElement | null>(null);
+  const terminalRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const dataListenerRef = useRef<{ dispose: () => void } | null>(null);
+  const resizeListenerRef = useRef<{ dispose: () => void } | null>(null);
+  const [connectionState, setConnectionState] = useState<"connecting" | "connected" | "disconnected">("connecting");
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [reconnectVersion, setReconnectVersion] = useState(0);
 
   if (!can(user, permissions.routersRunCommand)) {
     return null;
   }
 
-  const handleRun = async () => {
-    if (!command.trim() || !reason.trim()) {
-      setInlineError("Command and reason are required before execution.");
-      return;
-    }
+  useEffect(() => {
+    if (!terminalHostRef.current) return;
 
-    setInlineError(null);
-    setOutput("");
+    const terminal = new Terminal({
+      cursorBlink: true,
+      convertEol: true,
+      fontSize: 13,
+      theme: { background: "#111827" },
+    });
+    const fitAddon = new FitAddon();
 
-    try {
-      const result = await runCommandMutation.mutateAsync({
-        id: routerId,
-        payload: { command: command.trim(), reason: reason.trim() },
+    terminal.loadAddon(fitAddon);
+    terminal.loadAddon(new WebLinksAddon());
+    terminal.open(terminalHostRef.current);
+    fitAddon.fit();
+
+    terminalRef.current = terminal;
+    fitAddonRef.current = fitAddon;
+
+    const handleResize = () => fitAddon.fit();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      dataListenerRef.current?.dispose();
+      resizeListenerRef.current?.dispose();
+      socketRef.current?.close();
+      terminal.dispose();
+      terminalRef.current = null;
+      fitAddonRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const terminal = terminalRef.current;
+    const fitAddon = fitAddonRef.current;
+    if (!terminal || !fitAddon) return;
+
+    dataListenerRef.current?.dispose();
+    resizeListenerRef.current?.dispose();
+    socketRef.current?.close();
+
+    setConnectionState("connecting");
+    setLastError(null);
+    terminal.clear();
+    terminal.writeln("Connecting to router terminal...");
+
+    const token = localStorage.getItem(storageKeys.accessToken) || "";
+    const wsUrl = `${env.wsBaseUrl}/ws/terminal/${routerId}?token=${encodeURIComponent(token)}`;
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
+
+    socket.onopen = () => {
+      setConnectionState("connected");
+      fitAddon.fit();
+      socket.send(JSON.stringify({ type: "resize", rows: terminal.rows, cols: terminal.cols }));
+      dataListenerRef.current = terminal.onData((data) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "input", data }));
+        }
       });
+      resizeListenerRef.current = terminal.onResize(({ rows, cols }) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "resize", rows, cols }));
+        }
+      });
+      terminal.focus();
+    };
 
-      if (!result.success) {
-        setInlineError(result.error || "Command execution failed");
-        return;
+    socket.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(String(event.data || "{}"));
+        if (payload.type === "output" && typeof payload.data === "string") {
+          terminal.write(payload.data);
+          return;
+        }
+        if (payload.type === "error") {
+          setLastError(payload.message || "Terminal session failed");
+          terminal.writeln(`\r\n[error] ${payload.message || "Terminal session failed"}\r\n`);
+          return;
+        }
+        if (payload.type === "closed") {
+          setConnectionState("disconnected");
+          terminal.writeln("\r\n[session closed]\r\n");
+        }
+      } catch {
+        terminal.writeln("\r\n[invalid terminal payload]\r\n");
       }
+    };
 
-      setOutput(result.output || "Command completed with no output.");
-    } catch (error) {
-      setInlineError(error instanceof Error ? error.message : "Command execution failed");
-    }
-  };
+    socket.onerror = () => {
+      setLastError("Web terminal connection failed");
+    };
+
+    socket.onclose = () => {
+      setConnectionState("disconnected");
+      dataListenerRef.current?.dispose();
+      resizeListenerRef.current?.dispose();
+      dataListenerRef.current = null;
+      resizeListenerRef.current = null;
+    };
+
+    return () => {
+      socket.close();
+      dataListenerRef.current?.dispose();
+      resizeListenerRef.current?.dispose();
+      dataListenerRef.current = null;
+      resizeListenerRef.current = null;
+    };
+  }, [routerId, reconnectVersion]);
+
+  const tone = connectionState === "connected" ? "success" : connectionState === "connecting" ? "warning" : "danger";
 
   return (
     <Card className="space-y-5">
       <CardHeader>
-        <div>
-          <CardTitle>Live terminal</CardTitle>
-          <CardDescription>Run a single RouterOS command directly on the live router. Every execution is audited.</CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle>Live terminal</CardTitle>
+            <CardDescription>Interactive RouterOS shell over a browser-based SSH relay.</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge tone={tone}>{connectionState}</Badge>
+            {connectionState === "disconnected" ? (
+              <Button variant="outline" leftIcon={<PlugZap className="h-4 w-4" />} onClick={() => setReconnectVersion((value) => value + 1)}>
+                Reconnect
+              </Button>
+            ) : null}
+          </div>
         </div>
       </CardHeader>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_auto]">
-        <Input label="RouterOS Command" placeholder="/system resource print" value={command} onChange={(event) => setCommand(event.target.value)} />
-        <Input label="Reason" placeholder="Diagnosing memory issue ticket #123" value={reason} onChange={(event) => setReason(event.target.value)} />
-        <div className="flex items-end">
-          <Button className="w-full lg:w-auto" onClick={() => void handleRun()} isLoading={runCommandMutation.isPending} leftIcon={<TerminalSquare className="h-4 w-4" />}>
-            Run
-          </Button>
-        </div>
-      </div>
-
       <div className="rounded-2xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-primary">
         <div className="flex items-start gap-2">
-          <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
-          <span>Commands run directly on the live router. All executions are logged.</span>
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+          <span>This is a live shell on the router. Commands execute immediately.</span>
         </div>
       </div>
 
-      {inlineError ? <InlineError message={inlineError} /> : null}
+      {lastError ? <div className="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">{lastError}</div> : null}
 
-      <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-        <pre className="min-h-40 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm text-text-primary">
-          {output || "Command output will appear here."}
-        </pre>
+      <div className="overflow-hidden rounded-2xl border border-background-border bg-[#111827] p-2">
+        <div ref={terminalHostRef} className="min-h-[28rem] w-full" />
       </div>
     </Card>
   );

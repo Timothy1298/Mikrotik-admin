@@ -13,6 +13,9 @@ type QueueForm = {
   downloadUnit: "kbps" | "Mbps";
   uploadValue: number;
   uploadUnit: "kbps" | "Mbps";
+  queueType: "simple" | "pcq";
+  pcqDownloadProfile: string;
+  pcqUploadProfile: string;
   comment: string;
 };
 
@@ -46,9 +49,13 @@ export function EditQueueDialog({
       downloadUnit: "Mbps",
       uploadValue: 0,
       uploadUnit: "Mbps",
+      queueType: "simple",
+      pcqDownloadProfile: "",
+      pcqUploadProfile: "",
       comment: "",
     },
   });
+  const queueType = watch("queueType");
 
   useEffect(() => {
     if (!queue) return;
@@ -61,6 +68,9 @@ export function EditQueueDialog({
       downloadUnit: down.unit,
       uploadValue: up.value,
       uploadUnit: up.unit,
+      queueType: queue.queueType || "simple",
+      pcqDownloadProfile: queue.pcqDownloadProfile || "",
+      pcqUploadProfile: queue.pcqUploadProfile || "",
       comment: queue.comment || "",
     });
   }, [queue, reset]);
@@ -72,11 +82,34 @@ export function EditQueueDialog({
         target: values.target.trim(),
         maxDownloadKbps: toKbps(values.downloadValue, values.downloadUnit),
         maxUploadKbps: toKbps(values.uploadValue, values.uploadUnit),
+        queueType: values.queueType,
+        pcqDownloadProfile: values.queueType === "pcq" ? values.pcqDownloadProfile.trim() : "",
+        pcqUploadProfile: values.queueType === "pcq" ? values.pcqUploadProfile.trim() : "",
         comment: values.comment || "",
       }))}>
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Name" {...register("name")} />
           <Input label="Target IP/CIDR" {...register("target")} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Select
+            label="Queue type"
+            options={[{ label: "Simple", value: "simple" }, { label: "PCQ", value: "pcq" }]}
+            value={queueType}
+            {...register("queueType")}
+          />
+          <Input
+            label="PCQ download profile"
+            placeholder="pcq-download-default"
+            disabled={queueType !== "pcq"}
+            {...register("pcqDownloadProfile")}
+          />
+          <Input
+            label="PCQ upload profile"
+            placeholder="pcq-upload-default"
+            disabled={queueType !== "pcq"}
+            {...register("pcqUploadProfile")}
+          />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="grid grid-cols-[minmax(0,1fr)_180px] gap-3">

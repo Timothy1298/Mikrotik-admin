@@ -8,7 +8,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
 import { billingTabs } from "@/config/module-tabs";
 import {
@@ -21,6 +23,7 @@ import {
   InvoicesTable,
   InvoiceDetailsModal,
   IssueRefundDialog,
+  MpesaPaymentWidget,
   PaymentsTable,
   PaymentDetailsModal,
   RecordPaymentDialog,
@@ -36,6 +39,7 @@ import {
   useBillingRisk,
   useCreateInvoice,
   useDownloadInvoicePdf,
+  useEnforceBillingSubscriptions,
   useExtendTrial,
   useInvoices,
   useIssueRefund,
@@ -46,6 +50,7 @@ import {
   useRemoveBillingFlag,
   useRemoveGracePeriod,
   useResendInvoice,
+  useSuspendSubscription,
   useSubscriptions,
   useSuspendBillingAccount,
   useTrials,
@@ -97,6 +102,7 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const recordPaymentDisclosure = useDisclosure(false);
   const createInvoiceDisclosure = useDisclosure(false);
   const issueRefundDisclosure = useDisclosure(false);
+  const mpesaDisclosure = useDisclosure(false);
 
   const subscriptionsEnabled = ["subscriptions", "active-paid", "overdue-risk", "entitlements", "notes-flags"].includes(section);
   const subscriptionsQuery = useSubscriptions(filters as never, subscriptionsEnabled);
@@ -121,6 +127,8 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const createInvoiceMutation = useCreateInvoice();
   const issueRefundMutation = useIssueRefund();
   const downloadInvoiceMutation = useDownloadInvoicePdf();
+  const enforceBillingMutation = useEnforceBillingSubscriptions();
+  const suspendSubscriptionMutation = useSuspendSubscription();
 
   const Icon = sectionIcons[section];
   const canRecordPayment = can(currentUser, permissions.billingRecordPayment);
@@ -200,6 +208,12 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
 
   const selectedInvoice = (invoicesQuery.data?.items || []).find((item) => item.id === selectedInvoiceId) || null;
   const selectedPayment = (paymentsQuery.data?.items || []).find((item) => item.id === selectedPaymentId) || null;
+  const selectedSubscriptionId = detailQuery.data?.subscription?.id
+    || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.subscriptionId
+    || "";
+  const selectedSubscriptionAmount = detailQuery.data?.subscription?.pricePerMonth
+    || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.priceSummary
+    || 0;
 
   const onOpenSubscription = (row: BillingSubscriptionRow) => openAccount(row.account?.id || "");
   const onOpenTrial = (row: BillingTrialRow) => openAccount(row.accountId);
@@ -293,6 +307,17 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
             }}
           />
         </DataToolbar>
+        {(section === "subscriptions" || section === "overdue-risk" || section === "active-paid") ? (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">Collections & enforcement</p>
+              <p className="mt-1 text-xs text-text-muted">Run billing enforcement immediately and recover suspended subscriptions with M-Pesa from the account detail modal.</p>
+            </div>
+            <Button variant="outline" isLoading={enforceBillingMutation.isPending} onClick={() => enforceBillingMutation.mutate([undefined] as never)}>
+              Run enforcement
+            </Button>
+          </div>
+        ) : null}
         <div className="mt-4">{renderContent()}</div>
       </Card>
 
@@ -305,6 +330,8 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
         onReactivate={() => { detailDisclosure.onClose(); reactivateDisclosure.onOpen(); }}
         onApplyGracePeriod={() => { detailDisclosure.onClose(); applyGraceDisclosure.onOpen(); }}
         onResendInvoice={() => { detailDisclosure.onClose(); resendDisclosure.onOpen(); }}
+        onPayNow={() => { detailDisclosure.onClose(); mpesaDisclosure.onOpen(); }}
+        onRunEnforcement={() => enforceBillingMutation.mutate([undefined] as never)}
         onRecordPayment={canRecordPayment ? () => { detailDisclosure.onClose(); recordPaymentDisclosure.onOpen(); } : undefined}
         onCreateInvoice={canCreateInvoice ? () => { detailDisclosure.onClose(); createInvoiceDisclosure.onOpen(); } : undefined}
       />
@@ -324,6 +351,26 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
       <RecordPaymentDialog open={recordPaymentDisclosure.open} loading={recordPaymentMutation.isPending} accountId={selectedAccountId} accountName={detailQuery.data?.account.name || selectedAccountId} onClose={recordPaymentDisclosure.onClose} onConfirm={(payload) => recordPaymentMutation.mutate([payload] as never, { onSuccess: () => recordPaymentDisclosure.onClose() })} />
       <CreateInvoiceDialog open={createInvoiceDisclosure.open} loading={createInvoiceMutation.isPending} accountId={selectedAccountId} accountName={detailQuery.data?.account.name || selectedAccountId} onClose={createInvoiceDisclosure.onClose} onConfirm={(payload) => createInvoiceMutation.mutate([payload] as never, { onSuccess: () => createInvoiceDisclosure.onClose() })} />
       <IssueRefundDialog open={issueRefundDisclosure.open} loading={issueRefundMutation.isPending} accountId={selectedAccountId} accountName={detailQuery.data?.account.name || selectedAccountId} onClose={issueRefundDisclosure.onClose} onConfirm={(payload) => issueRefundMutation.mutate([payload] as never, { onSuccess: () => issueRefundDisclosure.onClose() })} />
+      <Modal open={mpesaDisclosure.open} title="Collect payment via M-Pesa" description={detailQuery.data?.account.email || "Subscription recovery"} onClose={mpesaDisclosure.onClose} maxWidthClass="max-w-[min(96vw,36rem)]">
+        <MpesaPaymentWidget
+          subscriptionId={selectedSubscriptionId}
+          amount={selectedSubscriptionAmount}
+          onCancel={mpesaDisclosure.onClose}
+          onSuccess={() => {
+            mpesaDisclosure.onClose();
+            void subscriptionsQuery.refetch();
+            void detailQuery.refetch();
+            void paymentsQuery.refetch();
+          }}
+        />
+        {selectedSubscriptionId ? (
+          <div className="flex justify-end">
+            <Button variant="ghost" onClick={() => suspendSubscriptionMutation.mutate([selectedSubscriptionId, "Manual collection hold"] as never)} isLoading={suspendSubscriptionMutation.isPending}>
+              Suspend only
+            </Button>
+          </div>
+        ) : null}
+      </Modal>
     </section>
   );
 }

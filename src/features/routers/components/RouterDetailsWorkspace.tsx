@@ -9,7 +9,6 @@ import { RouterApiAccessPanel } from "@/features/routers/components/RouterApiAcc
 import { RouterConnectivityPanel } from "@/features/routers/components/RouterConnectivityPanel";
 import { RouterCustomerPanel } from "@/features/routers/components/RouterCustomerPanel";
 import { RouterFlagsPanel } from "@/features/routers/components/RouterFlagsPanel";
-import { RouterInterfacesPanel } from "@/features/routers/components/RouterInterfacesPanel";
 import { RouterLiveHealthPanel } from "@/features/routers/components/RouterLiveHealthPanel";
 import { RouterMonitoringPanel } from "@/features/routers/components/RouterMonitoringPanel";
 import { RouterNotesPanel } from "@/features/routers/components/RouterNotesPanel";
@@ -21,6 +20,8 @@ import { RouterStatusBadge } from "@/features/routers/components/RouterStatusBad
 import { RouterTerminalPanel } from "@/features/routers/components/RouterTerminalPanel";
 import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTunnelHealthBadge";
 import { RouterHotspotPanel } from "@/features/hotspot";
+import { RouterFirewallPanel } from "@/features/firewall";
+import { RouterNetworkPanel } from "@/features/network-config";
 import { RouterPppoePanel } from "@/features/pppoe";
 import { RouterQueuesPanel } from "@/features/queues";
 import type { RouterDetail } from "@/features/routers/types/router.types";
@@ -62,7 +63,7 @@ export function RouterDetailsWorkspace({
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
 }) {
   const navigate = useNavigate();
-  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "queues" | "interfaces">("overview");
+  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network">("overview");
 
   return (
     <div className="space-y-6">
@@ -135,10 +136,11 @@ export function RouterDetailsWorkspace({
               { label: "Hotspot", value: "hotspot" },
               { label: "PPPoE", value: "pppoe" },
               { label: "Queues", value: "queues" },
-              { label: "Interfaces", value: "interfaces" },
+              { label: "Firewall", value: "firewall" },
+              { label: "Network", value: "network" },
             ]}
             value={liveSection}
-            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "queues" | "interfaces")}
+            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network")}
           />
         </div>
       </Card>
@@ -150,7 +152,8 @@ export function RouterDetailsWorkspace({
       {liveSection === "hotspot" ? <RouterHotspotPanel routerId={router.profile.id} /> : null}
       {liveSection === "pppoe" ? <RouterPppoePanel routerId={router.profile.id} /> : null}
       {liveSection === "queues" ? <RouterQueuesPanel routerId={router.profile.id} /> : null}
-      {liveSection === "interfaces" ? <RouterInterfacesPanel routerId={router.profile.id} /> : null}
+      {liveSection === "firewall" ? <RouterFirewallPanel routerId={router.profile.id} /> : null}
+      {liveSection === "network" ? <RouterNetworkPanel routerId={router.profile.id} /> : null}
       <RouterPortsPanel router={router} />
       <RouterMonitoringPanel router={router} />
       <RouterPingPanel router={router} />

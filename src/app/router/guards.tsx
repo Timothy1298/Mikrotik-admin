@@ -4,11 +4,20 @@ import { appRoutes } from "@/config/routes";
 import type { Permission } from "@/lib/permissions/permissions";
 import { hasPermission } from "@/lib/permissions/guards";
 
+function isSessionExpired(sessionExpiresAt: string | null) {
+  return Boolean(sessionExpiresAt && Date.parse(sessionExpiresAt) <= Date.now());
+}
+
 export function RequireAuth() {
   const location = useLocation();
-  const { token } = useAuthStore();
+  const { user, sessionExpiresAt, clearSession } = useAuthStore();
 
-  if (!token) {
+  if (isSessionExpired(sessionExpiresAt)) {
+    clearSession();
+    return <Navigate to={appRoutes.login} replace state={{ from: location }} />;
+  }
+
+  if (!user) {
     return <Navigate to={appRoutes.login} replace state={{ from: location }} />;
   }
 
@@ -26,6 +35,7 @@ export function RequirePermission({ permission }: { permission: Permission }) {
 }
 
 export function RedirectAuthenticated() {
-  const token = useAuthStore((state) => state.token);
-  return token ? <Navigate to={appRoutes.dashboard} replace /> : <Outlet />;
+  const user = useAuthStore((state) => state.user);
+  const sessionExpiresAt = useAuthStore((state) => state.sessionExpiresAt);
+  return user && !isSessionExpired(sessionExpiresAt) ? <Navigate to={appRoutes.dashboard} replace /> : <Outlet />;
 }

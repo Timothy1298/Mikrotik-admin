@@ -83,7 +83,7 @@ export function SettingsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
-  const token = useAuthStore((state) => state.token);
+  const sessionExpiresAt = useAuthStore((state) => state.sessionExpiresAt);
   const settingsQuery = useSettings();
   const adminProfileQuery = useAdminProfile();
   const platformQuery = usePlatformConfig();
@@ -434,11 +434,11 @@ export function SettingsPage() {
             <CardHeader>
               <div>
                 <CardTitle>Current Session</CardTitle>
-                <CardDescription>Review the currently stored session token and revoke active sessions if needed.</CardDescription>
+                <CardDescription>Review the current cookie-backed session and revoke active sessions if needed.</CardDescription>
               </div>
             </CardHeader>
             <div className="grid gap-3 md:grid-cols-2">
-              <SummaryItem label="Session token" value={token ? `...${token.slice(-8)}` : "No active session"} />
+              <SummaryItem label="Session status" value={sessionExpiresAt ? `Active until ${new Date(sessionExpiresAt).toLocaleString()}` : "Active session"} />
               <SummaryItem label="Permission mode" value={user?.adminRole ? formatAdminRole(user.adminRole) : "Legacy full admin"} />
             </div>
             <div className="pt-2">

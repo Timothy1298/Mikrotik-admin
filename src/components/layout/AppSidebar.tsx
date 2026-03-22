@@ -45,7 +45,19 @@ export function AppSidebar() {
   const logout = useLogout();
 
   const visibleItems = useMemo(
-    () => navigationItems.filter((item) => hasPermission(user, item.permission)),
+    () =>
+      navigationItems
+        .filter((item) => hasPermission(user, item.permission))
+        .map((item) => {
+          if (!("children" in item) || !item.children) {
+            return item;
+          }
+
+          return {
+            ...item,
+            children: item.children.filter((child) => !("permission" in child) || !child.permission || hasPermission(user, child.permission)),
+          };
+        }),
     [user],
   );
 

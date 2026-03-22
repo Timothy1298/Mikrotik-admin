@@ -18,6 +18,7 @@ const parsed = envSchema.parse({
 
 export const env = {
   apiBaseUrl: parsed.VITE_API_BASE_URL,
+  wsBaseUrl: parsed.VITE_API_BASE_URL.replace(/^http/i, (value) => (value.toLowerCase() === "https" ? "wss" : "ws")),
   appName: parsed.VITE_APP_NAME,
   appEnv: parsed.VITE_APP_ENV,
   enableMocks: parsed.VITE_ENABLE_MOCKS,

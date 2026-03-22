@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuthStore } from "@/app/store/auth.store";
 import { env } from "@/config/env";
-import { readStorage, storageKeys } from "@/lib/utils/storage";
 
 type WebSocketMessage = Record<string, unknown> | null;
 
-function getWebSocketUrl(token: string) {
+function getWebSocketUrl() {
   const base = new URL(env.apiBaseUrl);
   base.protocol = base.protocol === "https:" ? "wss:" : "ws:";
   base.pathname = "/ws";
-  base.searchParams.set("token", token);
   return base.toString();
 }
 
 export function useWebSocket(rooms: string[]) {
+  const user = useAuthStore((state) => state.user);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage>(null);
   const [isConnected, setIsConnected] = useState(false);
   const reconnectAttemptsRef = useRef(0);
@@ -22,14 +22,13 @@ export function useWebSocket(rooms: string[]) {
   const stableRooms = useMemo(() => (roomsKey ? roomsKey.split("|") : []), [roomsKey]);
 
   useEffect(() => {
-    const token = readStorage(storageKeys.accessToken);
-    if (!token) return undefined;
+    if (!user) return undefined;
 
     let cancelled = false;
 
     const connect = () => {
       if (cancelled) return;
-      const socket = new WebSocket(getWebSocketUrl(token));
+      const socket = new WebSocket(getWebSocketUrl());
       socketRef.current = socket;
 
       socket.onopen = () => {
@@ -79,7 +78,7 @@ export function useWebSocket(rooms: string[]) {
       socketRef.current?.close();
       socketRef.current = null;
     };
-  }, [roomsKey, stableRooms]);
+  }, [roomsKey, stableRooms, user]);
 
   return { lastMessage, isConnected };
 }

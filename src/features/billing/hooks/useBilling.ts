@@ -7,6 +7,7 @@ import {
   applyGracePeriod,
   createInvoice,
   downloadInvoicePdf,
+  enforceBillingSubscriptions,
   extendTrial,
   getBillingOutstandingReport,
   getAccountBillingActivity,
@@ -29,13 +30,17 @@ import {
   getSubscriptionById,
   getSubscriptions,
   getTrials,
+  initiateMpesaPayment,
   issueRefund,
   markBillingReviewed,
+  queryMpesaPayment,
   reactivateBillingAccount,
+  reactivateSubscription,
   recordPayment,
   removeBillingFlag,
   removeGracePeriod,
   resendInvoice,
+  suspendSubscription,
   suspendBillingAccount,
 } from "@/features/billing/api/getBilling";
 import type { BillingFilterState } from "@/features/billing/types/billing.types";
@@ -156,6 +161,9 @@ export const useRemoveGracePeriod = () => useBillingMutation(removeGracePeriod, 
 export const useAddBillingNote = () => useBillingMutation(addBillingNote, "Billing note added successfully");
 export const useAddBillingFlag = () => useBillingMutation(addBillingFlag, "Billing flag added successfully");
 export const useRemoveBillingFlag = () => useBillingMutation(removeBillingFlag, "Billing flag removed successfully");
+export const useEnforceBillingSubscriptions = () => useBillingMutation(enforceBillingSubscriptions, "Billing enforcement completed");
+export const useSuspendSubscription = () => useBillingMutation(suspendSubscription, "Subscription suspended successfully");
+export const useReactivateSubscription = () => useBillingMutation(reactivateSubscription, "Subscription reactivated successfully");
 
 export function useRecordPayment() {
   const queryClient = useQueryClient();
@@ -208,5 +216,19 @@ export function useDownloadInvoicePdf() {
       toast.success("Invoice downloaded");
     },
     onError: (error: Error) => toast.error(error.message || "Invoice download failed"),
+  });
+}
+
+export function useInitiateMpesaPayment() {
+  return useMutation({
+    mutationFn: (payload: { subscriptionId: string; phoneNumber: string; amount: number }) => initiateMpesaPayment(payload),
+    onError: (error: Error) => toast.error(error.message || "Failed to initiate M-Pesa payment"),
+  });
+}
+
+export function useQueryMpesaPayment() {
+  return useMutation({
+    mutationFn: (checkoutRequestId: string) => queryMpesaPayment(checkoutRequestId),
+    onError: (error: Error) => toast.error(error.message || "Failed to query M-Pesa payment"),
   });
 }
