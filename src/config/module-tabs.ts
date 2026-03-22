@@ -23,6 +23,7 @@ export const routerManagementTabs = [
   { label: "Unhealthy", value: appRoutes.routersUnhealthyTunnels },
   { label: "Port Issues", value: appRoutes.routersPortMappingIssues },
   { label: "Server Assign", value: appRoutes.routersServerAssignment },
+  { label: "Live Ops", value: appRoutes.routersLiveOperations },
   { label: "Diagnostics", value: appRoutes.routersDiagnosticsReview },
   { label: "API Connectivity", value: appRoutes.routersApiConnectivity },
   { label: "Notes", value: appRoutes.routersNotesFlags },

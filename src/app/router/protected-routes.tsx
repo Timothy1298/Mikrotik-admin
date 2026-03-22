@@ -60,6 +60,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.routersUnhealthyTunnels} element={<RouterManagementSectionPage section="unhealthy-tunnels" />} />
         <Route path={appRoutes.routersPortMappingIssues} element={<RouterManagementSectionPage section="port-mapping-issues" />} />
         <Route path={appRoutes.routersServerAssignment} element={<RouterManagementSectionPage section="server-assignment" />} />
+        <Route path={appRoutes.routersLiveOperations} element={<RouterManagementSectionPage section="live-operations" />} />
         <Route path={appRoutes.routersDiagnosticsReview} element={<RouterManagementSectionPage section="diagnostics-review" />} />
         <Route path={appRoutes.routersApiConnectivity} element={<RouterManagementSectionPage section="api-connectivity" />} />
         <Route path={appRoutes.routersNotesFlags} element={<RouterManagementSectionPage section="notes-flags" />} />

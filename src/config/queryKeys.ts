@@ -23,6 +23,8 @@ export const queryKeys = {
   networkDhcpLeases: (routerId: string) => ["routers", routerId, "network", "dhcp-leases"] as const,
   networkWirelessClients: (routerId: string) => ["routers", routerId, "network", "wireless-clients"] as const,
   networkInterfaces: (routerId: string) => ["routers", routerId, "network", "interfaces"] as const,
+  routerBackups: (routerId: string, page = 1, limit = 20) => ["routers", routerId, "backups", page, limit] as const,
+  routerBackupContent: (routerId: string, backupId: string) => ["routers", routerId, "backups", backupId, "content"] as const,
   routerOnboardingClaims: ["routers", "onboarding-claims"] as const,
   routerDiscoverySessions: ["routers", "discovery-sessions"] as const,
   vpnServers: ["vpn-servers"] as const,

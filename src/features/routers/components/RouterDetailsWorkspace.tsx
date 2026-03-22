@@ -24,6 +24,7 @@ import { RouterFirewallPanel } from "@/features/firewall";
 import { RouterNetworkPanel } from "@/features/network-config";
 import { RouterPppoePanel } from "@/features/pppoe";
 import { RouterQueuesPanel } from "@/features/queues";
+import { RouterBackupsPanel } from "@/features/backups";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { appRoutes } from "@/config/routes";
 import { useNavigate } from "react-router-dom";
@@ -63,7 +64,7 @@ export function RouterDetailsWorkspace({
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
 }) {
   const navigate = useNavigate();
-  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network">("overview");
+  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network" | "backups" | "terminal">("overview");
 
   return (
     <div className="space-y-6">
@@ -92,27 +93,6 @@ export function RouterDetailsWorkspace({
             </div>
           </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Last seen</p><p className="mt-3 text-sm text-text-primary">{formatDateTime(router.monitoring.lastSeen)}</p></div>
-          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Management host" : "Last handshake"}</p>
-            <p className="mt-3 text-sm text-text-primary">{router.profile.connectionMode === "management_only" ? (router.profile.localAddress || "Unavailable") : formatDateTime(router.connectivity.lastHandshake)}</p>
-          </div>
-          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Identity / model" : "VPN IP"}</p>
-            <p className="mt-3 font-mono text-sm text-text-primary">
-              {router.profile.connectionMode === "management_only" ? (router.profile.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (router.connectivity.vpnIp || "Unavailable")}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Discovered open ports" : "Active ports"}</p>
-            <p className="mt-3 text-sm text-text-primary">
-              {router.profile.connectionMode === "management_only"
-                ? (router.profile.openPorts.length ? router.profile.openPorts.join(", ") : "Unavailable")
-                : [router.accessPorts.winbox.publicPort, router.accessPorts.ssh.publicPort, router.accessPorts.api.publicPort].filter(Boolean).length}
-            </p>
-          </div>
-        </div>
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Primary actions</p>
           <div className="flex flex-wrap gap-2">
@@ -138,30 +118,58 @@ export function RouterDetailsWorkspace({
               { label: "Queues", value: "queues" },
               { label: "Firewall", value: "firewall" },
               { label: "Network", value: "network" },
+              { label: "Backups", value: "backups" },
+              { label: "Terminal", value: "terminal" },
             ]}
             value={liveSection}
-            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network")}
+            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network" | "backups" | "terminal")}
           />
         </div>
       </Card>
 
-      {liveSection === "overview" ? <RouterLiveHealthPanel routerId={router.profile.id} /> : null}
-      <RouterCustomerPanel router={router} />
-      <RouterConnectivityPanel router={router} />
-      <RouterApiAccessPanel router={router} />
+      {liveSection === "overview" ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4"><p className="text-xs uppercase tracking-[0.18em] text-text-muted">Last seen</p><p className="mt-3 text-sm text-text-primary">{formatDateTime(router.monitoring.lastSeen)}</p></div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Management host" : "Last handshake"}</p>
+              <p className="mt-3 text-sm text-text-primary">{router.profile.connectionMode === "management_only" ? (router.profile.localAddress || "Unavailable") : formatDateTime(router.connectivity.lastHandshake)}</p>
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Identity / model" : "VPN IP"}</p>
+              <p className="mt-3 font-mono text-sm text-text-primary">
+                {router.profile.connectionMode === "management_only" ? (router.profile.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (router.connectivity.vpnIp || "Unavailable")}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Discovered open ports" : "Active ports"}</p>
+              <p className="mt-3 text-sm text-text-primary">
+                {router.profile.connectionMode === "management_only"
+                  ? (router.profile.openPorts.length ? router.profile.openPorts.join(", ") : "Unavailable")
+                  : [router.accessPorts.winbox.publicPort, router.accessPorts.ssh.publicPort, router.accessPorts.api.publicPort].filter(Boolean).length}
+              </p>
+            </div>
+          </div>
+          <RouterLiveHealthPanel routerId={router.profile.id} />
+          <RouterCustomerPanel router={router} />
+          <RouterConnectivityPanel router={router} />
+          <RouterApiAccessPanel router={router} />
+          <RouterPortsPanel router={router} />
+          <RouterMonitoringPanel router={router} />
+          <RouterPingPanel router={router} />
+          <RouterProvisioningPanel router={router} />
+          <RouterFlagsPanel router={router} onRemoveFlag={onRemoveFlag} />
+          <RouterNotesPanel router={router} />
+          <RouterActivityPanel router={router} />
+        </>
+      ) : null}
       {liveSection === "hotspot" ? <RouterHotspotPanel routerId={router.profile.id} /> : null}
       {liveSection === "pppoe" ? <RouterPppoePanel routerId={router.profile.id} /> : null}
       {liveSection === "queues" ? <RouterQueuesPanel routerId={router.profile.id} /> : null}
       {liveSection === "firewall" ? <RouterFirewallPanel routerId={router.profile.id} /> : null}
       {liveSection === "network" ? <RouterNetworkPanel routerId={router.profile.id} /> : null}
-      <RouterPortsPanel router={router} />
-      <RouterMonitoringPanel router={router} />
-      <RouterPingPanel router={router} />
-      <RouterProvisioningPanel router={router} />
-      <RouterFlagsPanel router={router} onRemoveFlag={onRemoveFlag} />
-      <RouterNotesPanel router={router} />
-      <RouterActivityPanel router={router} />
-      <RouterTerminalPanel routerId={router.profile.id} />
+      {liveSection === "backups" ? <RouterBackupsPanel routerId={router.profile.id} /> : null}
+      {liveSection === "terminal" ? <RouterTerminalPanel routerId={router.profile.id} /> : null}
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
-import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -27,7 +26,6 @@ import {
   ResetPeerDialog,
   RouterDetailsModal,
   RouterFilters,
-  RouterStatsRow,
   RoutersTable,
   RemoveRouterFlagDialog,
 } from "@/features/routers/components";
@@ -47,7 +45,7 @@ import {
   useResetRouterPeer,
   useRouter,
 } from "@/features/routers/hooks/useRouter";
-import { useRouters, useRouterStats } from "@/features/routers/hooks/useRouters";
+import { useRouters } from "@/features/routers/hooks/useRouters";
 import type { RouterQuery, RouterRow } from "@/features/routers/types/router.types";
 import type { RouterManagementSection } from "@/features/routers/utils/router-management-sections";
 import { routerManagementSections } from "@/features/routers/utils/router-management-sections";
@@ -64,6 +62,7 @@ const sectionIcons: Record<RouterManagementSection, typeof Router> = {
   "unhealthy-tunnels": AlertTriangle,
   "port-mapping-issues": ShieldAlert,
   "server-assignment": Server,
+  "live-operations": Wrench,
   "diagnostics-review": ShieldAlert,
   "api-connectivity": ShieldAlert,
   "notes-flags": ShieldAlert,
@@ -129,7 +128,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
 
   const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const routersQuery = useRouters(effectiveFilters);
-  const statsQuery = useRouterStats();
   const detailQuery = useRouter(selectedRouter?.id || "");
   const { data: user } = useCurrentUser(true);
 
@@ -159,13 +157,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const flaggedCount = rows.reduce((sum, row) => sum + row.issueFlags.length, 0);
   const portIssueCount = rows.filter((row) => row.connectionMode !== "management_only" && (!row.winboxPort || !row.sshPort || !row.apiPort)).length;
 
-  const metrics = useMemo(() => [
-    { title: "Visible routers", value: String(total), progress: Math.min(100, total) },
-    { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 7) },
-    { title: "Offline", value: String(offlineCount), progress: Math.min(100, offlineCount * 8) },
-    { title: "Port issues", value: String(portIssueCount || flaggedCount), progress: Math.min(100, Math.max(portIssueCount, flaggedCount) * 10) },
-  ], [flaggedCount, offlineCount, portIssueCount, total, unhealthyCount]);
-
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== "").length;
   const Icon = sectionIcons[section];
 
@@ -179,12 +170,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Router management" />
 
       <Tabs tabs={[...routerManagementTabs]} value={location.pathname} onChange={navigate} />
-
-      {section === "all" && statsQuery.data ? <RouterStatsRow stats={statsQuery.data} /> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
-      </div>
 
       <RouterFilters filters={effectiveFilters} hiddenFields={hiddenFields} onChange={(patch) => setFilters((current) => ({ ...current, ...patch, ...lockedFilters }))} />
 
@@ -202,7 +187,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
           <div className="flex items-center gap-3">
             {section === "all" && can(user, permissions.routersManage) ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>Add Router</Button> : null}
             {routersQuery.isFetching && !routersQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
-            <RefreshButton loading={routersQuery.isFetching || statsQuery.isFetching} onClick={() => { void routersQuery.refetch(); void statsQuery.refetch(); }} />
+            <RefreshButton loading={routersQuery.isFetching} onClick={() => { void routersQuery.refetch(); }} />
           </div>
         </DataToolbar>
 

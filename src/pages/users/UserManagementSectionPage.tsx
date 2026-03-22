@@ -5,7 +5,6 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { TableLoader } from '@/components/feedback/TableLoader';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataToolbar } from '@/components/shared/DataToolbar';
-import { MetricCard } from '@/components/shared/MetricCard';
 import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -28,7 +27,6 @@ import {
   SuspendUserDialog,
   UserDetailsModal,
   UserFilters,
-  UsersStatsRow,
   UsersTable,
   VerifyUserDialog,
 } from '@/features/users/components';
@@ -46,14 +44,12 @@ import {
   useSuspendUser,
   useUser,
   useUsers,
-  useUsersStats,
   useVerifyUser,
 } from '@/features/users/hooks';
 import type { UserRow, UsersQuery } from '@/features/users/types/user.types';
 import type { UserManagementSection } from '@/features/users/utils/user-management-sections';
 import { userManagementSections } from '@/features/users/utils/user-management-sections';
 import { useDisclosure } from '@/hooks/ui/useDisclosure';
-import { formatCurrency } from '@/lib/formatters/currency';
 import { useCurrentUser } from '@/features/auth/hooks/useCurrentUser';
 import { can } from '@/lib/permissions/can';
 import { permissions } from '@/lib/permissions/permissions';
@@ -118,7 +114,6 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
 
   const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const usersQuery = useUsers(effectiveFilters);
-  const statsQuery = useUsersStats();
   const detailQuery = useUser(selectedUser?.id || '');
 
   useEffect(() => {
@@ -148,13 +143,6 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const totalOpenTickets = rows.reduce((sum, row) => sum + (row.openTickets || 0), 0);
   const pagination = usersQuery.data?.pagination;
 
-  const metrics = useMemo(() => [
-    { title: 'Visible users', value: String(total), progress: Math.min(100, total || 0), icon: UserPlus2 },
-    { title: 'Visible MRR', value: formatCurrency(totalMrr), progress: Math.min(100, Math.round(totalMrr > 0 ? 100 : 0)), icon: Wallet },
-    { title: 'Open tickets', value: String(totalOpenTickets), progress: Math.min(100, totalOpenTickets * 5), icon: Ticket },
-    { title: 'Flagged context', value: String(totalFlags), progress: Math.min(100, totalFlags * 10), icon: Flag },
-  ], [total, totalFlags, totalMrr, totalOpenTickets]);
-
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== '').length;
   const Icon = sectionIcons[section];
   const canManageUsers = can(currentUser, permissions.usersManage);
@@ -170,12 +158,6 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="User management" />
 
       <Tabs tabs={[...userManagementTabs]} value={location.pathname} onChange={navigate} />
-
-      {section === 'all' && statsQuery.data ? <UsersStatsRow stats={statsQuery.data} /> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
-      </div>
 
       <UserFilters
         filters={effectiveFilters}
@@ -213,7 +195,7 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
             />
             {usersQuery.isFetching && !usersQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
             {section === 'all' && canManageUsers ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addSubscriberDisclosure.onOpen}>Add Subscriber</Button> : null}
-            <RefreshButton loading={usersQuery.isFetching || statsQuery.isFetching} onClick={() => { void usersQuery.refetch(); void statsQuery.refetch(); }} />
+            <RefreshButton loading={usersQuery.isFetching} onClick={() => { void usersQuery.refetch(); }} />
           </div>
         </DataToolbar>
 

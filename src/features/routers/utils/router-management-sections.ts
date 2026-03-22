@@ -9,6 +9,7 @@ export type RouterManagementSection =
   | "unhealthy-tunnels"
   | "port-mapping-issues"
   | "server-assignment"
+  | "live-operations"
   | "diagnostics-review"
   | "api-connectivity"
   | "notes-flags";
@@ -73,6 +74,13 @@ export const routerManagementSections: Record<RouterManagementSection, {
     route: appRoutes.routersServerAssignment,
     emptyTitle: "No server assignment data found",
     emptyDescription: "No routers match the current server assignment filters.",
+  },
+  "live-operations": {
+    title: "Live operations",
+    description: "Operate directly on routers that need immediate action without the broader fleet summary competing for attention.",
+    route: appRoutes.routersLiveOperations,
+    emptyTitle: "No routers available for live operations",
+    emptyDescription: "No routers match the current live operations filters.",
   },
   "diagnostics-review": {
     title: "Diagnostics & review",

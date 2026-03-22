@@ -5,7 +5,6 @@ import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
-import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -25,7 +24,6 @@ import {
   RemoveServerFlagDialog,
   RestartVpnDialog,
   VpnServerDetailsModal,
-  VpnServerStatsRow,
   VpnServersFilters,
   VpnServersTable,
 } from "@/features/vpn-servers/components";
@@ -47,7 +45,6 @@ import {
   useVpnServerPeers,
   useVpnServerRouters,
   useVpnServers,
-  useVpnServerStats,
 } from "@/features/vpn-servers/hooks/useVpnServers";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import type { VpnServerQuery, VpnServerRow } from "@/features/vpn-servers/types/vpn-server.types";
@@ -131,7 +128,6 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
 
   const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const serversQuery = useVpnServers(effectiveFilters);
-  const statsQuery = useVpnServerStats();
   const detailQuery = useVpnServer(selectedServer?.id || "");
   const routersQuery = useVpnServerRouters(selectedServer?.id || "", vpnServerPreviewParams);
   const peersQuery = useVpnServerPeers(selectedServer?.id || "", vpnServerPreviewParams);
@@ -163,31 +159,6 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const routerCount = rows.reduce((sum, row) => sum + row.routerCount, 0);
   const peerCount = rows.reduce((sum, row) => sum + row.activePeerCount, 0);
 
-  const metrics = useMemo(() => {
-    if (section === "router-distribution") {
-      return [
-        { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
-        { title: "Routers attached", value: String(routerCount), progress: Math.min(100, routerCount) },
-        { title: "Peers in scope", value: String(peerCount), progress: Math.min(100, peerCount) },
-        { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 12) },
-      ];
-    }
-    if (section === "traffic-load") {
-      return [
-        { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
-        { title: "Traffic nodes", value: String(rows.filter((row) => row.bandwidthSummary.totalTransferBytes > 0).length), progress: Math.min(100, rows.filter((row) => row.bandwidthSummary.totalTransferBytes > 0).length * 12) },
-        { title: "Overloaded", value: String(overloadedCount), progress: Math.min(100, overloadedCount * 18) },
-        { title: "Peers in scope", value: String(peerCount || routerCount), progress: Math.min(100, Math.max(peerCount, routerCount)) },
-      ];
-    }
-    return [
-      { title: "Visible servers", value: String(total), progress: Math.min(100, total) },
-      { title: "Unhealthy", value: String(unhealthyCount), progress: Math.min(100, unhealthyCount * 12) },
-      { title: "Overloaded", value: String(overloadedCount), progress: Math.min(100, overloadedCount * 18) },
-      { title: "Peers in scope", value: String(peerCount || routerCount), progress: Math.min(100, Math.max(peerCount, routerCount)) },
-    ];
-  }, [overloadedCount, peerCount, routerCount, rows, section, total, unhealthyCount]);
-
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== "").length;
   const Icon = sectionIcons[section];
 
@@ -201,12 +172,6 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="VPN server management" />
 
       <Tabs tabs={[...vpnServerManagementTabs]} value={location.pathname} onChange={navigate} />
-
-      {section === "all" && statsQuery.data ? <VpnServerStatsRow stats={statsQuery.data} /> : null}
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
-      </div>
 
       <VpnServersFilters filters={effectiveFilters} hiddenFields={hiddenFields} onChange={(patch) => setFilters((current) => ({ ...current, ...patch, ...lockedFilters }))} />
 
@@ -222,7 +187,7 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
           <div className="flex items-center gap-3">
             {can(user, permissions.vpnServersManage) ? <Button onClick={addDisclosure.onOpen}>Add server</Button> : null}
             {serversQuery.isFetching && !serversQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
-            <RefreshButton loading={serversQuery.isFetching || statsQuery.isFetching} onClick={() => { void serversQuery.refetch(); void statsQuery.refetch(); }} />
+            <RefreshButton loading={serversQuery.isFetching} onClick={() => { void serversQuery.refetch(); }} />
           </div>
         </DataToolbar>
 

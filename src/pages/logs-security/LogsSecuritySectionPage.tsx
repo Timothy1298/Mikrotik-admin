@@ -7,7 +7,6 @@ import { TableLoader } from "@/components/feedback/TableLoader";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataToolbar } from "@/components/shared/DataToolbar";
-import { MetricCard } from "@/components/shared/MetricCard";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -336,10 +335,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Logs, audit, and security" />
       <Tabs tabs={[...logsSecurityTabs]} value={location.pathname} onChange={navigate} />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
-      </div>
 
       {section !== "resource-timelines" ? <LogsSecurityFilters section={section} filters={filters} onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))} /> : null}
 
