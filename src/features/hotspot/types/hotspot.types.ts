@@ -32,6 +32,18 @@ export type HotspotSession = {
   mac: string;
   uplinkBytes: number;
   downlinkBytes: number;
+  currentUplinkBps: number;
+  currentDownlinkBps: number;
+  uptimeSeconds: number;
+  sessionTimeLeftSeconds: number;
+  idleTimeoutSeconds: number;
+  keepaliveTimeoutSeconds: number;
+  server: string;
+  hostName: string;
+  deviceLabel: string;
+  profile: string;
+  averageUplinkBps: number;
+  averageDownlinkBps: number;
   sessionId: string;
   startedAt: string | null;
   endedAt?: string | null;

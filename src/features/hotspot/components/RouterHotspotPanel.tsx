@@ -34,7 +34,7 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
 
   const needsProfiles = createDisclosure.open || editDisclosure.open || vouchersDisclosure.open;
   const usersQuery = useHotspotUsers(routerId, { page: 1, limit: 100, search }, { enabled: true });
-  const sessionsQuery = useHotspotSessions(routerId, { enabled: tab === "sessions" });
+  const sessionsQuery = useHotspotSessions(routerId, { enabled: true });
   const profilesQuery = useHotspotProfiles(routerId, { enabled: needsProfiles });
   const createMutation = useCreateHotspotUser(routerId);
   const deleteMutation = useDeleteHotspotUser(routerId);

@@ -15,6 +15,7 @@ import { storageKeys } from "@/lib/utils/storage";
 
 export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const { data: user } = useCurrentUser(true);
+  const hasTerminalAccess = can(user, permissions.routersRunCommand);
   const terminalHostRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -25,12 +26,8 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const [lastError, setLastError] = useState<string | null>(null);
   const [reconnectVersion, setReconnectVersion] = useState(0);
 
-  if (!can(user, permissions.routersRunCommand)) {
-    return null;
-  }
-
   useEffect(() => {
-    if (!terminalHostRef.current) return;
+    if (!hasTerminalAccess || !terminalHostRef.current) return;
 
     const terminal = new Terminal({
       cursorBlink: true,
@@ -60,12 +57,12 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
       terminalRef.current = null;
       fitAddonRef.current = null;
     };
-  }, []);
+  }, [hasTerminalAccess]);
 
   useEffect(() => {
     const terminal = terminalRef.current;
     const fitAddon = fitAddonRef.current;
-    if (!terminal || !fitAddon) return;
+    if (!hasTerminalAccess || !terminal || !fitAddon) return;
 
     dataListenerRef.current?.dispose();
     resizeListenerRef.current?.dispose();
@@ -138,7 +135,11 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
       dataListenerRef.current = null;
       resizeListenerRef.current = null;
     };
-  }, [routerId, reconnectVersion]);
+  }, [hasTerminalAccess, routerId, reconnectVersion]);
+
+  if (!hasTerminalAccess) {
+    return null;
+  }
 
   const tone = connectionState === "connected" ? "success" : connectionState === "connecting" ? "warning" : "danger";
 
