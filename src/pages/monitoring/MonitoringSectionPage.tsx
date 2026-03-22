@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { monitoringTabs } from "@/config/module-tabs";
+import { appRoutes } from "@/config/routes";
 import {
   AcknowledgeIncidentModal,
   AddIncidentNoteModal,
@@ -66,7 +67,6 @@ import {
 import type { MonitoringDetailItem, MonitoringFilterState, MonitoringIncident, MonitoringSection } from "@/features/monitoring/types/monitoring.types";
 import { monitoringSections } from "@/features/monitoring/utils/monitoring-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
-import { formatBytes } from "@/lib/formatters/bytes";
 import { cn } from "@/lib/utils/cn";
 
 dayjs.extend(relativeTime);
@@ -172,84 +172,68 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   }, [stalePeersQuery.data?.items, unhealthyPeersQuery.data?.items]);
 
   const openIncident = (incident: MonitoringIncident) => {
+    if (incident.relatedRouter?.id) {
+      navigate(appRoutes.routerDetail(incident.relatedRouter.id));
+      return;
+    }
+    if (incident.relatedUser?.id) {
+      navigate(appRoutes.userDetail(incident.relatedUser.id));
+      return;
+    }
+    if (incident.relatedServer?.id) {
+      navigate(appRoutes.vpnServerDetail(incident.relatedServer.id));
+      return;
+    }
     setSelectedIncident(incident);
     incidentDisclosure.onOpen();
   };
 
+  const getWorkspaceRoute = (detail: MonitoringDetailItem) => {
+    switch (detail.kind) {
+      case "router":
+        return appRoutes.routerDetail(detail.item.id);
+      case "vpn-server":
+        return appRoutes.vpnServerDetail(detail.item.id);
+      case "peer":
+        return detail.item.router?.id ? appRoutes.routerDetail(detail.item.router.id) : (detail.item.user?.id ? appRoutes.userDetail(detail.item.user.id) : null);
+      case "customer":
+        return detail.item.user?.id ? appRoutes.userDetail(detail.item.user.id) : null;
+      case "traffic-router":
+        return appRoutes.routerDetail(detail.item.id);
+      case "traffic-server":
+        return appRoutes.vpnServerDetail(detail.item.nodeId);
+      case "diagnostic":
+        if (detail.item.resourceType === "router") return appRoutes.routerDetail(detail.item.resourceId);
+        if (detail.item.resourceType === "user" || detail.item.resourceType === "billing_account") return appRoutes.userDetail(detail.item.resourceId);
+        if (detail.item.resourceType === "vpn_server") return appRoutes.vpnServerDetail(detail.item.resourceId);
+        return null;
+      case "activity":
+        if (detail.item.resource?.type === "router") return appRoutes.routerDetail(detail.item.resource.id);
+        if (detail.item.resource?.type === "user" || detail.item.resource?.type === "billing_account") return appRoutes.userDetail(detail.item.resource.id);
+        if (detail.item.resource?.type === "vpn_server") return appRoutes.vpnServerDetail(detail.item.resource.id);
+        return null;
+      case "incident":
+        return detail.item.relatedRouter?.id
+          ? appRoutes.routerDetail(detail.item.relatedRouter.id)
+          : detail.item.relatedUser?.id
+            ? appRoutes.userDetail(detail.item.relatedUser.id)
+            : detail.item.relatedServer?.id
+              ? appRoutes.vpnServerDetail(detail.item.relatedServer.id)
+              : null;
+      default:
+        return null;
+    }
+  };
+
   const openDetail = (detail: MonitoringDetailItem) => {
+    const route = getWorkspaceRoute(detail);
+    if (route) {
+      navigate(route);
+      return;
+    }
     setSelectedDetail(detail);
     eventDisclosure.onOpen();
   };
-
-  const summaryMetrics = useMemo(() => {
-    switch (section) {
-      case "router-health":
-        return routerSummaryQuery.data ? [
-          { title: "Unhealthy routers", value: String(routerSummaryQuery.data.unhealthyRouters), progress: Math.min(100, routerSummaryQuery.data.unhealthyRouters * 4) },
-          { title: "Offline", value: String(routerSummaryQuery.data.byStatus.offline || 0), progress: Math.min(100, (routerSummaryQuery.data.byStatus.offline || 0) * 6) },
-          { title: "Stale handshake", value: String(routerSummaryQuery.data.staleHandshakeRouters), progress: Math.min(100, routerSummaryQuery.data.staleHandshakeRouters * 5) },
-          { title: "Missing ports", value: String(routerSummaryQuery.data.missingPortsRouters), progress: Math.min(100, routerSummaryQuery.data.missingPortsRouters * 5) },
-        ] : [];
-      case "vpn-server-health":
-        return vpnSummaryQuery.data ? [
-          { title: "Unhealthy servers", value: String(vpnSummaryQuery.data.unhealthyServers), progress: Math.min(100, vpnSummaryQuery.data.unhealthyServers * 15) },
-          { title: "Overloaded", value: String(vpnSummaryQuery.data.overloadedServers), progress: Math.min(100, vpnSummaryQuery.data.overloadedServers * 15) },
-          { title: "Maintenance", value: String(vpnSummaryQuery.data.maintenanceServers), progress: Math.min(100, vpnSummaryQuery.data.maintenanceServers * 15) },
-          { title: "Stale telemetry", value: String(vpnSummaryQuery.data.staleServers), progress: Math.min(100, vpnSummaryQuery.data.staleServers * 15) },
-        ] : [];
-      case "peer-health":
-        return peerSummaryQuery.data ? [
-          { title: "Active peers", value: String(peerSummaryQuery.data.activePeers), progress: Math.min(100, peerSummaryQuery.data.activePeers) },
-          { title: "Stale peers", value: String(peerSummaryQuery.data.stalePeers), progress: Math.min(100, peerSummaryQuery.data.stalePeers * 5) },
-          { title: "No handshake", value: String(peerSummaryQuery.data.peersWithNoHandshake), progress: Math.min(100, peerSummaryQuery.data.peersWithNoHandshake * 8) },
-          { title: "Disabled peers", value: String(peerSummaryQuery.data.disabledPeers), progress: Math.min(100, peerSummaryQuery.data.disabledPeers * 8) },
-        ] : [];
-      case "traffic-bandwidth":
-        return trafficSummaryQuery.data ? [
-          { title: "Ingress", value: formatBytes(trafficSummaryQuery.data.totalTransferRx), progress: 100 },
-          { title: "Egress", value: formatBytes(trafficSummaryQuery.data.totalTransferTx), progress: 100 },
-          { title: "Total bytes", value: formatBytes(trafficSummaryQuery.data.totalTransferBytes), progress: 100 },
-          { title: "Top routers", value: String(trafficSummaryQuery.data.topRouters.length), progress: Math.min(100, trafficSummaryQuery.data.topRouters.length * 20) },
-        ] : [];
-      case "customer-impact":
-        return customerImpactQuery.data ? [
-          { title: "Affected users", value: String(customerImpactQuery.data.affectedUsers), progress: Math.min(100, customerImpactQuery.data.affectedUsers) },
-          { title: "Offline impact", value: String(customerImpactQuery.data.customersWithOfflineRouters), progress: Math.min(100, customerImpactQuery.data.customersWithOfflineRouters * 8) },
-          { title: "Provisioning impact", value: String(customerImpactQuery.data.customersWithProvisioningFailures), progress: Math.min(100, customerImpactQuery.data.customersWithProvisioningFailures * 10) },
-          { title: "Server-linked impact", value: String(customerImpactQuery.data.customersAffectedByServerIssues), progress: Math.min(100, customerImpactQuery.data.customersAffectedByServerIssues * 10) },
-        ] : [];
-      case "provisioning-analytics":
-        return provisioningSummaryQuery.data ? [
-          { title: "Pending setup", value: String(provisioningSummaryQuery.data.pendingSetup), progress: Math.min(100, provisioningSummaryQuery.data.pendingSetup * 8) },
-          { title: "Awaiting handshake", value: String(provisioningSummaryQuery.data.awaitingFirstHandshake), progress: Math.min(100, provisioningSummaryQuery.data.awaitingFirstHandshake * 8) },
-          { title: "Failures", value: String(provisioningSummaryQuery.data.provisioningFailures), progress: Math.min(100, provisioningSummaryQuery.data.provisioningFailures * 10) },
-          { title: "Avg setup time", value: provisioningSummaryQuery.data.averageSetupCompletionMinutes ? `${provisioningSummaryQuery.data.averageSetupCompletionMinutes}m` : "N/A", progress: provisioningSummaryQuery.data.averageSetupCompletionMinutes || 0 },
-        ] : [];
-      case "incidents-alerts":
-        return incidentsQuery.data ? [
-          { title: "Total incidents", value: String(incidentsQuery.data.pagination.total), progress: Math.min(100, incidentsQuery.data.pagination.total * 4) },
-          { title: "Open", value: String((incidentsQuery.data.items || []).filter((item) => item.status === "open").length), progress: Math.min(100, (incidentsQuery.data.items || []).filter((item) => item.status === "open").length * 10) },
-          { title: "Acknowledged", value: String((incidentsQuery.data.items || []).filter((item) => item.status === "acknowledged").length), progress: Math.min(100, (incidentsQuery.data.items || []).filter((item) => item.status === "acknowledged").length * 10) },
-          { title: "Resolved", value: String((incidentsQuery.data.items || []).filter((item) => item.status === "resolved").length), progress: Math.min(100, (incidentsQuery.data.items || []).filter((item) => item.status === "resolved").length * 10) },
-        ] : [];
-      case "diagnostics":
-        return diagnosticsQuery.data ? [
-          { title: "Total issues", value: String(diagnosticsQuery.data.summary.totalIssues), progress: Math.min(100, diagnosticsQuery.data.summary.totalIssues * 4) },
-          { title: "Critical", value: String(diagnosticsQuery.data.summary.criticalIssues), progress: Math.min(100, diagnosticsQuery.data.summary.criticalIssues * 15) },
-          { title: "High", value: String(diagnosticsQuery.data.summary.highIssues), progress: Math.min(100, diagnosticsQuery.data.summary.highIssues * 10) },
-          { title: "Open incidents", value: String(diagnosticsQuery.data.summary.openIncidents), progress: Math.min(100, diagnosticsQuery.data.summary.openIncidents * 10) },
-        ] : [];
-      case "activity-feed":
-        return activityQuery.data ? [
-          { title: "Visible events", value: String(activityQuery.data.pagination.total), progress: Math.min(100, activityQuery.data.pagination.total * 2) },
-          { title: "Critical events", value: String((activityQuery.data.items || []).filter((item) => item.severity === "high" || item.severity === "critical").length), progress: Math.min(100, (activityQuery.data.items || []).filter((item) => item.severity === "high" || item.severity === "critical").length * 10) },
-          { title: "Admin actions", value: String((activityQuery.data.items || []).filter((item) => item.source === "admin").length), progress: Math.min(100, (activityQuery.data.items || []).filter((item) => item.source === "admin").length * 6) },
-          { title: "Incident events", value: String((activityQuery.data.items || []).filter((item) => item.source === "incident").length), progress: Math.min(100, (activityQuery.data.items || []).filter((item) => item.source === "incident").length * 8) },
-        ] : [];
-      default:
-        return [];
-    }
-  }, [activityQuery.data, customerImpactQuery.data, diagnosticsQuery.data, incidentsQuery.data, peerSummaryQuery.data, provisioningSummaryQuery.data, routerSummaryQuery.data, section, trafficSummaryQuery.data, vpnSummaryQuery.data]);
 
   const renderContent = () => {
     if (section === "router-health") {

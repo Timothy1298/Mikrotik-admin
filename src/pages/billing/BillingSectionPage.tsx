@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Tabs } from "@/components/ui/Tabs";
 import { billingTabs } from "@/config/module-tabs";
+import { appRoutes } from "@/config/routes";
 import {
   BillingActionDialog,
   BillingActivityTable,
@@ -35,7 +36,6 @@ import {
   useAddBillingNote,
   useApplyGracePeriod,
   useBillingActivity,
-  useBillingRisk,
   useCreateInvoice,
   useDownloadInvoicePdf,
   useEnforceBillingSubscriptions,
@@ -57,7 +57,6 @@ import {
 import type { BillingActivityItem, BillingFilterState, BillingSection, BillingSubscriptionRow, BillingTransaction, BillingTrialRow } from "@/features/billing/types/billing.types";
 import { billingSections } from "@/features/billing/utils/billing-sections";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
-import { formatCurrency } from "@/lib/formatters/currency";
 import { can } from "@/lib/permissions/can";
 import { permissions } from "@/lib/permissions/permissions";
 
@@ -83,7 +82,7 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string>("");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>("");
-  const [selectedFlag, setSelectedFlag] = useState<{ id?: string } | null>(null);
+  const [selectedFlag] = useState<{ id?: string } | null>(null);
 
   const detailDisclosure = useDisclosure(false);
   const invoiceDisclosure = useDisclosure(false);
@@ -108,7 +107,6 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const trialsQuery = useTrials(filters, section === "trials");
   const invoicesQuery = useInvoices(filters, section === "invoices");
   const paymentsQuery = usePayments(filters, section === "payments");
-  const riskQuery = useBillingRisk();
   const activityQuery = useBillingActivity(filters, section === "activity");
   const detailQuery = useAccountBillingOverview(selectedAccountId);
 
@@ -133,8 +131,6 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const canRecordPayment = can(currentUser, permissions.billingRecordPayment);
   const canCreateInvoice = can(currentUser, permissions.billingCreateInvoice);
   const canIssueRefund = can(currentUser, permissions.billingIssueRefund);
-  const canExport = can(currentUser, permissions.billingExport);
-
   useEffect(() => {
     setFilters({ limit: 50, window: "30d" });
   }, [section]);
@@ -147,62 +143,10 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
     return items;
   }, [section, subscriptionsQuery.data?.items]);
 
-  const metrics = useMemo(() => {
-    if (section === "subscriptions" || section === "active-paid" || section === "overdue-risk" || section === "entitlements" || section === "notes-flags") {
-      return [
-        { title: "Visible accounts", value: String(subscriptionRows.length), progress: Math.min(100, subscriptionRows.length) },
-        { title: "Overdue", value: String(subscriptionRows.filter((item) => item.overdue).length), progress: Math.min(100, subscriptionRows.filter((item) => item.overdue).length * 8) },
-        { title: "Open invoices", value: String(subscriptionRows.reduce((sum, item) => sum + item.openInvoiceCount, 0)), progress: Math.min(100, subscriptionRows.reduce((sum, item) => sum + item.openInvoiceCount, 0) * 6) },
-        { title: "Recurring value", value: formatCurrency(subscriptionRows.reduce((sum, item) => sum + item.priceSummary, 0), "USD"), progress: 100 },
-      ];
-    }
-    if (section === "trials") {
-      const items = trialsQuery.data?.items || [];
-      return [
-        { title: "Trial accounts", value: String(items.length), progress: Math.min(100, items.length) },
-        { title: "Ending soon", value: String(items.filter((item) => item.trialEndingSoon).length), progress: Math.min(100, items.filter((item) => item.trialEndingSoon).length * 12) },
-        { title: "Trial subscriptions", value: String(items.reduce((sum, item) => sum + item.subscriptionsOnTrial, 0)), progress: Math.min(100, items.reduce((sum, item) => sum + item.subscriptionsOnTrial, 0) * 10) },
-        { title: "Recurring risk", value: formatCurrency(items.reduce((sum, item) => sum + item.estimatedRecurringValue, 0), "USD"), progress: 100 },
-      ];
-    }
-    if (section === "invoices") {
-      const items = invoicesQuery.data?.items || [];
-      return [
-        { title: "Invoices", value: String(items.length), progress: Math.min(100, items.length) },
-        { title: "Pending", value: String(items.filter((item) => item.status === "pending").length), progress: Math.min(100, items.filter((item) => item.status === "pending").length * 10) },
-        { title: "Completed", value: String(items.filter((item) => item.status === "completed").length), progress: Math.min(100, items.filter((item) => item.status === "completed").length * 10) },
-        { title: "Invoice value", value: formatCurrency(items.reduce((sum, item) => sum + item.amount, 0), "USD"), progress: 100 },
-      ];
-    }
-    if (section === "payments") {
-      const items = paymentsQuery.data?.items || [];
-      return [
-        { title: "Payments", value: String(items.length), progress: Math.min(100, items.length) },
-        { title: "Completed", value: String(items.filter((item) => item.status === "completed").length), progress: Math.min(100, items.filter((item) => item.status === "completed").length * 10) },
-        { title: "Failed", value: String(items.filter((item) => item.status === "failed").length), progress: Math.min(100, items.filter((item) => item.status === "failed").length * 10) },
-        { title: "Payment volume", value: formatCurrency(items.reduce((sum, item) => sum + item.amount, 0), "USD"), progress: 100 },
-      ];
-    }
-    if (section === "reports") {
-      return [
-        { title: "Revenue reports", value: "Live", progress: 100 },
-        { title: "Outstanding balances", value: "Tracked", progress: 100 },
-        { title: "CSV export", value: canExport ? "Enabled" : "Disabled", progress: 100 },
-        { title: "Finance actions", value: can(currentUser, permissions.billingManage) ? "Enabled" : "View only", progress: 100 },
-      ];
-    }
-    const items = activityQuery.data?.items || [];
-    return [
-      { title: "Billing events", value: String(items.length), progress: Math.min(100, items.length) },
-      { title: "Admin actions", value: String(items.filter((item) => item.source === "admin").length), progress: Math.min(100, items.filter((item) => item.source === "admin").length * 10) },
-      { title: "Payment failures", value: String(items.filter((item) => item.type === "payment_failed").length), progress: Math.min(100, items.filter((item) => item.type === "payment_failed").length * 10) },
-      { title: "Overdue pressure", value: String(riskQuery.data?.overdueAccounts || 0), progress: Math.min(100, (riskQuery.data?.overdueAccounts || 0) * 8) },
-    ];
-  }, [activityQuery.data?.items, canExport, currentUser, invoicesQuery.data?.items, paymentsQuery.data?.items, riskQuery.data?.overdueAccounts, section, subscriptionRows, trialsQuery.data?.items]);
-
   const openAccount = (accountId: string) => {
+    if (!accountId) return;
     setSelectedAccountId(accountId);
-    detailDisclosure.onOpen();
+    navigate(appRoutes.userDetail(accountId));
   };
 
   const selectedInvoice = (invoicesQuery.data?.items || []).find((item) => item.id === selectedInvoiceId) || null;

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { logsSecurityTabs } from "@/config/module-tabs";
+import { appRoutes } from "@/config/routes";
 import {
   ActivityLogsTable,
   AuditTrailTable,
@@ -52,7 +53,6 @@ import type {
   LogsSecuritySection,
   SecurityEventItem,
   SessionItem,
-  SuspiciousActivityItem,
   UserSecuritySummary,
 } from "@/features/logs-security/types/logs-security.types";
 import { logsSecuritySections } from "@/features/logs-security/utils/logs-security-sections";
@@ -95,6 +95,7 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const [selectedUserId, setSelectedUserId] = useState("");
   const [timelineResourceType, setTimelineResourceType] = useState<(typeof resourceTypeOptions)[number]["value"]>("user");
   const [timelineResourceId, setTimelineResourceId] = useState("");
+  const [securityOverviewTab, setSecurityOverviewTab] = useState<"events" | "sessions">("events");
 
   const detailDisclosure = useDisclosure(false);
   const acknowledgeDisclosure = useDisclosure(false);
@@ -117,6 +118,12 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
     setFilters({ limit: 50, page: 1 });
   }, [section]);
 
+  useEffect(() => {
+    if (section === "security-overview") {
+      setSecurityOverviewTab("events");
+    }
+  }, [section]);
+
   const activityQuery = useActivityLogs(filters, activityEnabled);
   const auditQuery = useAuditTrail(filters, auditEnabled);
   const securityOverviewQuery = useSecurityOverview();
@@ -137,7 +144,50 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
   const exportActivityMutation = useExportActivityLogs();
   const exportSecurityMutation = useExportSecurityEvents();
 
+  const getRouteForResource = (resourceType?: string | null, resourceId?: string | null) => {
+    if (!resourceId) return null;
+    switch (resourceType) {
+      case "user":
+      case "billing_account":
+        return appRoutes.userDetail(resourceId);
+      case "router":
+        return appRoutes.routerDetail(resourceId);
+      case "vpn_server":
+        return appRoutes.vpnServerDetail(resourceId);
+      case "support_ticket":
+        return appRoutes.supportTicket(resourceId);
+      default:
+        return null;
+    }
+  };
+
+  const navigateToWorkspace = (item: LogsSecurityDetailItem) => {
+    switch (item.kind) {
+      case "activity":
+        return getRouteForResource(item.item.resourceType, item.item.resourceId) || (item.item.targetUser?.id ? appRoutes.userDetail(item.item.targetUser.id) : null);
+      case "audit":
+        return getRouteForResource(item.item.resourceType, item.item.resourceId) || (item.item.targetAccount?.id ? appRoutes.userDetail(item.item.targetAccount.id) : null);
+      case "security-event":
+        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
+      case "suspicious":
+        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
+      case "session":
+        return item.item.user?.id ? appRoutes.userDetail(item.item.user.id) : null;
+      case "user-security":
+        return appRoutes.userDetail(item.item.user.id);
+      case "timeline":
+        return null;
+      default:
+        return null;
+    }
+  };
+
   const openDetail = (item: LogsSecurityDetailItem) => {
+    const route = navigateToWorkspace(item);
+    if (route) {
+      navigate(route);
+      return;
+    }
     setSelectedDetail(item);
     detailDisclosure.onOpen();
   };
@@ -183,79 +233,6 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
     return Array.from(grouped.values()).filter((item) => item.repeatedFailedLoginCount > 0 || item.activeSessionsCount > 0);
   }, [securityEventsQuery.data?.items, sessionsQuery.data?.items]);
 
-  const metrics = useMemo(() => {
-    if (section === "activity") {
-      return [
-        { title: "Visible events", value: String(activityQuery.data?.pagination.total || 0), progress: Math.min(100, activityQuery.data?.pagination.total || 0) },
-        { title: "Critical / high", value: String((activityQuery.data?.items || []).filter((item) => ["critical", "high"].includes(item.severity || "")).length), progress: Math.min(100, (activityQuery.data?.items || []).filter((item) => ["critical", "high"].includes(item.severity || "")).length * 10) },
-        { title: "Admin sourced", value: String((activityQuery.data?.items || []).filter((item) => item.source === "admin").length), progress: Math.min(100, (activityQuery.data?.items || []).filter((item) => item.source === "admin").length * 8) },
-        { title: "Targeted users", value: String((activityQuery.data?.items || []).filter((item) => item.targetUser?.id).length), progress: Math.min(100, (activityQuery.data?.items || []).filter((item) => item.targetUser?.id).length) },
-      ];
-    }
-    if (section === "audit") {
-      return [
-        { title: "Audit records", value: String(auditQuery.data?.pagination.total || 0), progress: Math.min(100, auditQuery.data?.pagination.total || 0) },
-        { title: "Actions with reasons", value: String((auditQuery.data?.items || []).filter((item) => item.reason).length), progress: Math.min(100, (auditQuery.data?.items || []).filter((item) => item.reason).length) },
-        { title: "User-targeted", value: String((auditQuery.data?.items || []).filter((item) => item.targetAccount?.id).length), progress: Math.min(100, (auditQuery.data?.items || []).filter((item) => item.targetAccount?.id).length) },
-        { title: "Admin actors", value: String(new Set((auditQuery.data?.items || []).map((item) => item.actor?.email).filter(Boolean)).size), progress: 100 },
-      ];
-    }
-    if (section === "security-overview") {
-      return securityOverviewQuery.data ? [
-        { title: "Failed logins", value: String(securityOverviewQuery.data.totalFailedLogins), progress: Math.min(100, securityOverviewQuery.data.totalFailedLogins) },
-        { title: "Suspicious", value: String(securityOverviewQuery.data.suspiciousLoginAttempts), progress: Math.min(100, securityOverviewQuery.data.suspiciousLoginAttempts * 10) },
-        { title: "Active sessions", value: String(securityOverviewQuery.data.activeSessionsCount), progress: Math.min(100, securityOverviewQuery.data.activeSessionsCount) },
-        { title: "Under review", value: String(securityOverviewQuery.data.accountsUnderReview), progress: Math.min(100, securityOverviewQuery.data.accountsUnderReview * 6) },
-      ] : [];
-    }
-    if (section === "security-events" || section === "reviews-notes") {
-      return [
-        { title: "Visible events", value: String(securityEventsQuery.data?.pagination.total || 0), progress: Math.min(100, securityEventsQuery.data?.pagination.total || 0) },
-        { title: "Reviewed", value: String((securityEventsQuery.data?.items || []).filter((item) => item.reviewedAt).length), progress: Math.min(100, (securityEventsQuery.data?.items || []).filter((item) => item.reviewedAt).length * 8) },
-        { title: "Acknowledged", value: String((securityEventsQuery.data?.items || []).filter((item) => item.acknowledgedAt).length), progress: Math.min(100, (securityEventsQuery.data?.items || []).filter((item) => item.acknowledgedAt).length * 8) },
-        { title: "Resolved", value: String((securityEventsQuery.data?.items || []).filter((item) => item.resolvedAt).length), progress: Math.min(100, (securityEventsQuery.data?.items || []).filter((item) => item.resolvedAt).length * 8) },
-      ];
-    }
-    if (section === "suspicious-activity") {
-      return [
-        { title: "Suspicious items", value: String(suspiciousQuery.data?.pagination.total || 0), progress: Math.min(100, suspiciousQuery.data?.pagination.total || 0) },
-        { title: "Critical / high", value: String((suspiciousQuery.data?.items || []).filter((item) => ["critical", "high"].includes(item.severity)).length), progress: Math.min(100, (suspiciousQuery.data?.items || []).filter((item) => ["critical", "high"].includes(item.severity)).length * 10) },
-        { title: "Repeated failures", value: String((suspiciousQuery.data?.items || []).filter((item) => "type" in item && item.type === "repeated_failed_logins").length), progress: Math.min(100, (suspiciousQuery.data?.items || []).filter((item) => "type" in item && item.type === "repeated_failed_logins").length * 10) },
-        { title: "Event-backed", value: String((suspiciousQuery.data?.items || []).filter((item) => "eventId" in item).length), progress: Math.min(100, (suspiciousQuery.data?.items || []).filter((item) => "eventId" in item).length * 10) },
-      ];
-    }
-    if (section === "sessions") {
-      return [
-        { title: "Visible sessions", value: String(sessionsQuery.data?.pagination.total || 0), progress: Math.min(100, sessionsQuery.data?.pagination.total || 0) },
-        { title: "Active", value: String((sessionsQuery.data?.items || []).filter((item) => item.status === "active").length), progress: Math.min(100, (sessionsQuery.data?.items || []).filter((item) => item.status === "active").length) },
-        { title: "Revoked", value: String((sessionsQuery.data?.items || []).filter((item) => item.status === "revoked").length), progress: Math.min(100, (sessionsQuery.data?.items || []).filter((item) => item.status === "revoked").length * 6) },
-        { title: "Unique users", value: String(new Set((sessionsQuery.data?.items || []).map((item) => item.user?.id).filter(Boolean)).size), progress: 100 },
-      ];
-    }
-    if (section === "user-security-review") {
-      return [
-        { title: "Users in review", value: String(userReviewRows.length), progress: Math.min(100, userReviewRows.length) },
-        { title: "Repeated failures", value: String(userReviewRows.reduce((sum, item) => sum + item.repeatedFailedLoginCount, 0)), progress: Math.min(100, userReviewRows.reduce((sum, item) => sum + item.repeatedFailedLoginCount, 0)) },
-        { title: "Active sessions", value: String(userReviewRows.reduce((sum, item) => sum + item.activeSessionsCount, 0)), progress: Math.min(100, userReviewRows.reduce((sum, item) => sum + item.activeSessionsCount, 0)) },
-        { title: "Reviewed users", value: String(userReviewRows.filter((item) => item.reviewStatus === "reviewed").length), progress: Math.min(100, userReviewRows.filter((item) => item.reviewStatus === "reviewed").length * 8) },
-      ];
-    }
-    if (section === "resource-timelines") {
-      return [
-        { title: "Timeline rows", value: String(timelineQuery.data?.pagination.total || 0), progress: Math.min(100, timelineQuery.data?.pagination.total || 0) },
-        { title: "Search target", value: timelineResourceId || "Waiting", progress: timelineResourceId ? 100 : 0 },
-        { title: "Resource type", value: timelineResourceType.replace(/_/g, " "), progress: 100 },
-        { title: "Recent window", value: `${filters.limit || 50} rows`, progress: 100 },
-      ];
-    }
-    return [
-      { title: "Review items", value: String(reviewsQuery.data?.pagination.total || 0), progress: Math.min(100, reviewsQuery.data?.pagination.total || 0) },
-      { title: "Pending", value: String((reviewsQuery.data?.items || []).filter((item) => !item.reviewedAt).length), progress: Math.min(100, (reviewsQuery.data?.items || []).filter((item) => !item.reviewedAt).length * 8) },
-      { title: "Reviewed", value: String((reviewsQuery.data?.items || []).filter((item) => item.reviewedAt).length), progress: Math.min(100, (reviewsQuery.data?.items || []).filter((item) => item.reviewedAt).length * 8) },
-      { title: "Critical", value: String((reviewsQuery.data?.items || []).filter((item) => item.severity === "critical").length), progress: Math.min(100, (reviewsQuery.data?.items || []).filter((item) => item.severity === "critical").length * 12) },
-    ];
-  }, [activityQuery.data, auditQuery.data, filters.limit, reviewsQuery.data, section, securityEventsQuery.data, securityOverviewQuery.data, sessionsQuery.data, suspiciousQuery.data, timelineQuery.data, timelineResourceId, timelineResourceType, userReviewRows]);
-
   const renderContent = () => {
     if (section === "activity") {
       if (activityQuery.isPending) return <TableLoader />;
@@ -271,9 +248,30 @@ export function LogsSecuritySectionPage({ section }: { section: LogsSecuritySect
       if (securityOverviewQuery.isPending) return <SectionLoader />;
       if (securityOverviewQuery.isError || !securityOverviewQuery.data) return <ErrorState title="Unable to load security overview" description="Retry after confirming the security overview endpoint is available." onAction={() => void securityOverviewQuery.refetch()} />;
       return (
-        <div className="grid gap-5 xl:grid-cols-2">
-          <Card><div className="p-5"><SecurityEventsTable rows={(securityEventsQuery.data?.items || []).slice(0, 10)} onOpen={(item) => openDetail({ kind: "security-event", item })} onAcknowledge={(item) => { setSelectedEvent(item); acknowledgeDisclosure.onOpen(); }} onResolve={(item) => { setSelectedEvent(item); resolveDisclosure.onOpen(); }} onMarkReviewed={(item) => { setSelectedEvent(item); reviewedDisclosure.onOpen(); }} /></div></Card>
-          <Card><div className="p-5"><SessionsTable rows={(sessionsQuery.data?.items || []).slice(0, 10)} onOpen={(item) => openDetail({ kind: "session", item })} onRevoke={(item) => { setSelectedSession(item); revokeSessionDisclosure.onOpen(); }} /></div></Card>
+        <div className="space-y-5">
+          <Tabs
+            tabs={[
+              { label: "Login Logs", value: "events" },
+              { label: "Session Logs", value: "sessions" },
+            ]}
+            value={securityOverviewTab}
+            onChange={(value) => setSecurityOverviewTab(value as "events" | "sessions")}
+          />
+          {securityOverviewTab === "events" ? (
+            <SecurityEventsTable
+              rows={(securityEventsQuery.data?.items || []).slice(0, 10)}
+              onOpen={(item) => openDetail({ kind: "security-event", item })}
+              onAcknowledge={(item) => { setSelectedEvent(item); acknowledgeDisclosure.onOpen(); }}
+              onResolve={(item) => { setSelectedEvent(item); resolveDisclosure.onOpen(); }}
+              onMarkReviewed={(item) => { setSelectedEvent(item); reviewedDisclosure.onOpen(); }}
+            />
+          ) : (
+            <SessionsTable
+              rows={(sessionsQuery.data?.items || []).slice(0, 10)}
+              onOpen={(item) => openDetail({ kind: "session", item })}
+              onRevoke={(item) => { setSelectedSession(item); revokeSessionDisclosure.onOpen(); }}
+            />
+          )}
         </div>
       );
     }
