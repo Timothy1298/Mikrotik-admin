@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { MoreHorizontal, Plus, Trash2, UserCog } from "lucide-react";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/app/store/auth.store";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { DataTable } from "@/components/data-display/DataTable";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +20,7 @@ import { appRoutes } from "@/config/routes";
 import { formatDateTime } from "@/lib/formatters/date";
 import { permissions } from "@/lib/permissions/permissions";
 import { can } from "@/lib/permissions/can";
+import { SettingsShell } from "@/pages/settings/components/SettingsShell";
 
 function formatRole(role?: string | null) {
   if (!role) return "Legacy Admin";
@@ -182,12 +182,11 @@ export function AdminManagementPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <PageHeader title="Admin Accounts" description="Manage admin users, roles, and access permissions for the ISP control panel." />
-        <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>Add Admin</Button>
-      </div>
-
+    <SettingsShell
+      title="Admin Accounts"
+      description="Manage admin users, roles, and access permissions for the ISP control panel."
+      actions={<Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>Add Admin</Button>}
+    >
       <div className="grid gap-4 xl:grid-cols-4">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
       </div>
@@ -241,6 +240,6 @@ export function AdminManagementPage() {
       <CreateAdminDialog open={createOpen} onClose={() => setCreateOpen(false)} />
       <EditAdminRoleDialog open={Boolean(editingAdmin)} admin={editingAdmin} onClose={() => setEditingAdmin(null)} />
       <DeleteAdminDialog open={Boolean(deletingAdmin)} admin={deletingAdmin} onClose={() => setDeletingAdmin(null)} />
-    </section>
+    </SettingsShell>
   );
 }

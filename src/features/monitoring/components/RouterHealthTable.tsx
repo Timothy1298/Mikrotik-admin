@@ -16,14 +16,16 @@ export function RouterHealthTable({
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
+  const getTunnelStatus = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.tunnelStatus || "management_only") : row.healthSummary.state;
+  const getHandshake = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.lastHandshake || row.lastHandshake) : row.lastHandshake;
   const columns = useMemo<ColumnDef<RouterRow>[]>(() => [
     { header: "Router", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.name}</p><p className="font-mono text-xs text-text-muted">{row.original.id}</p></div> },
     { header: "Customer", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.customer?.name || "Unassigned"}</span> },
     { header: "Status", cell: ({ row }) => <HealthStatusBadge status={row.original.connectionStatus} /> },
     { header: "Setup", cell: ({ row }) => <HealthStatusBadge status={row.original.setupStatus} /> },
-    { header: "Tunnel", cell: ({ row }) => <HealthStatusBadge status={row.original.healthSummary.state} /> },
+    { header: "Tunnel", cell: ({ row }) => <HealthStatusBadge status={getTunnelStatus(row.original)} /> },
     { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastSeen)}</span> },
-    { header: "Handshake", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastHandshake)}</span> },
+    { header: "Handshake", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(getHandshake(row.original))}</span> },
     { header: "Server", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.serverNode}</span> },
   ], []);
 

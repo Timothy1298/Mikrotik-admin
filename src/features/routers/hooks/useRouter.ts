@@ -29,7 +29,9 @@ import {
   reprovisionRouter,
   runRouterCommand,
   resetRouterPeer,
+  discoverRouterDownstreamMikrotiks,
   setRouterCredentials,
+  trackRouterRuntimePeer,
   verifyDiscoveredRouter,
   testRouterConnection,
 } from "@/features/routers/api/getRouters";
@@ -166,6 +168,51 @@ export function useRemoveRouterFlag() {
 
 export function useDeleteRouter() {
   return useRouterMutation(deleteRouter, "Router deleted successfully");
+}
+
+export function useTrackRouterRuntimePeer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, peerId, payload }: { id: string; peerId: string; payload: { name: string; reason?: string } }) => trackRouterRuntimePeer(id, peerId, payload),
+    onSuccess: async (result, variables) => {
+      toast.success(`Runtime peer is now tracked as ${result.name}`);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to track runtime peer");
+    },
+  });
+}
+
+export function useDiscoverRouterDownstreamMikrotiks() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: {
+      id: string;
+      payload?: {
+        reason?: string;
+        dryRun?: boolean;
+        maxProbeTargets?: number;
+        timeoutMs?: number;
+        enableNeighborDiscovery?: boolean;
+        enableRouteInspection?: boolean;
+        enableSubnetProbe?: boolean;
+        allowedSubnetCidrs?: string[];
+        excludeCidrs?: string[];
+      };
+    }) => discoverRouterDownstreamMikrotiks(id, payload),
+    onSuccess: async (result, variables) => {
+      toast.success(result.dryRun ? "Dry-run discovery completed" : "Downstream MikroTik discovery completed");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to discover downstream MikroTik routers");
+    },
+  });
 }
 
 export function usePingRouter() {

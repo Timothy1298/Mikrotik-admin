@@ -1,12 +1,12 @@
 import { Users2 } from "lucide-react";
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/app/store/auth.store";
-import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { appRoutes } from "@/config/routes";
 import { permissions } from "@/lib/permissions/permissions";
 import { can } from "@/lib/permissions/can";
+import { SettingsShell } from "@/pages/settings/components/SettingsShell";
 
 export function ResellersPage() {
   const user = useAuthStore((state) => state.user);
@@ -15,11 +15,10 @@ export function ResellersPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <PageHeader
+    <SettingsShell
         title="Reseller Management"
         description="Manage sub-distributor and franchise operator accounts, plan allocations, and commission tracking."
-      />
+      >
       <Card>
         <div className="space-y-3 p-8 text-center">
           <Users2 className="mx-auto h-12 w-12 text-text-muted" />
@@ -32,6 +31,6 @@ export function ResellersPage() {
           </div>
         </div>
       </Card>
-    </section>
+    </SettingsShell>
   );
 }

@@ -3,10 +3,12 @@ import { AppContent } from "@/components/layout/AppContent";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 
 export function AdminLayout() {
   const location = useLocation();
   const crumbs = location.pathname.split("/").filter(Boolean);
+  useCurrentUser(true);
 
   return (
     <div className="app-grid-bg min-h-screen bg-background-main text-text-primary">

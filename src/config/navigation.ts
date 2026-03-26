@@ -20,7 +20,7 @@ import { permissions } from "@/lib/permissions/permissions";
 export const navigationItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: appRoutes.dashboard, permission: permissions.dashboardView },
   {
-    label: "User Management",
+    label: "Users",
     icon: UsersRound,
     path: appRoutes.usersOverview,
     permission: permissions.usersView,
@@ -30,7 +30,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "Router Management",
+    label: "Routers",
     icon: Router,
     path: appRoutes.routersOverview,
     permission: permissions.routersView,
@@ -43,7 +43,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "VPN Servers",
+    label: "VPN",
     icon: Server,
     path: appRoutes.vpnServersOverview,
     permission: permissions.vpnServersView,
@@ -53,7 +53,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "Monitoring & Analytics",
+    label: "Monitoring",
     icon: Activity,
     path: appRoutes.monitoringOverview,
     permission: permissions.monitoringView,
@@ -63,7 +63,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "Billing & Subscriptions",
+    label: "Billing",
     icon: CreditCard,
     path: appRoutes.billingOverview,
     permission: permissions.billingView,
@@ -75,7 +75,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "Logs, Audit & Security",
+    label: "Security",
     icon: LockKeyhole,
     path: appRoutes.logsSecurityOverview,
     permission: permissions.logsView,
@@ -85,7 +85,7 @@ export const navigationItems = [
     ],
   },
   {
-    label: "Support & Tickets",
+    label: "Support",
     icon: LifeBuoy,
     path: appRoutes.supportOverview,
     permission: permissions.supportView,

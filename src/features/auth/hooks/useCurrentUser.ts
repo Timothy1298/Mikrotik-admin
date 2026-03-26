@@ -10,5 +10,7 @@ export function useCurrentUser(enabled = false) {
       return session.user;
     },
     enabled,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 }

@@ -58,6 +58,8 @@ export function RoutersTable({
 }) {
   const navigate = useNavigate();
   const [navigatingRouterId, setNavigatingRouterId] = useState<string | null>(null);
+  const getTunnelStatus = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.tunnelStatus || "management_only") : row.healthSummary.state;
+  const getHandshake = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.lastHandshake || row.lastHandshake) : row.lastHandshake;
 
   const openFullPage = (router: RouterRow) => {
     if (navigatingRouterId) return;
@@ -91,13 +93,29 @@ export function RoutersTable({
     },
     { header: "Status", cell: ({ row }) => <RouterStatusBadge status={row.original.status} /> },
     { header: "Setup", cell: ({ row }) => <RouterSetupBadge status={row.original.setupStatus} /> },
-    { header: "Tunnel", cell: ({ row }) => <RouterTunnelHealthBadge status={row.original.healthSummary.state} /> },
-    { header: "VPN IP", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{row.original.vpnIp}</span> },
-    { header: "Server", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.serverNode}</span> },
+    { header: "Tunnel", cell: ({ row }) => <RouterTunnelHealthBadge status={getTunnelStatus(row.original)} /> },
+    {
+      header: "VPN IP",
+      cell: ({ row }) => (
+        <div>
+          <span className="font-mono text-xs text-text-secondary">{row.original.vpnIp}</span>
+          {row.original.connectionMode === "management_only" && row.original.ownerTunnel ? <p className="text-[11px] text-text-muted">owner tunnel</p> : null}
+        </div>
+      ),
+    },
+    {
+      header: "Server",
+      cell: ({ row }) => (
+        <div>
+          <span className="text-sm text-text-primary">{row.original.serverNode}</span>
+          {row.original.connectionMode === "management_only" && row.original.ownerTunnel?.sourceRouterName ? <p className="text-[11px] text-text-muted">{row.original.ownerTunnel.sourceRouterName}</p> : null}
+        </div>
+      ),
+    },
     { header: "Ports", cell: ({ row }) => <div className="flex flex-wrap gap-1"><RouterPortStatusBadge status={row.original.winboxPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.sshPort ? "assigned" : "missing"} /><RouterPortStatusBadge status={row.original.apiPort ? "assigned" : "missing"} /></div> },
     { header: "API", cell: ({ row }) => <ApiStateBadge state={row.original.apiConnectivity.state} /> },
     { header: "Last seen", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastSeen)}</span> },
-    { header: "Last handshake", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(row.original.lastHandshake)}</span> },
+    { header: "Last handshake", cell: ({ row }) => <span className="font-mono text-xs text-text-secondary">{formatDateTime(getHandshake(row.original))}</span> },
     {
       header: "Actions",
       cell: ({ row }) => (

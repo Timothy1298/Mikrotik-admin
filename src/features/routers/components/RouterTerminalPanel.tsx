@@ -14,6 +14,9 @@ import { permissions } from "@/lib/permissions/permissions";
 import { storageKeys } from "@/lib/utils/storage";
 
 export function RouterTerminalPanel({ routerId }: { routerId: string }) {
+  const autoReconnectAttemptsRef = useRef(0);
+  const autoReconnectTimerRef = useRef<number | null>(null);
+  const reconnectVersionRef = useRef(0);
   const { data: user } = useCurrentUser(true);
   const hasTerminalAccess = can(user, permissions.routersRunCommand);
   const terminalHostRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +28,14 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const [connectionState, setConnectionState] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [lastError, setLastError] = useState<string | null>(null);
   const [reconnectVersion, setReconnectVersion] = useState(0);
+
+  useEffect(() => {
+    reconnectVersionRef.current = reconnectVersion;
+  }, [reconnectVersion]);
+
+  const triggerReconnect = () => {
+    setReconnectVersion((value) => value + 1);
+  };
 
   useEffect(() => {
     if (!hasTerminalAccess || !terminalHostRef.current) return;
@@ -50,6 +61,10 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      if (autoReconnectTimerRef.current !== null) {
+        window.clearTimeout(autoReconnectTimerRef.current);
+        autoReconnectTimerRef.current = null;
+      }
       dataListenerRef.current?.dispose();
       resizeListenerRef.current?.dispose();
       socketRef.current?.close();
@@ -66,7 +81,9 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
 
     dataListenerRef.current?.dispose();
     resizeListenerRef.current?.dispose();
-    socketRef.current?.close();
+    const previousSocket = socketRef.current;
+    socketRef.current = null;
+    previousSocket?.close();
 
     setConnectionState("connecting");
     setLastError(null);
@@ -77,8 +94,13 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
     const wsUrl = `${env.wsBaseUrl}/ws/terminal/${routerId}?token=${encodeURIComponent(token)}`;
     const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
+    let disposed = false;
+    let terminalReady = false;
+    let sessionErrored = false;
+    let shouldAutoReconnect = false;
 
     socket.onopen = () => {
+      if (disposed || socketRef.current !== socket) return;
       setConnectionState("connected");
       fitAddon.fit();
       socket.send(JSON.stringify({ type: "resize", rows: terminal.rows, cols: terminal.cols }));
@@ -96,15 +118,30 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
     };
 
     socket.onmessage = (event) => {
+      if (disposed || socketRef.current !== socket) return;
       try {
         const payload = JSON.parse(String(event.data || "{}"));
         if (payload.type === "output" && typeof payload.data === "string") {
+          terminalReady = true;
+          autoReconnectAttemptsRef.current = 0;
           terminal.write(payload.data);
           return;
         }
+        if (payload.type === "status" && payload.state === "connected") {
+          terminalReady = true;
+          autoReconnectAttemptsRef.current = 0;
+          return;
+        }
         if (payload.type === "error") {
-          setLastError(payload.message || "Terminal session failed");
-          terminal.writeln(`\r\n[error] ${payload.message || "Terminal session failed"}\r\n`);
+          sessionErrored = true;
+          const message = payload.message || "Terminal session failed";
+          const isKeepaliveTimeout = /keepalive timeout/i.test(message);
+          shouldAutoReconnect = terminalReady && isKeepaliveTimeout;
+          setLastError(isKeepaliveTimeout ? "Terminal connection timed out. Reconnecting..." : message);
+          terminal.writeln(`\r\n[error] ${message}\r\n`);
+          if (isKeepaliveTimeout) {
+            terminal.writeln("\r\n[reconnecting]\r\n");
+          }
           return;
         }
         if (payload.type === "closed") {
@@ -117,18 +154,45 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
     };
 
     socket.onerror = () => {
+      if (disposed || socketRef.current !== socket) return;
+      sessionErrored = true;
       setLastError("Web terminal connection failed");
     };
 
     socket.onclose = () => {
+      if (disposed || socketRef.current !== socket) return;
       setConnectionState("disconnected");
       dataListenerRef.current?.dispose();
       resizeListenerRef.current?.dispose();
       dataListenerRef.current = null;
       resizeListenerRef.current = null;
+      socketRef.current = null;
+      if (shouldAutoReconnect && autoReconnectAttemptsRef.current < 3) {
+        const nextAttempt = autoReconnectAttemptsRef.current + 1;
+        autoReconnectAttemptsRef.current = nextAttempt;
+        const reconnectDelayMs = nextAttempt * 1500;
+        autoReconnectTimerRef.current = window.setTimeout(() => {
+          autoReconnectTimerRef.current = null;
+          if (reconnectVersionRef.current === reconnectVersion) {
+            triggerReconnect();
+          }
+        }, reconnectDelayMs);
+        return;
+      }
+      if (!terminalReady && !sessionErrored) {
+        setLastError("Web terminal connection failed");
+      }
     };
 
     return () => {
+      disposed = true;
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
+      if (autoReconnectTimerRef.current !== null) {
+        window.clearTimeout(autoReconnectTimerRef.current);
+        autoReconnectTimerRef.current = null;
+      }
       socket.close();
       dataListenerRef.current?.dispose();
       resizeListenerRef.current?.dispose();
@@ -154,7 +218,7 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
           <div className="flex items-center gap-2">
             <Badge tone={tone}>{connectionState}</Badge>
             {connectionState === "disconnected" ? (
-              <Button variant="outline" leftIcon={<PlugZap className="h-4 w-4" />} onClick={() => setReconnectVersion((value) => value + 1)}>
+              <Button variant="outline" leftIcon={<PlugZap className="h-4 w-4" />} onClick={triggerReconnect}>
                 Reconnect
               </Button>
             ) : null}

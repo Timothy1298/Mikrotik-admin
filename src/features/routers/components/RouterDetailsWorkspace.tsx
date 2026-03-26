@@ -19,6 +19,8 @@ import { RouterSetupBadge } from "@/features/routers/components/RouterSetupBadge
 import { RouterStatusBadge } from "@/features/routers/components/RouterStatusBadge";
 import { RouterTerminalPanel } from "@/features/routers/components/RouterTerminalPanel";
 import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTunnelHealthBadge";
+import { RouterWireGuardPanel } from "@/features/routers/components/RouterWireGuardPanel";
+import { NetworkTopologyViewer } from "@/features/routers/components/NetworkTopologyViewer";
 import { RouterHotspotPanel } from "@/features/hotspot";
 import { RouterFirewallPanel } from "@/features/firewall";
 import { RouterNetworkPanel } from "@/features/network-config";
@@ -64,7 +66,8 @@ export function RouterDetailsWorkspace({
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
 }) {
   const navigate = useNavigate();
-  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network" | "backups" | "terminal">("overview");
+  const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "wireguard" | "queues" | "firewall" | "network" | "backups" | "terminal" | "topology">("overview");
+  const ownerTunnel = router.connectivity.ownerTunnel;
 
   return (
     <div className="space-y-6">
@@ -113,8 +116,10 @@ export function RouterDetailsWorkspace({
           <Tabs
             tabs={[
               { label: "Overview", value: "overview" },
+              { label: "Network Topology", value: "topology" },
               { label: "Hotspot", value: "hotspot" },
               { label: "PPPoE", value: "pppoe" },
+              { label: "WireGuard", value: "wireguard" },
               { label: "Queues", value: "queues" },
               { label: "Firewall", value: "firewall" },
               { label: "Network", value: "network" },
@@ -122,7 +127,7 @@ export function RouterDetailsWorkspace({
               { label: "Terminal", value: "terminal" },
             ]}
             value={liveSection}
-            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "queues" | "firewall" | "network" | "backups" | "terminal")}
+            onChange={(value) => setLiveSection(value as "overview" | "hotspot" | "pppoe" | "wireguard" | "queues" | "firewall" | "network" | "backups" | "terminal" | "topology")}
           />
         </div>
       </Card>
@@ -136,18 +141,20 @@ export function RouterDetailsWorkspace({
               <p className="mt-3 text-sm text-text-primary">{router.profile.connectionMode === "management_only" ? (router.profile.localAddress || "Unavailable") : formatDateTime(router.connectivity.lastHandshake)}</p>
             </div>
             <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Identity / model" : "VPN IP"}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Owner tunnel" : "VPN IP"}</p>
               <p className="mt-3 font-mono text-sm text-text-primary">
-                {router.profile.connectionMode === "management_only" ? (router.profile.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (router.connectivity.vpnIp || "Unavailable")}
+                {router.profile.connectionMode === "management_only" ? (ownerTunnel?.vpnIp || router.profile.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (router.connectivity.vpnIp || "Unavailable")}
               </p>
+              {router.profile.connectionMode === "management_only" && ownerTunnel ? <p className="mt-1 text-xs text-text-muted">{ownerTunnel.serverNode}</p> : null}
             </div>
             <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Discovered open ports" : "Active ports"}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{router.profile.connectionMode === "management_only" ? "Tunnel handshake" : "Active ports"}</p>
               <p className="mt-3 text-sm text-text-primary">
                 {router.profile.connectionMode === "management_only"
-                  ? (router.profile.openPorts.length ? router.profile.openPorts.join(", ") : "Unavailable")
+                  ? (ownerTunnel ? formatDateTime(ownerTunnel.lastHandshake) : (router.profile.openPorts.length ? router.profile.openPorts.join(", ") : "Unavailable"))
                   : [router.accessPorts.winbox.publicPort, router.accessPorts.ssh.publicPort, router.accessPorts.api.publicPort].filter(Boolean).length}
               </p>
+              {router.profile.connectionMode === "management_only" && ownerTunnel ? <p className="mt-1 text-xs text-text-muted">{ownerTunnel.handshakeState}</p> : null}
             </div>
           </div>
           <RouterLiveHealthPanel routerId={router.profile.id} />
@@ -163,8 +170,10 @@ export function RouterDetailsWorkspace({
           <RouterActivityPanel router={router} />
         </>
       ) : null}
+      {liveSection === "topology" ? <NetworkTopologyViewer routerId={router.profile.id} /> : null}
       {liveSection === "hotspot" ? <RouterHotspotPanel routerId={router.profile.id} /> : null}
       {liveSection === "pppoe" ? <RouterPppoePanel routerId={router.profile.id} /> : null}
+      {liveSection === "wireguard" ? <RouterWireGuardPanel router={router} /> : null}
       {liveSection === "queues" ? <RouterQueuesPanel routerId={router.profile.id} /> : null}
       {liveSection === "firewall" ? <RouterFirewallPanel routerId={router.profile.id} /> : null}
       {liveSection === "network" ? <RouterNetworkPanel routerId={router.profile.id} /> : null}

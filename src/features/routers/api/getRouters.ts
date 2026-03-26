@@ -4,6 +4,7 @@ import type {
   CreateRouterPayload,
   CreateRouterResponse,
   RouterCommandResult,
+  RouterDownstreamDiscoveryRun,
   RouterApiConnectionTest,
   RouterDetail,
   RouterDirectoryResponse,
@@ -21,6 +22,7 @@ import type {
   RouterPingResult,
   RouterQuery,
   RouterMetricPoint,
+  TrackRuntimePeerResult,
 } from "@/features/routers/types/router.types";
 
 export async function getRouters(params: RouterQuery) {
@@ -194,4 +196,27 @@ export async function removeRouterFlag(id: string, flagId: string, reason?: stri
 export async function deleteRouter(id: string, reason?: string) {
   const { data } = await apiClient.delete<{ success: boolean; message: string }>(endpoints.admin.deleteRouter(id), { data: { reason } });
   return data;
+}
+
+export async function trackRouterRuntimePeer(id: string, peerId: string, payload: { name: string; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: TrackRuntimePeerResult }>(endpoints.admin.routerTrackRuntimePeer(id, peerId), payload);
+  return data.data;
+}
+
+export async function discoverRouterDownstreamMikrotiks(
+  id: string,
+  payload?: {
+    reason?: string;
+    dryRun?: boolean;
+    maxProbeTargets?: number;
+    timeoutMs?: number;
+    enableNeighborDiscovery?: boolean;
+    enableRouteInspection?: boolean;
+    enableSubnetProbe?: boolean;
+    allowedSubnetCidrs?: string[];
+    excludeCidrs?: string[];
+  },
+) {
+  const { data } = await apiClient.post<{ success: boolean; data: RouterDownstreamDiscoveryRun }>(endpoints.admin.routerDiscoverDownstreamMikrotiks(id), payload || {});
+  return data.data;
 }

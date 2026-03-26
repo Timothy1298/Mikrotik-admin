@@ -29,6 +29,7 @@ export * from "./RouterInterfacesPanel";
 export * from "./RouterPortsPanel";
 export * from "./RouterLiveHealthPanel";
 export * from "./RouterMonitoringPanel";
+export * from "./RouterWireGuardPanel";
 export * from "./RouterPingPanel";
 export * from "./RouterApiAccessPanel";
 export * from "./RouterProvisioningPanel";

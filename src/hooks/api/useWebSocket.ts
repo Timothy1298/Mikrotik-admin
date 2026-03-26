@@ -27,7 +27,7 @@ export function useWebSocket(rooms: string[]) {
     let cancelled = false;
 
     const connect = () => {
-      if (cancelled) return;
+      if (cancelled || socketRef.current?.readyState === WebSocket.OPEN || socketRef.current?.readyState === WebSocket.CONNECTING) return;
       const socket = new WebSocket(getWebSocketUrl());
       socketRef.current = socket;
 
@@ -50,9 +50,12 @@ export function useWebSocket(rooms: string[]) {
 
       socket.onclose = () => {
         setIsConnected(false);
+        if (socketRef.current === socket) {
+          socketRef.current = null;
+        }
         if (cancelled) return;
         if (reconnectAttemptsRef.current >= 3) return;
-        const delay = 1000 * (2 ** reconnectAttemptsRef.current);
+        const delay = Math.min(30000, 1000 * (2 ** reconnectAttemptsRef.current));
         reconnectAttemptsRef.current += 1;
         retryTimeoutRef.current = window.setTimeout(connect, delay);
       };
@@ -62,11 +65,31 @@ export function useWebSocket(rooms: string[]) {
       };
     };
 
+    const handleReconnectOpportunity = () => {
+      if (cancelled || socketRef.current?.readyState === WebSocket.OPEN || socketRef.current?.readyState === WebSocket.CONNECTING) return;
+      if (retryTimeoutRef.current != null) {
+        window.clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      reconnectAttemptsRef.current = 0;
+      connect();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        handleReconnectOpportunity();
+      }
+    };
+
     connect();
+    window.addEventListener("online", handleReconnectOpportunity);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       cancelled = true;
       setIsConnected(false);
+      window.removeEventListener("online", handleReconnectOpportunity);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (retryTimeoutRef.current != null) {
         window.clearTimeout(retryTimeoutRef.current);
       }

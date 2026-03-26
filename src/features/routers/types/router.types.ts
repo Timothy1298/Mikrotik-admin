@@ -61,6 +61,23 @@ export type RouterRow = {
     lastError: string | null;
     state: "healthy" | "failing" | "pending" | "unconfigured";
   };
+  ownerTunnel?: {
+    source: string;
+    sourceRouterId: string;
+    sourceRouterName: string | null;
+    peerId: string;
+    peerName: string | null;
+    peerEnabled: boolean;
+    serverNode: string;
+    vpnIp: string | null;
+    publicKeyFingerprint: string | null;
+    lastHandshake: string | null;
+    handshakeState: string;
+    transferRx: number;
+    transferTx: number;
+    tunnelStatus: string;
+    peerCreatedAt: string | null;
+  } | null;
 };
 
 export type RouterDirectoryResponse = {
@@ -116,6 +133,23 @@ export type RouterDetail = {
     configGenerationStatus: string;
     rekeyEligible: boolean;
     reconciliationState: string;
+    ownerTunnel?: {
+      source: string;
+      sourceRouterId: string;
+      sourceRouterName: string | null;
+      peerId: string;
+      peerName: string | null;
+      peerEnabled: boolean;
+      serverNode: string;
+      vpnIp: string | null;
+      publicKeyFingerprint: string | null;
+      lastHandshake: string | null;
+      handshakeState: string;
+      transferRx: number;
+      transferTx: number;
+      tunnelStatus: string;
+      peerCreatedAt: string | null;
+    } | null;
   };
   discovery: {
     localAddress: string | null;
@@ -148,7 +182,106 @@ export type RouterDetail = {
       state: string;
       issues: string[];
     };
+    ownerTunnel?: RouterDetail["connectivity"]["ownerTunnel"];
   };
+  wireguard: {
+    mode: "owner_tunnel" | "router_tunnel";
+    available: boolean;
+    primaryTunnel: {
+      source: string;
+      sourceRouterId: string;
+      sourceRouterName: string | null;
+      peerId: string;
+      peerName: string | null;
+      peerEnabled: boolean;
+      serverNode: string;
+      vpnIp: string | null;
+      publicKeyFingerprint: string | null;
+      lastHandshake: string | null;
+      handshakeState: string;
+      transferRx: number;
+      transferTx: number;
+      tunnelStatus: string;
+      peerCreatedAt: string | null;
+      interfaceName?: string | null;
+      endpoint?: string | null;
+      allowedIPs?: string | string[] | null;
+      persistentKeepalive?: number | null;
+    } | null;
+    trackingSource?: {
+      sourceRouterId: string;
+      sourceRouterName: string | null;
+      peerPublicKey: string | null;
+      peerName: string | null;
+      allowedAddress: string | null;
+      endpoint: string | null;
+      reason: string | null;
+    } | null;
+    sharedDevices: Array<{
+      routerId: string;
+      routerName: string | null;
+      connectionMode: "wireguard" | "management_only";
+      status: string;
+      serverNode: string;
+      vpnIp: string | null;
+      peerName: string | null;
+      peerEnabled: boolean;
+      lastHandshake: string | null;
+      handshakeState: string;
+      tunnelStatus: string;
+      transferRx: number;
+      transferTx: number;
+      sourceRouterId: string | null;
+      sourceRouterName: string | null;
+    }>;
+    sharedDeviceCount: number;
+    runtime?: {
+      available: boolean;
+      interfaces: Array<{
+        id: string | null;
+        name: string | null;
+        listenPort: number | null;
+        mtu: number | null;
+        privateKeyConfigured: boolean;
+        publicKey: string | null;
+        disabled: boolean;
+        running: boolean;
+      }>;
+      peers: Array<{
+        id: string | null;
+        interface: string | null;
+        publicKey: string | null;
+        endpointAddress: string | null;
+        endpointPort: number | null;
+        currentEndpointAddress: string | null;
+        currentEndpointPort: number | null;
+        allowedAddress: string | null;
+        persistentKeepalive: number | null;
+        lastHandshake: string | null;
+        rx: number;
+        tx: number;
+        disabled: boolean;
+        trackedDeviceCount?: number;
+        trackedDevices?: Array<{
+          routerId: string;
+          routerName: string | null;
+          connectionMode: "wireguard" | "management_only";
+          status: string;
+          serverNode: string;
+          vpnIp: string | null;
+          localAddress: string | null;
+          hostname: string | null;
+          source: string | null;
+          lastSeen: string | null;
+          sourceRouterId?: string | null;
+          sourceRouterName?: string | null;
+        }>;
+        trackingMarker?: string | null;
+      }>;
+      error: string | null;
+    } | null;
+  };
+  downstreamDiscovery?: RouterDownstreamDiscoveryRun | null;
   provisioning: {
     state: string;
     configGenerationStatus: string;
@@ -265,6 +398,65 @@ export type RouterCommandResult = {
   success: boolean;
   output?: string;
   error?: string;
+};
+
+export type TrackRuntimePeerResult = {
+  id: string;
+  name: string;
+  connectionMode?: "wireguard" | "management_only";
+  status: string;
+};
+
+export type RouterDownstreamDiscoveryRun = {
+  id: string;
+  parentRouterId: string;
+  status: "running" | "completed" | "failed";
+  dryRun: boolean;
+  timestamp: string;
+  startedAt: string;
+  completedAt: string | null;
+  sourceTunnelIp: string | null;
+  sourceRouterIdentity: string | null;
+  sourceRouterVersion: string | null;
+  discoveryMethodUsed: string[];
+  candidateSubnets: string[];
+  previewTargets: Array<{
+    ipAddress: string;
+    sourceMethod: string[];
+    candidateSubnet: string | null;
+    priority: number;
+    evidence: string[];
+  }>;
+  candidateSubnetCount: number;
+  probedTargetCount: number;
+  discoveredRouterCount: number;
+  partialVisibility: boolean;
+  warnings: string[];
+  errors: string[];
+  discoveredRouters: Array<{
+    ipAddress: string;
+    identity: string | null;
+    platform: string | null;
+    vendor: string | null;
+    confidence: "high" | "medium" | "low";
+    evidence: string[];
+    sourceMethod: string[];
+    reachable: boolean;
+    apiReachable: boolean;
+    sshReachable: boolean;
+    winboxReachable: boolean;
+    rosVersion: string | null;
+    macAddress: string | null;
+    interfaceContext: string | null;
+    viaRouter: {
+      routerId: string | null;
+      routerName: string | null;
+    } | null;
+    candidateSubnet: string | null;
+    notes: string | null;
+    adoptedRouterId: string | null;
+    lastSeenAt: string | null;
+  }>;
 };
 
 export type RouterApiConnectionTest = {

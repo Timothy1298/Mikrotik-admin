@@ -26,10 +26,10 @@ export function SidebarNavItem({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          "flex items-center justify-between rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors",
+          "flex items-center justify-between rounded-xl border px-3 py-2.5 text-[15px] font-semibold transition-colors",
           (active ?? isActive)
             ? "surface-active text-text-primary"
-            : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
+            : "border-transparent text-text-primary/90 hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
           collapsed && "justify-center",
         )
       }
@@ -39,7 +39,7 @@ export function SidebarNavItem({
         {!collapsed ? <span className="truncate leading-snug">{label}</span> : null}
       </span>
       {!collapsed && badge ? (
-        <span className="rounded-full border border-background-border bg-background-elevated px-2 py-0.5 text-xs font-mono text-text-secondary">
+        <span className="rounded-full border border-background-border bg-background-elevated px-2 py-0.5 text-xs font-mono text-text-primary/85">
           {badge}
         </span>
       ) : null}

@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/formatters/date";
 export function RouterConnectivityPanel({ router }: { router: RouterDetail }) {
   const connectivity = router.connectivity;
   const managementOnly = router.profile.connectionMode === "management_only";
+  const ownerTunnel = connectivity.ownerTunnel;
 
   return (
     <Card>
@@ -29,15 +30,49 @@ export function RouterConnectivityPanel({ router }: { router: RouterDetail }) {
           <p className="mt-3 text-sm font-medium text-text-primary">{managementOnly ? (router.discovery.localAddress || connectivity.vpnIp || "Unavailable") : connectivity.serverNode}</p>
         </div>
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Identity / hostname" : "VPN IP"}</p>
-          <p className="mt-3 font-mono text-sm text-text-primary">{managementOnly ? (router.discovery.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (connectivity.vpnIp || "Unavailable")}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Owner tunnel" : "VPN IP"}</p>
+          <p className="mt-3 font-mono text-sm text-text-primary">
+            {managementOnly ? (ownerTunnel?.vpnIp || router.discovery.hostname || router.profile.model || router.profile.boardName || "Unavailable") : (connectivity.vpnIp || "Unavailable")}
+          </p>
+          {managementOnly && ownerTunnel ? <p className="mt-1 text-xs text-text-muted">{ownerTunnel.serverNode} • {ownerTunnel.sourceRouterName || "Owner router"}</p> : null}
         </div>
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "API health" : "Last handshake"}</p>
-          <p className="mt-3 text-sm text-text-primary">{managementOnly ? formatDateTime(router.apiAccess.lastSuccessAt) : formatDateTime(connectivity.lastHandshake)}</p>
-          <p className="mt-1 text-xs text-text-muted">{managementOnly ? router.apiAccess.state : connectivity.handshakeState}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Tunnel handshake" : "Last handshake"}</p>
+          <p className="mt-3 text-sm text-text-primary">{managementOnly ? formatDateTime(ownerTunnel?.lastHandshake || router.apiAccess.lastSuccessAt) : formatDateTime(connectivity.lastHandshake)}</p>
+          <p className="mt-1 text-xs text-text-muted">{managementOnly ? (ownerTunnel?.handshakeState || router.apiAccess.state) : connectivity.handshakeState}</p>
         </div>
       </div>
+      {managementOnly && ownerTunnel ? (
+        <div className="mt-4 rounded-2xl border border-background-border bg-background-panel p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Owner WireGuard Tunnel</p>
+              <p className="mt-2 text-sm text-text-primary">
+                {ownerTunnel.sourceRouterName || "Owner router"} • {ownerTunnel.serverNode}
+              </p>
+            </div>
+            <RouterTunnelHealthBadge status={ownerTunnel.tunnelStatus} />
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Peer</p>
+              <p className="mt-2 font-mono text-sm text-text-primary">{ownerTunnel.peerName || "Unavailable"}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">VPN IP</p>
+              <p className="mt-2 font-mono text-sm text-text-primary">{ownerTunnel.vpnIp || "Unavailable"}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Handshake</p>
+              <p className="mt-2 text-sm text-text-primary">{formatDateTime(ownerTunnel.lastHandshake)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">State</p>
+              <p className="mt-2 text-sm text-text-primary">{ownerTunnel.handshakeState}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
 }
