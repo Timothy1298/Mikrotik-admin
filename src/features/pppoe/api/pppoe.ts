@@ -49,3 +49,13 @@ export async function createPppoeProfile(routerId: string, payload: PppoeProfile
   const { data } = await apiClient.post<{ success: boolean; data: PppoeProfile }>(endpoints.admin.pppoeProfiles(routerId), payload);
   return data.data;
 }
+
+export async function updatePppoeProfile(routerId: string, profileId: string, payload: PppoeProfilePayload) {
+  const { data } = await apiClient.put<{ success: boolean; data: PppoeProfile }>(`${endpoints.admin.pppoeProfiles(routerId)}/${profileId}`, payload);
+  return data.data;
+}
+
+export async function deletePppoeProfile(routerId: string, profileId: string) {
+  const { data } = await apiClient.delete<{ success: boolean; data: { message: string } }>(`${endpoints.admin.pppoeProfiles(routerId)}/${profileId}`);
+  return data.data;
+}

@@ -1,19 +1,4 @@
-import {
-  Activity,
-  BarChart3,
-  CreditCard,
-  LayoutDashboard,
-  LifeBuoy,
-  LockKeyhole,
-  Package,
-  PlusCircle,
-  Router,
-  Server,
-  Settings,
-  Users,
-  Users2,
-  UsersRound,
-} from "lucide-react";
+import { Activity, BarChart3, CreditCard, LayoutDashboard, LifeBuoy, LockKeyhole, Package, PlusCircle, Router, Server, Settings, Users, UsersRound } from "lucide-react";
 import { appRoutes } from "@/config/routes";
 import { permissions } from "@/lib/permissions/permissions";
 
@@ -105,7 +90,6 @@ export const navigationItems = [
       { label: "System", path: appRoutes.settingsSystem },
       { label: "Admin Accounts", path: appRoutes.settingsAdmins, icon: Users, permission: permissions.settingsManage },
       { label: "Service Plans", path: appRoutes.settingsServicePlans, icon: Package, permission: permissions.servicePlansView },
-      { label: "Resellers", path: appRoutes.settingsResellers, icon: Users2, permission: permissions.settingsManage },
     ],
   },
 ] as const;

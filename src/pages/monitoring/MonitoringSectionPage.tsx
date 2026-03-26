@@ -175,6 +175,8 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   const openDetail = (detail: MonitoringDetailItem) => {
     const itemId = detail.kind === "traffic-server"
       ? detail.item.nodeId
+      : detail.kind === "customer"
+        ? detail.item.user.id
       : detail.kind === "diagnostic"
         ? detail.item.resourceId
         : detail.kind === "activity"

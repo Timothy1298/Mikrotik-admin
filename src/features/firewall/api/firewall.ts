@@ -47,6 +47,11 @@ export async function addNatRule(routerId: string, payload: NatRulePayload) {
   return data.data;
 }
 
+export async function updateNatRule(routerId: string, ruleId: string, payload: NatRulePayload) {
+  const { data } = await apiClient.put<{ success: boolean; data: NatRule | { message: string } }>(endpoints.admin.firewallNatRule(routerId, ruleId), payload);
+  return data.data;
+}
+
 export async function deleteNatRule(routerId: string, ruleId: string) {
   const { data } = await apiClient.delete<{ success: boolean; data: { message: string } }>(endpoints.admin.firewallNatRule(routerId, ruleId));
   return data.data;

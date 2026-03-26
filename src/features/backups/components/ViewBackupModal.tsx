@@ -3,7 +3,7 @@ import { InlineError } from "@/components/feedback/InlineError";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { useCopyToClipboard } from "@/hooks/utils/useCopyToClipboard";
-import { useBackupContent } from "@/features/backups/hooks/useBackups";
+import { useBackupContent, useBackupDetail } from "@/features/backups/hooks/useBackups";
 import type { RouterBackup } from "@/features/backups/types/backup.types";
 
 function downloadText(filename: string, content: string) {
@@ -30,17 +30,40 @@ export function ViewBackupModal({
   onClose: () => void;
 }) {
   const { copy } = useCopyToClipboard();
+  const detailQuery = useBackupDetail(routerId, backup?.id, open);
   const contentQuery = useBackupContent(routerId, backup?.id, open);
-  const content = contentQuery.data || backup?.exportText || "";
+  const resolvedBackup = detailQuery.data || backup;
+  const content = contentQuery.data || resolvedBackup?.exportText || "";
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={backup?.filename || "Router backup"}
+      title={resolvedBackup?.filename || "Router backup"}
       description="Review, copy, or download the raw RouterOS export."
       maxWidthClass="max-w-5xl"
     >
+      <div className="grid gap-3 rounded-2xl border border-background-border bg-background-panel p-4 md:grid-cols-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Created by</p>
+          <p className="mt-2 text-sm text-text-primary">{resolvedBackup?.createdBy || "Unknown"}</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Trigger</p>
+          <p className="mt-2 text-sm text-text-primary">{resolvedBackup?.triggeredBy || "manual"}</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Created at</p>
+          <p className="mt-2 text-sm text-text-primary">{resolvedBackup?.createdAt ? new Date(resolvedBackup.createdAt).toLocaleString() : "Unknown"}</p>
+        </div>
+        {resolvedBackup?.note ? (
+          <div className="md:col-span-3">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Note</p>
+            <p className="mt-2 text-sm text-text-primary">{resolvedBackup.note}</p>
+          </div>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap justify-end gap-3">
         <Button
           variant="outline"
@@ -53,11 +76,15 @@ export function ViewBackupModal({
         <Button
           leftIcon={<Download className="h-4 w-4" />}
           disabled={!content}
-          onClick={() => downloadText(backup?.filename || "router-backup.rsc", content)}
+          onClick={() => downloadText(resolvedBackup?.filename || "router-backup.rsc", content)}
         >
           Download
         </Button>
       </div>
+
+      {detailQuery.isError ? (
+        <InlineError message={detailQuery.error instanceof Error ? detailQuery.error.message : "Unable to load backup detail"} />
+      ) : null}
 
       {contentQuery.isError ? (
         <InlineError message={contentQuery.error instanceof Error ? contentQuery.error.message : "Unable to load backup content"} />

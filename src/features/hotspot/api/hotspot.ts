@@ -8,6 +8,8 @@ import type {
   HotspotUser,
   HotspotUserFilters,
   HotspotUserPayload,
+  HotspotVoucher,
+  HotspotVoucherFilters,
 } from "@/features/hotspot/types/hotspot.types";
 
 export async function getHotspotUsers(routerId: string, params: HotspotUserFilters = {}) {
@@ -48,6 +50,24 @@ export async function disconnectSession(routerId: string, sessionId: string) {
 export async function generateVouchers(routerId: string, payload: GenerateVouchersPayload) {
   const { data } = await apiClient.post<{ success: boolean; data: Array<{ username: string; password: string }> }>(endpoints.admin.hotspotVouchers(routerId), payload);
   return data.data || [];
+}
+
+export async function getHotspotVouchers(routerId: string, params: HotspotVoucherFilters = {}) {
+  const { data } = await apiClient.get<{ success: boolean; vouchers: HotspotVoucher[]; total: number; page: number; limit: number }>(endpoints.admin.hotspotVouchers(routerId), { params });
+  return {
+    items: data.vouchers || [],
+    pagination: {
+      page: data.page || 1,
+      limit: data.limit || 50,
+      total: data.total || 0,
+      pages: Math.max(1, Math.ceil((data.total || 0) / Math.max(1, data.limit || 50))),
+    } satisfies HotspotPagination,
+  };
+}
+
+export async function revokeHotspotVoucher(routerId: string, voucherId: string) {
+  const { data } = await apiClient.delete<{ success: boolean }>(`${endpoints.admin.hotspotVouchers(routerId)}/${voucherId}`);
+  return data;
 }
 
 export async function getHotspotProfiles(routerId: string) {

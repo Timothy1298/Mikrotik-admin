@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
+import { downloadBlob } from "@/lib/utils/download";
 import type {
   BillingAccountDetail,
   BillingActivityItem,
@@ -122,8 +123,11 @@ export async function issueRefund(payload: IssueRefundPayload) {
 }
 
 export async function downloadInvoicePdf(invoiceId: string) {
-  const { data } = await apiClient.get<{ success: boolean; invoiceData?: Record<string, unknown> }>(endpoints.admin.downloadInvoicePdf(invoiceId));
-  return data;
+  const { data, headers } = await apiClient.get<Blob>(endpoints.admin.downloadInvoicePdf(invoiceId), { responseType: "blob" });
+  const filenameMatch = String(headers["content-disposition"] || "").match(/filename="?([^"]+)"?/i);
+  const filename = filenameMatch?.[1] || `invoice-${invoiceId}.pdf`;
+  downloadBlob(filename, data, "application/pdf");
+  return { success: true };
 }
 
 export async function getBillingRevenueReport(params?: { window?: string; groupBy?: string }) {

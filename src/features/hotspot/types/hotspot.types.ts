@@ -57,6 +57,26 @@ export type HotspotProfile = {
   idleTimeout: string;
 };
 
+export type HotspotVoucher = {
+  id: string;
+  routerId: string;
+  hotspotUserId?: string | null;
+  username: string;
+  password: string;
+  profile: string;
+  dataLimitBytes: number;
+  timeLimitSeconds: number;
+  comment: string;
+  batchId: string;
+  status: "unused" | "used" | "expired" | "revoked";
+  expiresAt: string | null;
+  usedAt?: string | null;
+  revokedAt?: string | null;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
 export type GenerateVouchersPayload = {
   count: number;
   profile: string;
@@ -70,6 +90,12 @@ export type HotspotUserFilters = {
   page?: number;
   limit?: number;
   search?: string;
+};
+
+export type HotspotVoucherFilters = {
+  page?: number;
+  limit?: number;
+  status?: string;
 };
 
 export type HotspotUserPayload = {

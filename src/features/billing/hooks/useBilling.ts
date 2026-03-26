@@ -204,15 +204,7 @@ export function useIssueRefund() {
 export function useDownloadInvoicePdf() {
   return useMutation({
     mutationFn: (invoiceId: string) => downloadInvoicePdf(invoiceId),
-    onSuccess: (data) => {
-      if (data.invoiceData) {
-        const win = window.open("", "_blank", "width=900,height=700");
-        if (win) {
-          win.document.write(`<html><head><title>Invoice</title></head><body><pre>${JSON.stringify(data.invoiceData, null, 2)}</pre></body></html>`);
-          win.document.close();
-          win.print();
-        }
-      }
+    onSuccess: () => {
       toast.success("Invoice downloaded");
     },
     onError: (error: Error) => toast.error(error.message || "Invoice download failed"),

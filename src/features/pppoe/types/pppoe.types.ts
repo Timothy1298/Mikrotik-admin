@@ -36,6 +36,7 @@ export type PppoeSession = {
 };
 
 export type PppoeProfile = {
+  id?: string;
   name: string;
   localAddress: string;
   remoteAddress: string;

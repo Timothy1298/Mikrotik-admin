@@ -15,6 +15,7 @@ import {
   toggleFilterRule,
   unblockSubscriber,
   updateFilterRule,
+  updateNatRule,
 } from "@/features/firewall/api/firewall";
 import type {
   AddressListPayload,
@@ -129,6 +130,18 @@ export function useDeleteNatRule(routerId: string) {
       await invalidateFirewall(queryClient, routerId);
     },
     onError: (error: Error) => toast.error(error.message || "Failed to remove NAT rule"),
+  });
+}
+
+export function useUpdateNatRule(routerId: string, ruleId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: NatRulePayload) => updateNatRule(routerId, ruleId, payload),
+    onSuccess: async () => {
+      toast.success("NAT rule updated");
+      await invalidateFirewall(queryClient, routerId);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to update NAT rule"),
   });
 }
 

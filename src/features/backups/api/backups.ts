@@ -49,6 +49,11 @@ export async function createRouterBackup(routerId: string, note = "") {
   return mapBackup(data.data);
 }
 
+export async function getRouterBackup(routerId: string, backupId: string) {
+  const { data } = await apiClient.get<{ success: boolean; backup: BackupRecord }>(endpoints.admin.routerBackup(routerId, backupId));
+  return mapBackup(data.backup);
+}
+
 export async function getRouterBackupContent(routerId: string, backupId: string) {
   const { data } = await apiClient.get<string>(endpoints.admin.routerBackupContent(routerId, backupId), {
     responseType: "text" as const,

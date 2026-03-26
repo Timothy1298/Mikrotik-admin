@@ -162,7 +162,7 @@ export function transformDevicesToMarkers(
   devices: Array<ConnectedDevicesResponse['devices'][number]>,
   parentLocation?: ParentLocation | null
 ): DeviceMarker[] {
-  return devices
+  const markers: Array<DeviceMarker | null> = devices
     .filter(isRenderableRouterDevice)
     .map((d, index) => {
       const fallbackCoordinates = buildApproximateCoordinates(index, parentLocation);
@@ -182,8 +182,9 @@ export function transformDevicesToMarkers(
         type: d.deviceType || 'unknown',
         approximate: !(d.latitude && d.longitude)
       };
-    })
-    .filter((device): device is DeviceMarker => Boolean(device));
+    });
+
+  return markers.filter((device): device is DeviceMarker => device !== null);
 }
 
 /**

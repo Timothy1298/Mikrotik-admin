@@ -17,8 +17,9 @@ import {
   useNatRules,
   useToggleFilterRule,
   useUpdateFilterRule,
+  useUpdateNatRule,
 } from "@/features/firewall/hooks/useFirewall";
-import type { FilterRule, FilterRulePayload, NatRulePayload } from "@/features/firewall/types/firewall.types";
+import type { FilterRule, FilterRulePayload, NatRule, NatRulePayload } from "@/features/firewall/types/firewall.types";
 import { AddFilterRuleDialog } from "@/features/firewall/components/AddFilterRuleDialog";
 import { AddNatRuleDialog } from "@/features/firewall/components/AddNatRuleDialog";
 import { AddToAddressListDialog } from "@/features/firewall/components/AddToAddressListDialog";
@@ -32,6 +33,7 @@ export function RouterFirewallPanel({ routerId }: { routerId: string }) {
   const [filterChain, setFilterChain] = useState("");
   const [listFilter, setListFilter] = useState("");
   const [selectedRule, setSelectedRule] = useState<FilterRule | null>(null);
+  const [selectedNatRule, setSelectedNatRule] = useState<NatRule | null>(null);
   const filterDialog = useDisclosure(false);
   const natDialog = useDisclosure(false);
   const addressDialog = useDisclosure(false);
@@ -46,6 +48,7 @@ export function RouterFirewallPanel({ routerId }: { routerId: string }) {
   const deleteFilterMutation = useDeleteFilterRule(routerId);
   const toggleFilterMutation = useToggleFilterRule(routerId);
   const addNatMutation = useAddNatRule(routerId);
+  const updateNatMutation = useUpdateNatRule(routerId, selectedNatRule?.routerosId || "");
   const deleteNatMutation = useDeleteNatRule(routerId);
   const addAddressMutation = useAddAddressListEntry(routerId);
   const deleteAddressMutation = useDeleteAddressListEntry(routerId);
@@ -126,7 +129,14 @@ export function RouterFirewallPanel({ routerId }: { routerId: string }) {
       ) : tab === "nat" ? (
         <NatRulesTable
           rows={natRulesQuery.data || []}
-          onAddRule={natDialog.onOpen}
+          onAddRule={() => {
+            setSelectedNatRule(null);
+            natDialog.onOpen();
+          }}
+          onEditRule={(rule) => {
+            setSelectedNatRule(rule);
+            natDialog.onOpen();
+          }}
           onDeleteRule={(rule) => {
             if (!window.confirm(`Delete NAT rule ${rule.routerosId}?`)) return;
             deleteNatMutation.mutate(rule.routerosId);
@@ -160,9 +170,16 @@ export function RouterFirewallPanel({ routerId }: { routerId: string }) {
 
       <AddNatRuleDialog
         open={natDialog.open}
-        loading={addNatMutation.isPending}
+        loading={addNatMutation.isPending || updateNatMutation.isPending}
+        initialRule={selectedNatRule}
         onClose={natDialog.onClose}
-        onConfirm={(payload: NatRulePayload) => addNatMutation.mutate(payload, { onSuccess: () => natDialog.onClose() })}
+        onConfirm={(payload: NatRulePayload) => {
+          if (selectedNatRule) {
+            updateNatMutation.mutate(payload, { onSuccess: () => natDialog.onClose() });
+            return;
+          }
+          addNatMutation.mutate(payload, { onSuccess: () => natDialog.onClose() });
+        }}
       />
 
       <AddToAddressListDialog

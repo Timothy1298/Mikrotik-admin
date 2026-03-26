@@ -4,11 +4,13 @@ import { queryKeys } from "@/config/queryKeys";
 import {
   createPppoeProfile,
   createPppoeSecret,
+  deletePppoeProfile,
   deletePppoeSecret,
   disconnectPppoeSession,
   getPppoeProfiles,
   getPppoeSecrets,
   getPppoeSessions,
+  updatePppoeProfile,
   updatePppoeSecret,
 } from "@/features/pppoe/api/pppoe";
 import type { PppoeProfilePayload, PppoeSecretFilters, PppoeSecretPayload } from "@/features/pppoe/types/pppoe.types";
@@ -110,5 +112,29 @@ export function useCreatePppoeProfile(routerId: string) {
       await invalidatePppoe(queryClient, routerId);
     },
     onError: (error: Error) => toast.error(error.message || "Failed to create PPPoE profile"),
+  });
+}
+
+export function useUpdatePppoeProfile(routerId: string, profileId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: PppoeProfilePayload) => updatePppoeProfile(routerId, profileId, payload),
+    onSuccess: async () => {
+      toast.success("PPPoE profile updated");
+      await invalidatePppoe(queryClient, routerId);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to update PPPoE profile"),
+  });
+}
+
+export function useDeletePppoeProfile(routerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (profileId: string) => deletePppoeProfile(routerId, profileId),
+    onSuccess: async () => {
+      toast.success("PPPoE profile deleted");
+      await invalidatePppoe(queryClient, routerId);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to delete PPPoE profile"),
   });
 }

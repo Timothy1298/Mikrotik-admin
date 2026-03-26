@@ -11,6 +11,7 @@ export const queryKeys = {
   hotspotUser: (routerId: string, userId: string) => ["routers", routerId, "hotspot", "users", userId] as const,
   hotspotSessions: (routerId: string) => ["routers", routerId, "hotspot", "sessions"] as const,
   hotspotProfiles: (routerId: string) => ["routers", routerId, "hotspot", "profiles"] as const,
+  hotspotVouchers: (routerId: string, filters?: Record<string, unknown>) => ["routers", routerId, "hotspot", "vouchers", filters || {}] as const,
   pppoeSecrets: (routerId: string, filters?: Record<string, unknown>) => ["routers", routerId, "pppoe", "secrets", filters || {}] as const,
   pppoeSecret: (routerId: string, secretId: string) => ["routers", routerId, "pppoe", "secrets", secretId] as const,
   pppoeSessions: (routerId: string) => ["routers", routerId, "pppoe", "sessions"] as const,

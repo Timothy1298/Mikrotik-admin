@@ -102,7 +102,7 @@ export function MonitoringWorkspacePage() {
               <h2 className="text-2xl font-semibold text-text-primary">{title}</h2>
               {detail.kind === "incident" ? <IncidentSeverityBadge severity={detail.item.severity} /> : null}
               {detail.kind === "incident" ? <HealthStatusBadge status={detail.item.status} /> : null}
-              {detail.kind === "router" ? <HealthStatusBadge status={detail.item.healthSummary.status} /> : null}
+              {detail.kind === "router" ? <HealthStatusBadge status={detail.item.healthSummary.state} /> : null}
               {detail.kind === "vpn-server" ? <HealthStatusBadge status={detail.item.healthSummary.status} /> : null}
               {detail.kind === "peer" ? <HealthStatusBadge status={detail.item.handshakeState} /> : null}
               {detail.kind === "diagnostic" ? <HealthStatusBadge status={detail.item.severity} /> : null}
@@ -243,9 +243,9 @@ export function MonitoringWorkspacePage() {
             <>
               <div className="grid gap-5 xl:grid-cols-4">
                 <SummaryMetric label="Connection" value={detail.item.connectionStatus} hint={detail.item.setupStatus} />
-                <SummaryMetric label="Customer" value={detail.item.customer?.name || "Unassigned"} hint={detail.item.vpnIp} />
+                <SummaryMetric label="Customer" value={detail.item.customer?.name || "Unassigned"} hint={detail.item.vpnIp || "No VPN IP"} />
                 <SummaryMetric label="Last seen" value={dayjs(detail.item.lastSeen).fromNow()} hint={formatDateTime(detail.item.lastSeen)} />
-                <SummaryMetric label="Last handshake" value={dayjs(detail.item.lastHandshake).fromNow()} hint={formatDateTime(detail.item.lastHandshake)} />
+                <SummaryMetric label="Last handshake" value={detail.item.lastHandshake ? dayjs(detail.item.lastHandshake).fromNow() : "Never"} hint={formatDateTime(detail.item.lastHandshake)} />
               </div>
               <Card>
                 <div className="space-y-4 p-5">

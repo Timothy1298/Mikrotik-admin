@@ -10,9 +10,11 @@ import {
   getHotspotSessions,
   getHotspotUser,
   getHotspotUsers,
+  getHotspotVouchers,
+  revokeHotspotVoucher,
   updateHotspotUser,
 } from "@/features/hotspot/api/hotspot";
-import type { GenerateVouchersPayload, HotspotUserFilters, HotspotUserPayload } from "@/features/hotspot/types/hotspot.types";
+import type { GenerateVouchersPayload, HotspotUserFilters, HotspotUserPayload, HotspotVoucherFilters } from "@/features/hotspot/types/hotspot.types";
 
 export function useHotspotUsers(routerId: string, filters: HotspotUserFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
@@ -55,11 +57,22 @@ export function useHotspotProfiles(routerId: string, options: { enabled?: boolea
   });
 }
 
+export function useHotspotVouchers(routerId: string, filters: HotspotVoucherFilters = {}, options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: queryKeys.hotspotVouchers(routerId, filters),
+    queryFn: () => getHotspotVouchers(routerId, filters),
+    enabled: Boolean(routerId) && (options.enabled ?? true),
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 function invalidateHotspot(queryClient: ReturnType<typeof useQueryClient>, routerId: string) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ["routers", routerId, "hotspot"] }),
     queryClient.invalidateQueries({ queryKey: queryKeys.hotspotSessions(routerId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.hotspotProfiles(routerId) }),
+    queryClient.invalidateQueries({ queryKey: ["routers", routerId, "hotspot", "vouchers"] }),
   ]);
 }
 
@@ -121,5 +134,17 @@ export function useDisconnectSession(routerId: string) {
       await invalidateHotspot(queryClient, routerId);
     },
     onError: (error: Error) => toast.error(error.message || "Failed to disconnect session"),
+  });
+}
+
+export function useRevokeHotspotVoucher(routerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (voucherId: string) => revokeHotspotVoucher(routerId, voucherId),
+    onSuccess: async () => {
+      toast.success("Voucher revoked");
+      await invalidateHotspot(queryClient, routerId);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to revoke voucher"),
   });
 }

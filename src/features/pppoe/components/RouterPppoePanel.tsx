@@ -7,14 +7,16 @@ import { useDisclosure } from "@/hooks/ui/useDisclosure";
 import {
   useCreatePppoeProfile,
   useCreatePppoeSecret,
+  useDeletePppoeProfile,
   useDeletePppoeSecret,
   useDisconnectPppoeSession,
   usePppoeProfiles,
   usePppoeSecrets,
   usePppoeSessions,
+  useUpdatePppoeProfile,
   useUpdatePppoeSecret,
 } from "@/features/pppoe/hooks/usePppoe";
-import type { PppoeSecret, PppoeSecretPayload, PppoeSession } from "@/features/pppoe/types/pppoe.types";
+import type { PppoeProfile, PppoeSecret, PppoeSecretPayload, PppoeSession } from "@/features/pppoe/types/pppoe.types";
 import { CreatePppoeProfileDialog } from "@/features/pppoe/components/CreatePppoeProfileDialog";
 import { CreatePppoeSecretDialog } from "@/features/pppoe/components/CreatePppoeSecretDialog";
 import { DisconnectPppoeSessionDialog } from "@/features/pppoe/components/DisconnectPppoeSessionDialog";
@@ -28,6 +30,7 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
   const [search, setSearch] = useState("");
   const [selectedSubscriber, setSelectedSubscriber] = useState<PppoeSecret | null>(null);
   const [selectedSession, setSelectedSession] = useState<PppoeSession | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<PppoeProfile | null>(null);
   const createSubscriberDisclosure = useDisclosure(false);
   const editSubscriberDisclosure = useDisclosure(false);
   const createProfileDisclosure = useDisclosure(false);
@@ -42,6 +45,8 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
   const deleteSecretMutation = useDeletePppoeSecret(routerId);
   const disconnectMutation = useDisconnectPppoeSession(routerId);
   const createProfileMutation = useCreatePppoeProfile(routerId);
+  const updateProfileMutation = useUpdatePppoeProfile(routerId, selectedProfile?.id || selectedProfile?.name || "");
+  const deleteProfileMutation = useDeletePppoeProfile(routerId);
 
   const activeSessionsByName = useMemo(() => {
     const map = new Map<string, PppoeSession>();
@@ -133,7 +138,22 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
           isLoading={sessionsQuery.isPending}
         />
       ) : (
-        <PppoeProfilesTable rows={profiles} onAddProfile={createProfileDisclosure.onOpen} isLoading={profilesQuery.isPending} />
+        <PppoeProfilesTable
+          rows={profiles}
+          onAddProfile={() => {
+            setSelectedProfile(null);
+            createProfileDisclosure.onOpen();
+          }}
+          onEditProfile={(profile) => {
+            setSelectedProfile(profile);
+            createProfileDisclosure.onOpen();
+          }}
+          onDeleteProfile={(profile) => {
+            if (!window.confirm(`Delete PPPoE profile ${profile.name}?`)) return;
+            deleteProfileMutation.mutate(profile.id || profile.name);
+          }}
+          isLoading={profilesQuery.isPending}
+        />
       )}
 
       <CreatePppoeSecretDialog
@@ -155,9 +175,16 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
 
       <CreatePppoeProfileDialog
         open={createProfileDisclosure.open}
-        loading={createProfileMutation.isPending}
+        loading={createProfileMutation.isPending || updateProfileMutation.isPending}
+        initialProfile={selectedProfile}
         onClose={createProfileDisclosure.onClose}
-        onConfirm={(payload) => createProfileMutation.mutate(payload, { onSuccess: () => createProfileDisclosure.onClose() })}
+        onConfirm={(payload) => {
+          if (selectedProfile) {
+            updateProfileMutation.mutate(payload, { onSuccess: () => createProfileDisclosure.onClose() });
+            return;
+          }
+          createProfileMutation.mutate(payload, { onSuccess: () => createProfileDisclosure.onClose() });
+        }}
       />
 
       <DisconnectPppoeSessionDialog

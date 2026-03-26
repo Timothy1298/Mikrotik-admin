@@ -9,11 +9,13 @@ import type { NatRule } from "@/features/firewall/types/firewall.types";
 export function NatRulesTable({
   rows,
   onAddRule,
+  onEditRule,
   onDeleteRule,
   isLoading,
 }: {
   rows: NatRule[];
   onAddRule: () => void;
+  onEditRule: (rule: NatRule) => void;
   onDeleteRule: (rule: NatRule) => void;
   isLoading?: boolean;
 }) {
@@ -28,10 +30,10 @@ export function NatRulesTable({
     {
       header: "Actions",
       cell: ({ row }) => (
-        <Dropdown items={[{ label: "Delete", onClick: () => onDeleteRule(row.original), danger: true }]} />
+        <Dropdown items={[{ label: "Edit", onClick: () => onEditRule(row.original) }, { label: "Delete", onClick: () => onDeleteRule(row.original), danger: true }]} />
       ),
     },
-  ], [onDeleteRule]);
+  ], [onDeleteRule, onEditRule]);
 
   return (
     <div className="space-y-4">

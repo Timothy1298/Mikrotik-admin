@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
-import type { NatRulePayload } from "@/features/firewall/types/firewall.types";
+import type { NatRule, NatRulePayload } from "@/features/firewall/types/firewall.types";
 
 type FormValues = {
   chain: string;
@@ -18,11 +19,13 @@ type FormValues = {
 export function AddNatRuleDialog({
   open,
   loading,
+  initialRule,
   onClose,
   onConfirm,
 }: {
   open: boolean;
   loading?: boolean;
+  initialRule?: NatRule | null;
   onClose: () => void;
   onConfirm: (payload: NatRulePayload) => void;
 }) {
@@ -38,8 +41,24 @@ export function AddNatRuleDialog({
     },
   });
 
+  const title = initialRule ? "Edit NAT rule" : "Add NAT rule";
+  const submitLabel = initialRule ? "Save changes" : "Add rule";
+
+  useEffect(() => {
+    if (!open) return;
+    reset({
+      chain: initialRule?.chain || "dstnat",
+      action: initialRule?.action || "dst-nat",
+      protocol: initialRule?.protocol || "tcp",
+      dstPort: initialRule?.dstPort || "",
+      toAddresses: initialRule?.toAddresses || "",
+      toPorts: initialRule?.toPorts || "",
+      comment: initialRule?.comment || "",
+    });
+  }, [initialRule, open, reset]);
+
   return (
-    <Modal open={open} onClose={() => { reset(); onClose(); }} title="Add NAT rule" description="Create source NAT or destination NAT rules on this router.">
+    <Modal open={open} onClose={() => { reset(); onClose(); }} title={title} description="Create source NAT or destination NAT rules on this router.">
       <form className="space-y-4" onSubmit={handleSubmit((values) => onConfirm({
         chain: values.chain,
         action: values.action,
@@ -64,7 +83,7 @@ export function AddNatRuleDialog({
         </div>
         <div className="flex justify-end gap-3">
           <Button type="button" variant="ghost" onClick={() => { reset(); onClose(); }}>Cancel</Button>
-          <Button type="submit" isLoading={loading}>Add rule</Button>
+          <Button type="submit" isLoading={loading}>{submitLabel}</Button>
         </div>
       </form>
     </Modal>

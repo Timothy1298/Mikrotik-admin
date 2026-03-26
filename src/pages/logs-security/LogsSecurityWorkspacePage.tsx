@@ -82,7 +82,7 @@ function getTitle(item: LogsSecurityDetailItem) {
   if (item.kind === "session") return item.item.sessionId;
   if (item.kind === "user-security") return item.item.user.name || item.item.user.email || item.item.user.id;
   if (item.kind === "timeline") return item.item.summary;
-  if (item.kind === "suspicious") return item.item.summary;
+  if (item.kind === "suspicious") return "summary" in item.item ? item.item.summary : item.item.reason || item.item.eventType;
   return formatActionType(item.item.eventType);
 }
 

@@ -12,6 +12,8 @@ import {
   useHotspotProfiles,
   useHotspotSessions,
   useHotspotUsers,
+  useHotspotVouchers,
+  useRevokeHotspotVoucher,
   useUpdateHotspotUser,
 } from "@/features/hotspot/hooks/useHotspot";
 import type { HotspotSession, HotspotUser, HotspotUserPayload } from "@/features/hotspot/types/hotspot.types";
@@ -21,10 +23,12 @@ import { EditHotspotUserDialog } from "@/features/hotspot/components/EditHotspot
 import { GenerateVouchersDialog } from "@/features/hotspot/components/GenerateVouchersDialog";
 import { HotspotSessionsTable } from "@/features/hotspot/components/HotspotSessionsTable";
 import { HotspotUsersTable } from "@/features/hotspot/components/HotspotUsersTable";
+import { HotspotVouchersTable } from "@/features/hotspot/components/HotspotVouchersTable";
 
 export function RouterHotspotPanel({ routerId }: { routerId: string }) {
-  const [tab, setTab] = useState<"users" | "sessions">("users");
+  const [tab, setTab] = useState<"users" | "sessions" | "vouchers">("users");
   const [search, setSearch] = useState("");
+  const [voucherStatus, setVoucherStatus] = useState("");
   const [selectedUser, setSelectedUser] = useState<HotspotUser | null>(null);
   const [selectedSession, setSelectedSession] = useState<HotspotSession | null>(null);
   const createDisclosure = useDisclosure(false);
@@ -36,10 +40,12 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
   const usersQuery = useHotspotUsers(routerId, { page: 1, limit: 100, search }, { enabled: true });
   const sessionsQuery = useHotspotSessions(routerId, { enabled: true });
   const profilesQuery = useHotspotProfiles(routerId, { enabled: needsProfiles });
+  const vouchersQuery = useHotspotVouchers(routerId, { page: 1, limit: 100, status: voucherStatus || undefined }, { enabled: true });
   const createMutation = useCreateHotspotUser(routerId);
   const deleteMutation = useDeleteHotspotUser(routerId);
   const generateMutation = useGenerateVouchers(routerId);
   const disconnectMutation = useDisconnectSession(routerId);
+  const revokeVoucherMutation = useRevokeHotspotVoucher(routerId);
   const updateMutation = useUpdateHotspotUser(routerId, selectedUser?.id || "");
 
   const onlineSessionsByUser = useMemo(() => {
@@ -58,6 +64,7 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
   }));
   const sessions = sessionsQuery.data || [];
   const profiles = profilesQuery.data || [];
+  const vouchers = vouchersQuery.data?.items || [];
 
   return (
     <Card className="space-y-5">
@@ -87,19 +94,25 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
           </div>
           <p className="mt-3 text-2xl font-semibold text-text-primary">{profiles.length}</p>
         </div>
+        <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+          <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Vouchers</p>
+          <p className="mt-3 text-2xl font-semibold text-text-primary">{vouchers.length}</p>
+        </div>
       </div>
 
       <Tabs
         tabs={[
           { label: "Users", value: "users" },
           { label: "Active Sessions", value: "sessions" },
+          { label: "Vouchers", value: "vouchers" },
         ]}
         value={tab}
-        onChange={(value) => setTab(value as "users" | "sessions")}
+        onChange={(value) => setTab(value as "users" | "sessions" | "vouchers")}
       />
 
       {usersQuery.isError ? <InlineError message={usersQuery.error instanceof Error ? usersQuery.error.message : "Unable to load hotspot users"} /> : null}
       {sessionsQuery.isError ? <InlineError message={sessionsQuery.error instanceof Error ? sessionsQuery.error.message : "Unable to load hotspot sessions"} /> : null}
+      {vouchersQuery.isError ? <InlineError message={vouchersQuery.error instanceof Error ? vouchersQuery.error.message : "Unable to load hotspot vouchers"} /> : null}
 
       {tab === "users" ? (
         <HotspotUsersTable
@@ -123,7 +136,7 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
           }}
           isLoading={usersQuery.isPending}
         />
-      ) : (
+      ) : tab === "sessions" ? (
         <HotspotSessionsTable
           rows={sessions}
           onDisconnect={(session) => {
@@ -131,6 +144,17 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
             disconnectDisclosure.onOpen();
           }}
           isLoading={sessionsQuery.isPending}
+        />
+      ) : (
+        <HotspotVouchersTable
+          rows={vouchers}
+          status={voucherStatus}
+          onStatusChange={setVoucherStatus}
+          onRevoke={(voucher) => {
+            if (!window.confirm(`Revoke voucher ${voucher.username}?`)) return;
+            revokeVoucherMutation.mutate(voucher.id);
+          }}
+          isLoading={vouchersQuery.isPending}
         />
       )}
 

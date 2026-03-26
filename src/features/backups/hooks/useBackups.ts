@@ -4,6 +4,7 @@ import { queryKeys } from "@/config/queryKeys";
 import {
   createRouterBackup,
   deleteRouterBackup,
+  getRouterBackup,
   getRouterBackupContent,
   getRouterBackups,
 } from "@/features/backups/api/backups";
@@ -22,6 +23,16 @@ export function useBackupContent(routerId: string, backupId?: string, enabled = 
   return useQuery({
     queryKey: queryKeys.routerBackupContent(routerId, backupId || ""),
     queryFn: () => getRouterBackupContent(routerId, backupId || ""),
+    enabled: Boolean(routerId && backupId && enabled),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useBackupDetail(routerId: string, backupId?: string, enabled = true) {
+  return useQuery({
+    queryKey: ["routers", routerId, "backups", backupId || "detail"],
+    queryFn: () => getRouterBackup(routerId, backupId || ""),
     enabled: Boolean(routerId && backupId && enabled),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
