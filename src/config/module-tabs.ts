@@ -31,6 +31,7 @@ export const routerManagementTabs = [
 
 export const vpnServerManagementTabs = [
   { label: "Overview", value: appRoutes.vpnServersOverview },
+  { label: "VPN Clients", value: appRoutes.vpnClients },
   { label: "All Servers", value: appRoutes.vpnServersAll },
   { label: "Healthy", value: appRoutes.vpnServersHealthy },
   { label: "Unhealthy", value: appRoutes.vpnServersUnhealthy },
@@ -67,6 +68,7 @@ export const billingTabs = [
   { label: "Reports", value: appRoutes.billingReports },
   { label: "Activity", value: appRoutes.billingActivity },
   { label: "Notes", value: appRoutes.billingNotesFlags },
+  { label: "Router Billing", value: appRoutes.billingRouterSubscriptions },
 ] as const;
 
 export const logsSecurityTabs = [

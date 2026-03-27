@@ -11,12 +11,16 @@ import type {
   BillingNote,
   BillingOutstandingReport,
   BillingOverview,
+  BillingReadiness,
   BillingPaginationMeta,
+  BillingRouterSubscriptionLookup,
   BillingRevenueReport,
   BillingRisk,
   BillingSubscriptionRow,
   BillingTransaction,
   BillingTrialRow,
+  AddBalancePayload,
+  AddBalanceResponse,
   CreateInvoicePayload,
   IssueRefundPayload,
   RecordPaymentPayload,
@@ -25,6 +29,11 @@ import type {
 export async function getBillingOverview() {
   const { data } = await apiClient.get<{ success: boolean; overview: BillingOverview }>(endpoints.admin.billingOverview);
   return data.overview;
+}
+
+export async function getBillingReadiness() {
+  const { data } = await apiClient.get<{ success: boolean; readiness: BillingReadiness }>(endpoints.admin.billingReadiness);
+  return data.readiness;
 }
 
 export async function getBillingAnalytics(params?: BillingFilterState) {
@@ -49,6 +58,11 @@ export async function getSubscriptions(params?: BillingFilterState & Record<stri
 
 export async function getSubscriptionById(id: string) {
   const { data } = await apiClient.get<{ success: boolean; data: BillingAccountDetail }>(endpoints.admin.billingSubscriptionDetail(id));
+  return data.data;
+}
+
+export async function getRouterSubscriptionBilling(routerId: string) {
+  const { data } = await apiClient.get<{ success: boolean; data: BillingRouterSubscriptionLookup }>(endpoints.admin.billingRouterSubscription(routerId));
   return data.data;
 }
 
@@ -167,6 +181,11 @@ export async function suspendBillingAccount(accountId: string, reason?: string) 
 
 export async function reactivateBillingAccount(accountId: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.billingReactivate(accountId), { reason });
+  return data;
+}
+
+export async function addBalance(accountId: string, payload: AddBalancePayload) {
+  const { data } = await apiClient.post<{ success: boolean } & AddBalanceResponse>(endpoints.admin.billingAddBalance(accountId), payload);
   return data;
 }
 

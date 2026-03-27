@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { routerManagementTabs } from "@/config/module-tabs";
+import { appRoutes } from "@/config/routes";
 import {
   AddRouterFlagDialog,
-  AddRouterAdminDialog,
   AddRouterNoteDialog,
   DeleteRouterDialog,
   DisableRouterDialog,
@@ -124,7 +124,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const noteDisclosure = useDisclosure(false);
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
-  const addRouterDisclosure = useDisclosure(false);
 
   const effectiveFilters = useMemo(() => ({ ...filters, ...lockedFilters }), [filters, lockedFilters]);
   const routersQuery = useRouters(effectiveFilters);
@@ -185,7 +184,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {section === "all" && can(user, permissions.routersManage) ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>Add Router</Button> : null}
+            {section === "all" && can(user, permissions.routersManage) ? <Button variant="outline" leftIcon={<Plus className="h-4 w-4" />} onClick={() => navigate(appRoutes.routersAdd)}>Add Router</Button> : null}
             {routersQuery.isFetching && !routersQuery.isPending ? <p className="font-mono text-xs text-text-muted">Refreshing data...</p> : null}
             <RefreshButton loading={routersQuery.isFetching} onClick={() => { void routersQuery.refetch(); }} />
           </div>
@@ -255,7 +254,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
         if (!selectedRouter || !selectedFlag?.id) return;
         removeFlagMutation.mutate([selectedRouter.id, selectedFlag.id, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() });
       }} />
-      <AddRouterAdminDialog open={addRouterDisclosure.open} onClose={addRouterDisclosure.onClose} />
     </section>
   );
 }

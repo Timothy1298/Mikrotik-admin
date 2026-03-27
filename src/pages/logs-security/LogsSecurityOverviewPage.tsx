@@ -65,7 +65,6 @@ export function LogsSecurityOverviewPage() {
     <section className="space-y-6">
       <PageHeader title="Logs, Audit & Security" description="Platform-wide command center for traceability, suspicious activity, session risk, and sensitive admin action visibility." meta="Security operations" />
       <Tabs tabs={[...logsSecurityTabs]} value={location.pathname} onChange={navigate} />
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
       </div>

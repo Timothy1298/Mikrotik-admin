@@ -39,6 +39,27 @@ export type BillingAnalytics = {
   }>;
 };
 
+export type BillingReadinessItem = {
+  configured: boolean;
+  status: "ready" | "needs_config";
+  detail: string;
+};
+
+export type BillingReadiness = {
+  email: BillingReadinessItem;
+  mpesa: BillingReadinessItem & {
+    sandbox: boolean;
+    missing: string[];
+  };
+  topupLinks: BillingReadinessItem & {
+    providers: {
+      paystack: BillingReadinessItem;
+      paypal: BillingReadinessItem;
+    };
+  };
+  publicApiBase: BillingReadinessItem;
+};
+
 export type BillingRisk = {
   overdueAccounts: number;
   overdueInvoices: number;
@@ -133,6 +154,40 @@ export type BillingTransaction = {
     planType: string;
   } | null;
   metadata: Record<string, unknown>;
+};
+
+export type BillingRouterSubscriptionLookup = {
+  router: {
+    id: string;
+    name: string;
+    status: string;
+    vpnIp: string | null;
+    createdAt: string;
+  };
+  account: {
+    id: string;
+    name: string;
+    email: string;
+    currency: string;
+    balance: number;
+  } | null;
+  subscription: {
+    id: string;
+    status: string;
+    planType: string;
+    pricePerMonth: number;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    trialEndsAt: string | null;
+    nextBillingDate: string | null;
+    lastPaymentDate: string | null;
+    paymentMethod: string | null;
+    createdAt: string;
+  } | null;
+  summary: {
+    openInvoiceCount: number;
+    hasSubscription: boolean;
+  };
 };
 
 export type BillingEntitlements = {
@@ -299,6 +354,25 @@ export type IssueRefundPayload = {
   currency?: string;
   description: string;
   reason: string;
+};
+
+export type AddBalancePayload = {
+  amount: number;
+  paymentMethod: "paystack" | "paypal";
+  reason?: string;
+};
+
+export type AddBalanceResponse = {
+  transaction: {
+    id: string;
+    transactionId: string;
+    amount: number;
+    currency: string;
+    status: string;
+    paymentMethod: string | null;
+    paymentLink: string;
+  };
+  message?: string;
 };
 
 export type BillingRevenueReport = {

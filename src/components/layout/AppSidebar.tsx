@@ -1,6 +1,6 @@
-import { ChevronDown, LogOut, Shield } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuthStore } from "@/app/store/auth.store";
 import { useUIStore } from "@/app/store/ui.store";
 import { navigationItems } from "@/config/navigation";
@@ -16,19 +16,13 @@ function getItemBasePath(path: string) {
   return segment ? `/${segment}` : path;
 }
 
-function pathBelongsToItem(pathname: string, path: string) {
+function pathBelongsToItem(pathname: string, path: string, matchMode?: unknown) {
+  if (matchMode === "exact") {
+    return pathname === path;
+  }
+
   const basePath = getItemBasePath(path);
   return pathname === path || pathname === basePath || pathname.startsWith(`${basePath}/`);
-}
-
-function getNavClassName(active: boolean, collapsed = false) {
-  return cn(
-    "flex min-w-0 items-center gap-3 rounded-xl border px-2.5 py-2 text-[15px] transition-colors",
-    active
-      ? "surface-active text-text-primary"
-      : "border-transparent text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
-    collapsed && "justify-center",
-  );
 }
 
 export function AppSidebar() {
@@ -38,8 +32,6 @@ export function AppSidebar() {
     mobileSidebarOpen,
     toggleSidebar,
     closeMobileSidebar,
-    expandedSidebarSection,
-    setExpandedSidebarSection,
   } = useUIStore();
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
@@ -85,67 +77,14 @@ export function AppSidebar() {
           <div className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1">
             <SidebarSection title="Operations">
               {visibleItems.map((item) => (
-                <div key={item.path} className="space-y-2">
-                  {(() => {
-                    const isItemActive = pathBelongsToItem(location.pathname, item.path);
-                    const isItemOpen = isItemActive || expandedSidebarSection === item.path;
-
-                    return "children" in item && item.children ? (
-                    <>
-                      <div className="flex items-center gap-1">
-                        <NavLink
-                          to={item.path}
-                          onClick={closeMobileSidebar}
-                          className={getNavClassName(isItemActive)}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span className="leading-tight">{item.label}</span>
-                        </NavLink>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path);
-                          }}
-                          className={cn(
-                            "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-text-secondary transition-colors hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
-                            isItemActive && "text-text-primary",
-                          )}
-                        >
-                          <ChevronDown
-                            className={cn(
-                              "h-4 w-4 shrink-0 transition-transform",
-                              isItemOpen && "rotate-180",
-                            )}
-                          />
-                        </button>
-                      </div>
-                      {isItemOpen ? (
-                        <div className="ml-6 space-y-2 border-l border-background-border pl-4">
-                          {item.children.map((child) => (
-                            <SidebarNavItem
-                              key={child.path}
-                              icon={item.icon}
-                              label={child.label}
-                              to={child.path}
-                              active={child.path === location.pathname}
-                              onClick={closeMobileSidebar}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <SidebarNavItem
-                      icon={item.icon}
-                      label={item.label}
-                      to={item.path}
-                      onClick={closeMobileSidebar}
-                    />
-                  );
-                  })()}
-                </div>
+                <SidebarNavItem
+                  key={item.path}
+                  icon={item.icon}
+                  label={item.label}
+                  to={item.path}
+                  active={pathBelongsToItem(location.pathname, item.path, "matchMode" in item ? item.matchMode : undefined)}
+                  onClick={closeMobileSidebar}
+                />
               ))}
             </SidebarSection>
           </div>
@@ -189,67 +128,14 @@ export function AppSidebar() {
           <div className="flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1">
             <SidebarSection title="Operations" collapsed={sidebarCollapsed}>
               {visibleItems.map((item) => (
-                <div key={item.path} className="space-y-1">
-                  {(() => {
-                    const isItemActive = pathBelongsToItem(location.pathname, item.path);
-                    const isItemOpen = isItemActive || expandedSidebarSection === item.path;
-
-                    return "children" in item && item.children ? (
-                    <>
-                      <div className={cn("flex items-center gap-1", sidebarCollapsed && "justify-center")}>
-                        <NavLink
-                          to={item.path}
-                          className={getNavClassName(isItemActive, sidebarCollapsed)}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          {!sidebarCollapsed ? <span className="leading-tight">{item.label}</span> : null}
-                        </NavLink>
-                        {!sidebarCollapsed ? (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setExpandedSidebarSection(expandedSidebarSection === item.path ? null : item.path);
-                            }}
-                            className={cn(
-                              "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-transparent text-text-secondary transition-colors hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
-                              isItemActive && "text-text-primary",
-                            )}
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-4 w-4 shrink-0 transition-transform",
-                                isItemOpen && "rotate-180",
-                              )}
-                            />
-                          </button>
-                        ) : null}
-                      </div>
-                      {!sidebarCollapsed && isItemOpen ? (
-                        <div className="ml-6 space-y-1 border-l border-background-border pl-4">
-                          {item.children.map((child) => (
-                            <SidebarNavItem
-                              key={child.path}
-                              icon={item.icon}
-                              label={child.label}
-                              to={child.path}
-                              active={child.path === location.pathname}
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <SidebarNavItem
-                      icon={item.icon}
-                      label={item.label}
-                      to={item.path}
-                      collapsed={sidebarCollapsed}
-                    />
-                  );
-                  })()}
-                </div>
+                <SidebarNavItem
+                  key={item.path}
+                  icon={item.icon}
+                  label={item.label}
+                  to={item.path}
+                  collapsed={sidebarCollapsed}
+                  active={pathBelongsToItem(location.pathname, item.path, "matchMode" in item ? item.matchMode : undefined)}
+                />
               ))}
             </SidebarSection>
           </div>

@@ -52,7 +52,6 @@ export function MonitoringOverviewPage() {
   return (
     <section className="space-y-6">
       <PageHeader title="Monitoring & Analytics" description="Platform-wide command center for router health, VPN infrastructure, incidents, provisioning quality, and operational customer impact." meta={`Last sync ${formatDateTime(overview.lastMonitoringSyncAt)}`} />
-
       <Tabs tabs={[...monitoringTabs]} value={location.pathname} onChange={navigate} />
 
       <div className="flex justify-end">

@@ -12,10 +12,9 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Ca
 import { Tabs } from "@/components/ui/Tabs";
 import { routerManagementTabs } from "@/config/module-tabs";
 import { appRoutes } from "@/config/routes";
-import { AddRouterAdminDialog, RouterStatsRow } from "@/features/routers/components";
+import { RouterStatsRow } from "@/features/routers/components";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { useRouters, useRouterStats } from "@/features/routers/hooks/useRouters";
-import { useDisclosure } from "@/hooks/ui/useDisclosure";
 import { formatDateTime } from "@/lib/formatters/date";
 import { permissions } from "@/lib/permissions/permissions";
 import { can } from "@/lib/permissions/can";
@@ -23,7 +22,6 @@ import { can } from "@/lib/permissions/can";
 export function RouterManagementOverviewPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const addRouterDisclosure = useDisclosure(false);
   const { data: user } = useCurrentUser(true);
   const statsQuery = useRouterStats();
   const recentRoutersQuery = useRouters({ limit: 5, sortBy: "createdAt", sortOrder: "desc" });
@@ -43,7 +41,7 @@ export function RouterManagementOverviewPage() {
 
       {can(user, permissions.routersManage) ? (
         <div className="flex justify-end">
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => navigate(appRoutes.routersAdd)}>
             Add Router
           </Button>
         </div>
@@ -59,7 +57,7 @@ export function RouterManagementOverviewPage() {
           </div>
         </CardHeader>
         <div className="flex flex-wrap gap-3">
-          {can(user, permissions.routersManage) ? <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addRouterDisclosure.onOpen}>Add Router</Button> : null}
+          {can(user, permissions.routersManage) ? <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => navigate(appRoutes.routersAdd)}>Add Router</Button> : null}
           <Button variant="outline" onClick={() => navigate(appRoutes.routersAll)}>Open All Routers</Button>
           <Button variant="outline" onClick={() => navigate(appRoutes.routersOffline)}>Offline Routers</Button>
           <Button variant="outline" onClick={() => navigate(appRoutes.routersProvisioningQueue)}>Provisioning Queue</Button>
@@ -153,8 +151,6 @@ export function RouterManagementOverviewPage() {
           </div>
         </Card>
       </div>
-
-      <AddRouterAdminDialog open={addRouterDisclosure.open} onClose={addRouterDisclosure.onClose} />
     </section>
   );
 }

@@ -14,6 +14,7 @@ export * from "./RecordPaymentDialog";
 export * from "./CreateInvoiceDialog";
 export * from "./IssueRefundDialog";
 export * from "./MpesaPaymentWidget";
+export * from "./AddBalanceDialog";
 export * from "./BillingReportsSection";
 export * from "./SubscriptionsTable";
 export * from "./SubscriptionStatusBadge";

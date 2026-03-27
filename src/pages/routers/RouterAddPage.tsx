@@ -15,10 +15,10 @@ export function RouterAddPage() {
     <section className="space-y-6">
       <PageHeader
         title="Add Router"
-        description="Register a new MikroTik router for a subscriber and generate their WireGuard provisioning config."
+        description="Provision a new router from a dedicated page and attach it to an existing customer account."
         meta="Admin router onboarding"
       />
-      <RouterAdminCreateForm mode="page" submitLabel="Create Router" onSuccess={handleSuccess} />
+      <RouterAdminCreateForm mode="page" initialTab="direct" submitLabel="Create Router" onSuccess={handleSuccess} />
     </section>
   );
 }

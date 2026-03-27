@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import {
+  AddBalanceDialog,
   BillingActionDialog,
   CreateInvoiceDialog,
   InvoiceStatusBadge,
@@ -21,6 +22,7 @@ import {
 import {
   useAccountBillingOverview,
   useAddBillingFlag,
+  useAddBalance,
   useAddBillingNote,
   useApplyGracePeriod,
   useCreateInvoice,
@@ -84,6 +86,7 @@ export function BillingAccountPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [selectedFlag, setSelectedFlag] = useState<BillingFlag | null>(null);
+  const [addBalanceResult, setAddBalanceResult] = useState<import("@/features/billing/types/billing.types").AddBalanceResponse["transaction"] | null>(null);
 
   const reviewedDisclosure = useDisclosure(false);
   const suspendDisclosure = useDisclosure(false);
@@ -96,6 +99,7 @@ export function BillingAccountPage() {
   const flagDisclosure = useDisclosure(false);
   const removeFlagDisclosure = useDisclosure(false);
   const recordPaymentDisclosure = useDisclosure(false);
+  const addBalanceDisclosure = useDisclosure(false);
   const createInvoiceDisclosure = useDisclosure(false);
   const issueRefundDisclosure = useDisclosure(false);
   const mpesaDisclosure = useDisclosure(false);
@@ -108,6 +112,7 @@ export function BillingAccountPage() {
   const resendMutation = useResendInvoice();
   const applyGraceMutation = useApplyGracePeriod();
   const removeGraceMutation = useRemoveGracePeriod();
+  const addBalanceMutation = useAddBalance();
   const noteMutation = useAddBillingNote();
   const flagMutation = useAddBillingFlag();
   const removeFlagMutation = useRemoveBillingFlag();
@@ -154,6 +159,7 @@ export function BillingAccountPage() {
               {detail.overview.subscriptionStatus === "trial" ? <Button variant="outline" onClick={extendDisclosure.onOpen}>Extend trial</Button> : null}
               {detail.overview.openInvoices > 0 ? <Button variant="outline" onClick={resendDisclosure.onOpen}>Resend invoice</Button> : null}
               {paymentActionVisible ? <Button leftIcon={<Smartphone className="h-4 w-4" />} onClick={mpesaDisclosure.onOpen}>Pay now</Button> : null}
+              <Button variant="outline" onClick={() => { setAddBalanceResult(null); addBalanceDisclosure.onOpen(); }}>Create top-up link</Button>
               <Button variant="outline" leftIcon={<ShieldAlert className="h-4 w-4" />} onClick={() => enforceBillingMutation.mutate([undefined] as never)} isLoading={enforceBillingMutation.isPending}>Run enforcement</Button>
               <Button variant="outline" onClick={recordPaymentDisclosure.onOpen}>Record payment</Button>
               <Button variant="outline" onClick={createInvoiceDisclosure.onOpen}>Create invoice</Button>
@@ -379,6 +385,15 @@ export function BillingAccountPage() {
       <RecordPaymentDialog open={recordPaymentDisclosure.open} loading={recordPaymentMutation.isPending} accountId={detail.account.id} accountName={detail.account.name} onClose={recordPaymentDisclosure.onClose} onConfirm={(payload) => recordPaymentMutation.mutate([payload] as never, { onSuccess: () => recordPaymentDisclosure.onClose() })} />
       <CreateInvoiceDialog open={createInvoiceDisclosure.open} loading={createInvoiceMutation.isPending} accountId={detail.account.id} accountName={detail.account.name} onClose={createInvoiceDisclosure.onClose} onConfirm={(payload) => createInvoiceMutation.mutate([payload] as never, { onSuccess: () => createInvoiceDisclosure.onClose() })} />
       <IssueRefundDialog open={issueRefundDisclosure.open} loading={issueRefundMutation.isPending} accountId={detail.account.id} accountName={detail.account.name} onClose={issueRefundDisclosure.onClose} onConfirm={(payload) => issueRefundMutation.mutate([payload] as never, { onSuccess: () => issueRefundDisclosure.onClose() })} />
+      <AddBalanceDialog
+        open={addBalanceDisclosure.open}
+        loading={addBalanceMutation.isPending}
+        accountName={detail.account.name}
+        currency={detail.account.currency}
+        result={addBalanceResult}
+        onClose={addBalanceDisclosure.onClose}
+        onConfirm={(payload) => addBalanceMutation.mutate([detail.account.id, payload] as never, { onSuccess: (response) => setAddBalanceResult(response.transaction) })}
+      />
       <Modal open={mpesaDisclosure.open} title="Collect payment via M-Pesa" description={detail.account.email || "Subscription recovery"} onClose={mpesaDisclosure.onClose} maxWidthClass="max-w-[min(96vw,36rem)]">
         <MpesaPaymentWidget
           subscriptionId={selectedSubscriptionId}

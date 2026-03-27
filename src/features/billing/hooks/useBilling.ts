@@ -5,6 +5,7 @@ import {
   addBillingFlag,
   addBillingNote,
   applyGracePeriod,
+  addBalance,
   createInvoice,
   downloadInvoicePdf,
   enforceBillingSubscriptions,
@@ -22,10 +23,12 @@ import {
   getBillingFlags,
   getBillingNotes,
   getBillingOverview,
+  getBillingReadiness,
   getBillingRisk,
   getInvoiceById,
   getInvoices,
   getPaymentById,
+  getRouterSubscriptionBilling,
   getPayments,
   getSubscriptionById,
   getSubscriptions,
@@ -51,6 +54,10 @@ export function useBillingOverview() {
   return useQuery({ queryKey: [...billingBase, "overview"], queryFn: getBillingOverview, staleTime: 30_000, refetchOnWindowFocus: false });
 }
 
+export function useBillingReadiness() {
+  return useQuery({ queryKey: [...billingBase, "readiness"], queryFn: getBillingReadiness, staleTime: 30_000, refetchOnWindowFocus: false });
+}
+
 export function useBillingAnalytics(params?: BillingFilterState) {
   return useQuery({ queryKey: [...billingBase, "analytics", params], queryFn: () => getBillingAnalytics(params), staleTime: 30_000, refetchOnWindowFocus: false });
 }
@@ -69,6 +76,10 @@ export function useSubscriptions(params?: BillingFilterState & Record<string, un
 
 export function useSubscription(id: string) {
   return useQuery({ queryKey: [...billingBase, "subscription", id], queryFn: () => getSubscriptionById(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
+}
+
+export function useRouterSubscriptionBilling(routerId: string, enabled = true) {
+  return useQuery({ queryKey: queryKeys.billingRouterSubscription(routerId), queryFn: () => getRouterSubscriptionBilling(routerId), enabled: Boolean(routerId) && enabled, staleTime: 20_000, refetchOnWindowFocus: false });
 }
 
 export function useAccountBillingOverview(accountId: string) {
@@ -171,6 +182,18 @@ export function useRecordPayment() {
     mutationFn: (variables: [import("@/features/billing/types/billing.types").RecordPaymentPayload]) => recordPayment(variables[0]),
     onSuccess: async () => {
       toast.success("Payment recorded successfully");
+      await queryClient.invalidateQueries({ queryKey: billingBase });
+    },
+    onError: (error: Error) => toast.error(error.message || "Billing action failed"),
+  });
+}
+
+export function useAddBalance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (variables: [string, import("@/features/billing/types/billing.types").AddBalancePayload]) => addBalance(...variables),
+    onSuccess: async () => {
+      toast.success("Balance top-up link created");
       await queryClient.invalidateQueries({ queryKey: billingBase });
     },
     onError: (error: Error) => toast.error(error.message || "Billing action failed"),

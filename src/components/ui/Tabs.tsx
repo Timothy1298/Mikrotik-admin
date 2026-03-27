@@ -25,10 +25,11 @@ export function Tabs({
     })?.value;
 
   return (
-    <div className="flex flex-wrap gap-1 rounded-xl border border-background-border bg-background-panel p-1">
-      {tabs.map((tab) => {
-        const className = cn(
-          "rounded-lg border border-transparent px-4 py-2 text-sm font-medium transition-colors",
+    <div className="w-full overflow-x-auto rounded-xl border border-background-border bg-background-panel p-1">
+      <div className="flex min-w-full gap-1">
+        {tabs.map((tab) => {
+          const className = cn(
+            "shrink-0 whitespace-nowrap rounded-lg border border-transparent px-4 py-2 text-sm font-medium transition-colors",
           activeTabValue === tab.value
             ? "surface-active text-text-primary"
             : "text-text-secondary hover:border-primary/20 hover:bg-primary/10 hover:text-text-primary",
@@ -52,7 +53,8 @@ export function Tabs({
             {tab.label}
           </button>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }

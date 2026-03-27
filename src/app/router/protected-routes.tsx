@@ -5,6 +5,7 @@ import { appRoutes } from "@/config/routes";
 import { permissions } from "@/lib/permissions/permissions";
 import { BillingAccountPage } from "@/pages/billing/BillingAccountPage";
 import { BillingOverviewPage } from "@/pages/billing/BillingOverviewPage";
+import { BillingRouterSubscriptionPage } from "@/pages/billing/BillingRouterSubscriptionPage";
 import { BillingSectionPage } from "@/pages/billing/BillingSectionPage";
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
 import { LogsSecurityOverviewPage } from "@/pages/logs-security/LogsSecurityOverviewPage";
@@ -13,6 +14,7 @@ import { LogsSecurityWorkspacePage } from "@/pages/logs-security/LogsSecurityWor
 import { MonitoringOverviewPage } from "@/pages/monitoring/MonitoringOverviewPage";
 import { MonitoringSectionPage } from "@/pages/monitoring/MonitoringSectionPage";
 import { MonitoringWorkspacePage } from "@/pages/monitoring/MonitoringWorkspacePage";
+import { ReferralsPage } from "@/pages/referrals/ReferralsPage";
 import { RouterManagementOverviewPage } from "@/pages/routers/RouterManagementOverviewPage";
 import { RouterManagementSectionPage } from "@/pages/routers/RouterManagementSectionPage";
 import { RouterDetailsPage } from "@/pages/routers/RouterDetailsPage";
@@ -30,6 +32,7 @@ import { UserManagementSectionPage } from "@/pages/users/UserManagementSectionPa
 import { VpnServerManagementOverviewPage } from "@/pages/vpn-servers/VpnServerManagementOverviewPage";
 import { VpnServerManagementSectionPage } from "@/pages/vpn-servers/VpnServerManagementSectionPage";
 import { VpnServerDetailsPage } from "@/pages/vpn-servers/VpnServerDetailsPage";
+import { VpnClientsPage } from "@/pages/vpn-servers/VpnClientsPage";
 
 export function ProtectedRoutes() {
   return (
@@ -37,6 +40,7 @@ export function ProtectedRoutes() {
       <Route element={<AdminLayout />}>
         <Route path={appRoutes.root} element={<DashboardPage />} />
         <Route path={appRoutes.dashboard} element={<DashboardPage />} />
+        <Route path={appRoutes.referrals} element={<ReferralsPage />} />
         <Route path={appRoutes.usersRoot} element={<Navigate to={appRoutes.usersOverview} replace />} />
         <Route path={appRoutes.usersOverview} element={<UserManagementOverviewPage />} />
         <Route path={appRoutes.usersAll} element={<UserManagementSectionPage section="all" />} />
@@ -68,6 +72,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.vpnServersRoot} element={<Navigate to={appRoutes.vpnServersOverview} replace />} />
         <Route path={appRoutes.vpnServers} element={<VpnServerManagementOverviewPage />} />
         <Route path={appRoutes.vpnServersOverview} element={<VpnServerManagementOverviewPage />} />
+        <Route path={appRoutes.vpnClients} element={<VpnClientsPage />} />
         <Route path={appRoutes.vpnServersAll} element={<VpnServerManagementSectionPage section="all" />} />
         <Route path={appRoutes.vpnServersHealthy} element={<VpnServerManagementSectionPage section="healthy" />} />
         <Route path={appRoutes.vpnServersUnhealthy} element={<VpnServerManagementSectionPage section="unhealthy" />} />
@@ -104,6 +109,7 @@ export function ProtectedRoutes() {
         <Route path={appRoutes.billingReports} element={<BillingSectionPage section="reports" />} />
         <Route path={appRoutes.billingActivity} element={<BillingSectionPage section="activity" />} />
         <Route path={appRoutes.billingNotesFlags} element={<BillingSectionPage section="notes-flags" />} />
+        <Route path={appRoutes.billingRouterSubscriptions} element={<BillingRouterSubscriptionPage />} />
         <Route path={appRoutes.billingAccount()} element={<BillingAccountPage />} />
         <Route path={appRoutes.logsSecurityRoot} element={<Navigate to={appRoutes.logsSecurityOverview} replace />} />
         <Route path={appRoutes.logsSecurity} element={<LogsSecurityOverviewPage />} />

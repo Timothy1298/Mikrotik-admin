@@ -190,7 +190,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Support operations" />
       <Tabs tabs={[...supportTabs]} value={location.pathname} onChange={navigate} />
-
       {section !== "by-assignee" ? <SupportFilters filters={filters} onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))} /> : null}
 
       {section === "by-assignee" ? (

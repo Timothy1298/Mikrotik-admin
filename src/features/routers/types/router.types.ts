@@ -505,6 +505,21 @@ export type CreateRouterPayload = {
   name: string;
   serverNode?: string;
   reason?: string;
+  connectionMode?: "wireguard" | "management_only";
+  managementOnly?: boolean;
+  managementHost?: string;
+  managementIp?: string;
+  localAddress?: string;
+  hostname?: string;
+  apiUsername?: string;
+  apiPassword?: string;
+  apiPort?: number;
+  apiUseTls?: boolean;
+  sshPort?: number;
+  includeSshFallback?: boolean;
+  allowInsecureTls?: boolean;
+  deviceDetails?: string;
+  testConnectionOnCreate?: boolean;
 };
 
 export type CreateRouterResponse = {
@@ -515,6 +530,13 @@ export type CreateRouterResponse = {
   status: string;
   connectionMode?: "wireguard" | "management_only";
   wireguardConfig?: string;
+  connectionTest?: {
+    success: boolean;
+    testedAt: string;
+    error?: string;
+    resource?: RouterApiConnectionTest["resource"];
+    interfaces?: RouterApiConnectionTest["interfaces"];
+  } | null;
 };
 
 export type RouterSetupArtifacts = {

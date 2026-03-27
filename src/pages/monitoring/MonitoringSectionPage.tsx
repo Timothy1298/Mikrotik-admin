@@ -288,7 +288,6 @@ export function MonitoringSectionPage({ section }: { section: MonitoringSection 
   return (
     <section className="space-y-6">
       <PageHeader title={sectionMeta.title} description={sectionMeta.description} meta="Monitoring operations" />
-
       <Tabs tabs={[...monitoringTabs]} value={location.pathname} onChange={navigate} />
 
       <MonitoringFilters section={section} filters={filters} onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))} />

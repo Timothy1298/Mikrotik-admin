@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, Clock3, CreditCard, PlusCircle, Receipt, ShieldAlert } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, CreditCard, PlusCircle, Receipt, ShieldAlert } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
@@ -13,14 +13,24 @@ import { Tabs } from "@/components/ui/Tabs";
 import { billingTabs } from "@/config/module-tabs";
 import { appRoutes } from "@/config/routes";
 import { BillingStatsRow } from "@/features/billing/components";
-import { useBillingActivity, useBillingAnalytics, useBillingOverview, useBillingRisk, useSubscriptions } from "@/features/billing/hooks/useBilling";
+import { useBillingActivity, useBillingAnalytics, useBillingOverview, useBillingReadiness, useBillingRisk, useSubscriptions } from "@/features/billing/hooks/useBilling";
 import { formatCurrency } from "@/lib/formatters/currency";
+
+function ReadinessPill({ ready, label }: { ready: boolean; label: string }) {
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${ready ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200" : "border-amber-500/30 bg-amber-500/10 text-amber-100"}`}>
+      {ready ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+      <span>{label}</span>
+    </div>
+  );
+}
 
 export function BillingOverviewPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const overviewQuery = useBillingOverview();
   const analyticsQuery = useBillingAnalytics({ window: "30d" });
+  const readinessQuery = useBillingReadiness();
   const riskQuery = useBillingRisk();
   const activityQuery = useBillingActivity({ limit: 5 });
   const overdueQuery = useSubscriptions({ limit: 5, overdue: "true" } as never);
@@ -35,7 +45,7 @@ export function BillingOverviewPage() {
       <PageHeader title="Billing & Subscriptions" description="Platform-wide command center for subscription health, invoice/payment state, trial pressure, grace-period operations, and revenue risk." meta={overview.lastBillingSyncAt ? `Last sync ${overview.lastBillingSyncAt}` : "Billing telemetry ready"} />
       <Tabs tabs={[...billingTabs]} value={location.pathname} onChange={navigate} />
       <div className="flex justify-end">
-        <RefreshButton loading={overviewQuery.isFetching || analyticsQuery.isFetching || riskQuery.isFetching || activityQuery.isFetching || overdueQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void analyticsQuery.refetch(); void riskQuery.refetch(); void activityQuery.refetch(); void overdueQuery.refetch(); }} />
+        <RefreshButton loading={overviewQuery.isFetching || analyticsQuery.isFetching || readinessQuery.isFetching || riskQuery.isFetching || activityQuery.isFetching || overdueQuery.isFetching} onClick={() => { void overviewQuery.refetch(); void analyticsQuery.refetch(); void readinessQuery.refetch(); void riskQuery.refetch(); void activityQuery.refetch(); void overdueQuery.refetch(); }} />
       </div>
       <Card>
         <CardHeader>
@@ -49,6 +59,7 @@ export function BillingOverviewPage() {
           <Button variant="outline" leftIcon={<Receipt className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingInvoices)}>Open invoices</Button>
           <Button variant="outline" leftIcon={<AlertTriangle className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingOverdueRisk)}>Overdue risk queue</Button>
           <Button variant="outline" leftIcon={<PlusCircle className="h-4 w-4" />} onClick={() => navigate(appRoutes.billingReports)}>Financial reports</Button>
+          <Button variant="outline" onClick={() => navigate(appRoutes.billingRouterSubscriptions)}>Router billing lookup</Button>
         </div>
       </Card>
       <BillingStatsRow overview={overview} />
@@ -58,6 +69,54 @@ export function BillingOverviewPage() {
         <MetricCard title="Trials ending soon" value={String(overview.trialsEndingSoon)} progress={Math.min(100, overview.trialsEndingSoon * 12)} />
         <MetricCard title="Grace period accounts" value={String(overview.accountsInGracePeriod)} progress={Math.min(100, overview.accountsInGracePeriod * 12)} />
       </div>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Billing readiness</CardTitle>
+            <CardDescription>Live dependency status for collections, reminders, top-up links, and callback-safe API URLs.</CardDescription>
+          </div>
+        </CardHeader>
+        {readinessQuery.isPending ? <SectionLoader /> : readinessQuery.isError || !readinessQuery.data ? (
+          <ErrorState title="Unable to load billing readiness" description="Retry after confirming the readiness endpoint is available." onAction={() => void readinessQuery.refetch()} />
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-4">
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-text-primary">Email reminders</p>
+                <ReadinessPill ready={readinessQuery.data.email.configured} label={readinessQuery.data.email.configured ? "Ready" : "Needs config"} />
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{readinessQuery.data.email.detail}</p>
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-text-primary">M-Pesa collections</p>
+                <ReadinessPill ready={readinessQuery.data.mpesa.configured} label={readinessQuery.data.mpesa.configured ? "Ready" : "Needs config"} />
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{readinessQuery.data.mpesa.detail}</p>
+              <p className="mt-2 text-xs text-text-muted">Mode: {readinessQuery.data.mpesa.sandbox ? "Sandbox" : "Live"}</p>
+              {!readinessQuery.data.mpesa.configured && readinessQuery.data.mpesa.missing.length ? <p className="mt-2 text-xs text-amber-100">Missing: {readinessQuery.data.mpesa.missing.join(", ")}</p> : null}
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-text-primary">Top-up links</p>
+                <ReadinessPill ready={readinessQuery.data.topupLinks.configured} label={readinessQuery.data.topupLinks.configured ? "Ready" : "Needs config"} />
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{readinessQuery.data.topupLinks.detail}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <ReadinessPill ready={readinessQuery.data.topupLinks.providers.paystack.configured} label="Paystack" />
+                <ReadinessPill ready={readinessQuery.data.topupLinks.providers.paypal.configured} label="PayPal" />
+              </div>
+            </div>
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-text-primary">Callback API base</p>
+                <ReadinessPill ready={readinessQuery.data.publicApiBase.configured} label={readinessQuery.data.publicApiBase.configured ? "Ready" : "Needs config"} />
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">{readinessQuery.data.publicApiBase.detail}</p>
+            </div>
+          </div>
+        )}
+      </Card>
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader><div><CardTitle>Risk summary</CardTitle><CardDescription>Highest-signal billing follow-up counts from the real backend risk model.</CardDescription></div></CardHeader>

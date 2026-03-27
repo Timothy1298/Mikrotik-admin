@@ -38,6 +38,10 @@ const routeLabels: Record<string, { label: string; path: string }> = {
   system: { label: "System", path: appRoutes.settingsSystem },
   activity: { label: "Activity", path: appRoutes.logsSecurityActivity },
   invoices: { label: "Invoices", path: appRoutes.billingInvoices },
+  payments: { label: "Payments", path: appRoutes.billingPayments },
+  reports: { label: "Reports", path: appRoutes.billingReports },
+  "overdue-risk": { label: "Overdue & Risk", path: appRoutes.billingOverdueRisk },
+  "router-subscriptions": { label: "Router Billing", path: appRoutes.billingRouterSubscriptions },
   subscriptions: { label: "Subscriptions", path: appRoutes.billingSubscriptions },
 };
 
