@@ -51,10 +51,20 @@ export type HotspotSession = {
 };
 
 export type HotspotProfile = {
+  id?: string;
   name: string;
   rateLimit: string;
+  comment?: string;
   sessionTimeout: string;
   idleTimeout: string;
+};
+
+export type HotspotProfilePayload = {
+  name: string;
+  rateLimit?: string;
+  comment?: string;
+  sessionTimeout?: string;
+  idleTimeout?: string;
 };
 
 export type HotspotVoucher = {

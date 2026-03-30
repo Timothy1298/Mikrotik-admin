@@ -35,6 +35,8 @@ export function RouterDetailsModal({
   onAddNote: () => void;
   onAddFlag: () => void;
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
+  onSaveManagementPolicy: (profile: Exclude<RouterDetail["policy"]["profile"], "custom">) => void;
+  savingManagementPolicy?: boolean;
 }) {
   if (!open) return null;
 

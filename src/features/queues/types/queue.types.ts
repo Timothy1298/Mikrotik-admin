@@ -7,9 +7,13 @@ export type RouterQueue = {
   maxUploadKbps: number;
   comment: string;
   routerosId: string;
+  isDynamic: boolean;
   isActive: boolean;
   linkedSubscriptionId: string | null;
   linkedServicePlanId?: string | null;
+  overrideSourceType?: "hotspot_user" | "pppoe_secret" | "manual" | "";
+  overrideSourceId?: string;
+  overrideSourceName?: string;
   queueType?: "simple" | "pcq";
   pcqDownloadProfile?: string;
   pcqUploadProfile?: string;
@@ -28,6 +32,9 @@ export type QueuePayload = {
   maxDownloadKbps: number;
   maxUploadKbps: number;
   comment?: string;
+  overrideSourceType?: "hotspot_user" | "pppoe_secret" | "manual";
+  overrideSourceId?: string;
+  overrideSourceName?: string;
   queueType?: "simple" | "pcq";
   pcqDownloadProfile?: string;
   pcqUploadProfile?: string;

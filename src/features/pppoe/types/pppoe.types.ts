@@ -44,6 +44,17 @@ export type PppoeProfile = {
   comment?: string;
 };
 
+export type PppoeProfileOption = {
+  value: string;
+  label: string;
+  kind: "pool" | "address";
+};
+
+export type PppoeProfileOptions = {
+  localAddressOptions: PppoeProfileOption[];
+  remoteAddressOptions: PppoeProfileOption[];
+};
+
 export type PppoeSecretPayload = {
   name: string;
   password?: string;

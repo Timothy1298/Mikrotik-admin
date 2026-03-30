@@ -39,6 +39,7 @@ import {
   resetRouterPeer,
   discoverRouterDownstreamMikrotiks,
   setRouterCredentials,
+  updateRouterManagementPolicy,
   trackRouterRuntimePeer,
   verifyDiscoveredRouter,
   testRouterConnection,
@@ -258,6 +259,10 @@ export function useRemoveRouterFlag() {
 
 export function useDeleteRouter() {
   return useRouterMutation(deleteRouter, "Router deleted successfully");
+}
+
+export function useUpdateRouterManagementPolicy() {
+  return useRouterMutation(updateRouterManagementPolicy, "Router management policy updated");
 }
 
 export function useTrackRouterRuntimePeer() {

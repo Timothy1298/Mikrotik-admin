@@ -36,6 +36,7 @@ import {
   useReprovisionRouter,
   useResetRouterPeer,
   useRouter,
+  useUpdateRouterManagementPolicy,
 } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
@@ -73,6 +74,7 @@ export function RouterDetailsPage() {
   const noteMutation = useAddRouterNote();
   const addFlagMutation = useAddRouterFlag();
   const removeFlagMutation = useRemoveRouterFlag();
+  const updateManagementPolicyMutation = useUpdateRouterManagementPolicy();
 
   if (routerQuery.isPending) return <PageLoader />;
   if (routerQuery.isError || !routerQuery.data) {
@@ -105,6 +107,8 @@ export function RouterDetailsPage() {
         onAddNote={noteDisclosure.onOpen}
         onAddFlag={flagDisclosure.onOpen}
         onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
+        onSaveManagementPolicy={(profile) => updateManagementPolicyMutation.mutate([router.id, { policyProfile: profile }] as never)}
+        savingManagementPolicy={updateManagementPolicyMutation.isPending}
       />
 
       <DisableRouterDialog open={disableDisclosure.open} loading={disableMutation.isPending} onClose={disableDisclosure.onClose} onConfirm={(reason) => disableMutation.mutate([router.id, reason] as never, { onSuccess: () => disableDisclosure.onClose() })} />

@@ -92,6 +92,7 @@ export type RouterDetail = {
     name: string;
     vpnIp: string | null;
     connectionMode?: "wireguard" | "management_only";
+    managementMode?: "fully_managed" | "management_only";
     serverNode: string;
     status: string;
     setupStatus: string;
@@ -107,6 +108,14 @@ export type RouterDetail = {
     routerosVersion: string | null;
     createdAt: string;
     updatedAt: string;
+  };
+  policy: {
+    profile: "queue_only" | "service_admin" | "full_remote_admin" | "custom";
+    defaultMaxClass: "read_only" | "safe_operational" | "service_mutation" | "network_core_mutation" | "bootstrap_mutation";
+    allowNetworkCoreWrites: boolean;
+    allowBootstrap: boolean;
+    approvedScopes: string[];
+    breakGlassRequiredFor: string[];
   };
   customer: RouterRow["customer"];
   accessPorts: {
@@ -535,6 +544,8 @@ export type CreateRouterPayload = {
   deviceDetails?: string;
   testConnectionOnCreate?: boolean;
 };
+
+export type RouterManagementPolicyProfile = RouterDetail["policy"]["profile"];
 
 export type CreateRouterResponse = {
   id: string;

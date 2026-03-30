@@ -38,5 +38,6 @@ export * from "./RouterActivityPanel";
 export * from "./RouterNotesPanel";
 export * from "./RouterFlagsPanel";
 export * from "./RouterDiagnosticsPanel";
+export * from "./RouterManagementPolicyPanel";
 export * from "./RouterDetailsWorkspace";
 export * from "./RouterDetailsModal";

@@ -19,6 +19,7 @@ export const queryKeys = {
   pppoeSecret: (routerId: string, secretId: string) => ["routers", routerId, "pppoe", "secrets", secretId] as const,
   pppoeSessions: (routerId: string) => ["routers", routerId, "pppoe", "sessions"] as const,
   pppoeProfiles: (routerId: string) => ["routers", routerId, "pppoe", "profiles"] as const,
+  pppoeProfileOptions: (routerId: string) => ["routers", routerId, "pppoe", "profile-options"] as const,
   routerQueues: (routerId: string) => ["routers", routerId, "queues"] as const,
   routerQueue: (routerId: string, queueId: string) => ["routers", routerId, "queues", queueId] as const,
   firewallFilterRules: (routerId: string, chain?: string) => ["routers", routerId, "firewall", "filter", chain || "all"] as const,

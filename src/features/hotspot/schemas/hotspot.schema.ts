@@ -24,5 +24,14 @@ export const voucherGenerationSchema = z.object({
   expiresAt: z.string().optional().nullable(),
 });
 
+export const hotspotProfileSchema = z.object({
+  name: z.string().min(1, "Profile name is required"),
+  rateLimit: z.string().optional(),
+  sessionTimeout: z.string().optional(),
+  idleTimeout: z.string().optional(),
+  comment: z.string().optional(),
+});
+
 export type HotspotUserSchema = z.infer<typeof hotspotUserSchema>;
 export type VoucherGenerationSchema = z.infer<typeof voucherGenerationSchema>;
+export type HotspotProfileSchema = z.infer<typeof hotspotProfileSchema>;

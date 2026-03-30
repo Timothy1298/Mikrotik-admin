@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Plus, Ticket } from "lucide-react";
 import { DataTable } from "@/components/data-display/DataTable";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Input } from "@/components/ui/Input";
 import { HotspotProfilesBadge } from "@/features/hotspot/components/HotspotProfilesBadge";
@@ -13,6 +14,7 @@ import { formatDateTime } from "@/lib/formatters/date";
 export function HotspotUsersTable({
   rows,
   search,
+  controlModeByUserId,
   onSearchChange,
   onAddUser,
   onGenerateVouchers,
@@ -23,6 +25,7 @@ export function HotspotUsersTable({
 }: {
   rows: HotspotUser[];
   search: string;
+  controlModeByUserId: Record<string, "profile" | "override">;
   onSearchChange: (value: string) => void;
   onAddUser: () => void;
   onGenerateVouchers: () => void;
@@ -43,7 +46,14 @@ export function HotspotUsersTable({
     },
     {
       header: "Profile",
-      cell: ({ row }) => <HotspotProfilesBadge profile={row.original.profile} />,
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <HotspotProfilesBadge profile={row.original.profile} />
+          <Badge tone={controlModeByUserId[row.original.id] === "override" ? "warning" : "info"}>
+            {controlModeByUserId[row.original.id] === "override" ? "override" : "profile"}
+          </Badge>
+        </div>
+      ),
     },
     {
       header: "Data used",
@@ -79,7 +89,7 @@ export function HotspotUsersTable({
         />
       ),
     },
-  ], [onDeleteUser, onDisconnectUserSession, onEditUser]);
+  ], [controlModeByUserId, onDeleteUser, onDisconnectUserSession, onEditUser]);
 
   return (
     <div className="space-y-4">

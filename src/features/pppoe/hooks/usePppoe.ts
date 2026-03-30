@@ -7,6 +7,7 @@ import {
   deletePppoeProfile,
   deletePppoeSecret,
   disconnectPppoeSession,
+  getPppoeProfileOptions,
   getPppoeProfiles,
   getPppoeSecrets,
   getPppoeSessions,
@@ -14,6 +15,7 @@ import {
   updatePppoeSecret,
 } from "@/features/pppoe/api/pppoe";
 import type { PppoeProfilePayload, PppoeSecretFilters, PppoeSecretPayload } from "@/features/pppoe/types/pppoe.types";
+import { ApiError } from "@/lib/api/errors";
 
 function invalidatePppoe(queryClient: ReturnType<typeof useQueryClient>, routerId: string) {
   return Promise.all([
@@ -48,6 +50,16 @@ export function usePppoeProfiles(routerId: string, options: { enabled?: boolean 
   return useQuery({
     queryKey: queryKeys.pppoeProfiles(routerId),
     queryFn: () => getPppoeProfiles(routerId),
+    enabled: Boolean(routerId) && (options.enabled ?? true),
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function usePppoeProfileOptions(routerId: string, options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: queryKeys.pppoeProfileOptions(routerId),
+    queryFn: () => getPppoeProfileOptions(routerId),
     enabled: Boolean(routerId) && (options.enabled ?? true),
     staleTime: 60_000,
     refetchOnWindowFocus: false,
@@ -111,7 +123,12 @@ export function useCreatePppoeProfile(routerId: string) {
       toast.success("PPPoE profile created");
       await invalidatePppoe(queryClient, routerId);
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to create PPPoE profile"),
+    onError: (error: Error) => {
+      const message = error instanceof ApiError && error.status === 404
+        ? "PPPoE profile creation endpoint is unavailable in the running backend. Restart the API server and try again."
+        : (error.message || "Failed to create PPPoE profile");
+      toast.error(message);
+    },
   });
 }
 

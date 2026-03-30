@@ -33,10 +33,19 @@ export function QueuesTable({
         <div className="space-y-1">
           <p className="font-medium text-text-primary">{row.original.name}</p>
           <p className="text-xs text-text-muted">
-            {row.original.queueType === "pcq"
-              ? `PCQ-backed queue${row.original.pcqUploadProfile || row.original.pcqDownloadProfile ? ` (${row.original.pcqUploadProfile || "default"}/${row.original.pcqDownloadProfile || "default"})` : ""}`
-              : "Simple queue"}
+            {row.original.isDynamic
+              ? `Dynamic ${row.original.queueType === "pcq"
+                ? `PCQ-backed queue${row.original.pcqUploadProfile || row.original.pcqDownloadProfile ? ` (${row.original.pcqUploadProfile || "default"}/${row.original.pcqDownloadProfile || "default"})` : ""}`
+                : "simple queue"}`
+              : row.original.queueType === "pcq"
+                ? `PCQ-backed queue${row.original.pcqUploadProfile || row.original.pcqDownloadProfile ? ` (${row.original.pcqUploadProfile || "default"}/${row.original.pcqDownloadProfile || "default"})` : ""}`
+                : "Simple queue"}
           </p>
+          {!row.original.isDynamic && row.original.overrideSourceName ? (
+            <p className="text-xs text-text-muted">
+              Override for {row.original.overrideSourceType === "hotspot_user" ? "hotspot user" : row.original.overrideSourceType === "pppoe_secret" ? "PPPoE subscriber" : "manual target"} {row.original.overrideSourceName}
+            </p>
+          ) : null}
         </div>
       ),
     },
@@ -47,12 +56,23 @@ export function QueuesTable({
     {
       header: "Actions",
       cell: ({ row }) => (
-        <Dropdown
-          items={[
-            { label: "Edit", onClick: () => onEdit(row.original) },
-            { label: "Delete", onClick: () => onDelete(row.original), danger: true },
-          ]}
-        />
+        row.original.isDynamic
+          ? (
+            <div className="space-y-1">
+              <p className="text-xs text-text-muted">Read only</p>
+              {row.original.queueType === "pcq"
+                ? <p className="text-xs text-text-muted">Edit source in Hotspot Profiles.</p>
+                : null}
+            </div>
+          )
+          : (
+            <Dropdown
+              items={[
+                { label: "Edit", onClick: () => onEdit(row.original) },
+                { label: "Delete", onClick: () => onDelete(row.original), danger: true },
+              ]}
+            />
+          )
       ),
     },
   ], [onDelete, onEdit]);

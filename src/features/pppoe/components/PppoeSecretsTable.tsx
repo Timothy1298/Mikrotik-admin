@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Plus } from "lucide-react";
 import { DataTable } from "@/components/data-display/DataTable";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +12,7 @@ import type { PppoeSecret } from "@/features/pppoe/types/pppoe.types";
 export function PppoeSecretsTable({
   rows,
   search,
+  controlModeBySecretId,
   onSearchChange,
   onAddSubscriber,
   onEdit,
@@ -19,6 +21,7 @@ export function PppoeSecretsTable({
 }: {
   rows: PppoeSecret[];
   search: string;
+  controlModeBySecretId: Record<string, "profile" | "override">;
   onSearchChange: (value: string) => void;
   onAddSubscriber: () => void;
   onEdit: (secret: PppoeSecret) => void;
@@ -35,7 +38,17 @@ export function PppoeSecretsTable({
         </div>
       ),
     },
-    { header: "Profile", cell: ({ row }) => <HotspotProfilesBadge profile={row.original.profile} /> },
+    {
+      header: "Profile",
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <HotspotProfilesBadge profile={row.original.profile} />
+          <Badge tone={controlModeBySecretId[row.original.id] === "override" ? "warning" : "info"}>
+            {controlModeBySecretId[row.original.id] === "override" ? "override" : "profile"}
+          </Badge>
+        </div>
+      ),
+    },
     { header: "Service", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.service || "pppoe"}</span> },
     { header: "Remote Address", cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{row.original.remoteAddress || "Dynamic"}</span> },
     {
@@ -58,7 +71,7 @@ export function PppoeSecretsTable({
         />
       ),
     },
-  ], [onDelete, onEdit]);
+  ], [controlModeBySecretId, onDelete, onEdit]);
 
   return (
     <div className="space-y-4">

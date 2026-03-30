@@ -24,10 +24,18 @@ function formatRate(bytesPerSecond: number | null | undefined) {
 
 export function HotspotSessionsTable({
   rows,
+  controlModeBySessionId,
+  canSwitchProfileBySessionId,
+  onAdjustBandwidth,
+  onSwitchProfile,
   onDisconnect,
   isLoading,
 }: {
   rows: HotspotSession[];
+  controlModeBySessionId?: Record<string, "profile" | "override">;
+  canSwitchProfileBySessionId?: Record<string, boolean>;
+  onAdjustBandwidth: (session: HotspotSession) => void;
+  onSwitchProfile: (session: HotspotSession) => void;
   onDisconnect: (session: HotspotSession) => void;
   isLoading?: boolean;
 }) {
@@ -48,6 +56,9 @@ export function HotspotSessionsTable({
       cell: ({ row }) => (
         <div className="space-y-1">
           <Badge tone="info">{row.original.profile || "default"}</Badge>
+          <Badge tone={controlModeBySessionId?.[row.original.id] === "override" ? "warning" : "info"}>
+            {controlModeBySessionId?.[row.original.id] === "override" ? "override" : "profile"}
+          </Badge>
           <p className="text-xs text-text-muted">Server {row.original.server || "default"}</p>
         </div>
       ),
@@ -83,9 +94,31 @@ export function HotspotSessionsTable({
     },
     {
       header: "Actions",
-      cell: ({ row }) => <Button variant="danger" size="sm" onClick={(event) => { event.stopPropagation(); onDisconnect(row.original); }}>Disconnect</Button>,
+      cell: ({ row }) => {
+        const canSwitchProfile = canSwitchProfileBySessionId?.[row.original.id] ?? true;
+        return (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={(event) => { event.stopPropagation(); onAdjustBandwidth(row.original); }}>
+              Adjust bandwidth
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!canSwitchProfile}
+              title={canSwitchProfile ? "Switch this connected client to another profile" : "This session is not linked to a saved hotspot user, so profile switching is unavailable."}
+              onClick={(event) => {
+                event.stopPropagation();
+                onSwitchProfile(row.original);
+              }}
+            >
+              Switch profile
+            </Button>
+            <Button variant="danger" size="sm" onClick={(event) => { event.stopPropagation(); onDisconnect(row.original); }}>Disconnect</Button>
+          </div>
+        );
+      },
     },
-  ], [onDisconnect]);
+  ], [canSwitchProfileBySessionId, controlModeBySessionId, onAdjustBandwidth, onDisconnect, onSwitchProfile]);
 
   return <DataTable data={rows} columns={columns} isLoading={isLoading} emptyTitle="No active hotspot sessions" emptyDescription="Active hotspot logins will appear here and refresh automatically every 10 seconds." />;
 }

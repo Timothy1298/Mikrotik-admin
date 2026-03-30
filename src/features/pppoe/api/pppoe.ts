@@ -3,6 +3,7 @@ import { endpoints } from "@/lib/api/endpoints";
 import type {
   PppoePagination,
   PppoeProfile,
+  PppoeProfileOptions,
   PppoeProfilePayload,
   PppoeSecret,
   PppoeSecretFilters,
@@ -43,6 +44,11 @@ export async function disconnectPppoeSession(routerId: string, sessionId: string
 export async function getPppoeProfiles(routerId: string) {
   const { data } = await apiClient.get<{ success: boolean; data: PppoeProfile[] }>(endpoints.admin.pppoeProfiles(routerId));
   return data.data || [];
+}
+
+export async function getPppoeProfileOptions(routerId: string) {
+  const { data } = await apiClient.get<{ success: boolean; data: PppoeProfileOptions }>(endpoints.admin.pppoeProfileOptions(routerId));
+  return data.data || { localAddressOptions: [], remoteAddressOptions: [] };
 }
 
 export async function createPppoeProfile(routerId: string, payload: PppoeProfilePayload) {

@@ -4,6 +4,7 @@ import type {
   GenerateVouchersPayload,
   HotspotPagination,
   HotspotProfile,
+  HotspotProfilePayload,
   HotspotSession,
   HotspotUser,
   HotspotUserFilters,
@@ -73,4 +74,14 @@ export async function revokeHotspotVoucher(routerId: string, voucherId: string) 
 export async function getHotspotProfiles(routerId: string) {
   const { data } = await apiClient.get<{ success: boolean; data: HotspotProfile[] }>(endpoints.admin.hotspotProfiles(routerId));
   return data.data || [];
+}
+
+export async function createHotspotProfile(routerId: string, payload: HotspotProfilePayload) {
+  const { data } = await apiClient.post<{ success: boolean; data: HotspotProfile }>(endpoints.admin.hotspotProfiles(routerId), payload);
+  return data.data;
+}
+
+export async function updateHotspotProfile(routerId: string, profileId: string, payload: HotspotProfilePayload) {
+  const { data } = await apiClient.put<{ success: boolean; data: HotspotProfile }>(endpoints.admin.hotspotProfile(routerId, profileId), payload);
+  return data.data;
 }

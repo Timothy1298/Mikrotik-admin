@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/config/queryKeys";
 import {
+  createHotspotProfile,
   createHotspotUser,
   deleteHotspotUser,
   disconnectSession,
@@ -12,9 +13,11 @@ import {
   getHotspotUsers,
   getHotspotVouchers,
   revokeHotspotVoucher,
+  updateHotspotProfile,
   updateHotspotUser,
 } from "@/features/hotspot/api/hotspot";
-import type { GenerateVouchersPayload, HotspotUserFilters, HotspotUserPayload, HotspotVoucherFilters } from "@/features/hotspot/types/hotspot.types";
+import type { GenerateVouchersPayload, HotspotProfilePayload, HotspotUserFilters, HotspotUserPayload, HotspotVoucherFilters } from "@/features/hotspot/types/hotspot.types";
+import { ApiError } from "@/lib/api/errors";
 
 export function useHotspotUsers(routerId: string, filters: HotspotUserFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
@@ -146,5 +149,34 @@ export function useRevokeHotspotVoucher(routerId: string) {
       await invalidateHotspot(queryClient, routerId);
     },
     onError: (error: Error) => toast.error(error.message || "Failed to revoke voucher"),
+  });
+}
+
+export function useUpdateHotspotProfile(routerId: string, profileId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: HotspotProfilePayload) => updateHotspotProfile(routerId, profileId, payload),
+    onSuccess: async () => {
+      toast.success("Hotspot profile updated");
+      await invalidateHotspot(queryClient, routerId);
+    },
+    onError: (error: Error) => toast.error(error.message || "Failed to update hotspot profile"),
+  });
+}
+
+export function useCreateHotspotProfile(routerId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: HotspotProfilePayload) => createHotspotProfile(routerId, payload),
+    onSuccess: async () => {
+      toast.success("Hotspot profile created");
+      await invalidateHotspot(queryClient, routerId);
+    },
+    onError: (error: Error) => {
+      const message = error instanceof ApiError && error.status === 404
+        ? "Hotspot profile creation endpoint is unavailable in the running backend. Restart the API server and try again."
+        : (error.message || "Failed to create hotspot profile");
+      toast.error(message);
+    },
   });
 }

@@ -29,6 +29,7 @@ import type {
   RouterMetricPoint,
   RouterNotesDetail,
   RouterFlagsDetail,
+  RouterManagementPolicyProfile,
   TrackRuntimePeerResult,
 } from "@/features/routers/types/router.types";
 
@@ -222,6 +223,18 @@ export async function setRouterCredentials(id: string, payload: { apiUsername: s
 export async function testRouterConnection(id: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; data: RouterApiConnectionTest }>(endpoints.admin.routerTestConnection(id), { reason });
   return data.data;
+}
+
+export async function updateRouterManagementPolicy(id: string, payload: { policyProfile: Exclude<RouterManagementPolicyProfile, "custom">; reason?: string }) {
+  const { data } = await apiClient.post<{
+    success: boolean;
+    message: string;
+    data: {
+      routerId: string;
+      policy: RouterDetail["policy"];
+    };
+  }>(endpoints.admin.routerManagementPolicy(id), payload);
+  return data;
 }
 
 export async function addRouterNote(id: string, payload: { body: string; category: string; pinned?: boolean; reason?: string }) {

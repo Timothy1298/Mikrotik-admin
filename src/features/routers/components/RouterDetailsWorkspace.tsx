@@ -13,6 +13,7 @@ import { RouterDiagnosticsPanel } from "@/features/routers/components/RouterDiag
 import { RouterFlagsPanel } from "@/features/routers/components/RouterFlagsPanel";
 import { RouterInterfacesPanel } from "@/features/routers/components/RouterInterfacesPanel";
 import { RouterLiveHealthPanel } from "@/features/routers/components/RouterLiveHealthPanel";
+import { RouterManagementPolicyPanel } from "@/features/routers/components/RouterManagementPolicyPanel";
 import { RouterMonitoringPanel } from "@/features/routers/components/RouterMonitoringPanel";
 import { RouterNotesPanel } from "@/features/routers/components/RouterNotesPanel";
 import { RouterPingPanel } from "@/features/routers/components/RouterPingPanel";
@@ -51,8 +52,10 @@ export function RouterDetailsWorkspace({
   onAddNote,
   onAddFlag,
   onRemoveFlag,
+  onSaveManagementPolicy,
   onRefresh,
   refreshing = false,
+  savingManagementPolicy = false,
 }: {
   router: RouterDetail;
   showRouteLink?: boolean;
@@ -69,8 +72,10 @@ export function RouterDetailsWorkspace({
   onAddNote: () => void;
   onAddFlag: () => void;
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
+  onSaveManagementPolicy: (profile: Exclude<RouterDetail["policy"]["profile"], "custom">) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
+  savingManagementPolicy?: boolean;
 }) {
   const navigate = useNavigate();
   const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "wireguard" | "queues" | "firewall" | "network" | "backups" | "terminal" | "topology">("overview");
@@ -173,6 +178,7 @@ export function RouterDetailsWorkspace({
           <RouterPortsPanel router={router} />
           <RouterMonitoringPanel router={router} />
           <RouterPingPanel router={router} />
+          <RouterManagementPolicyPanel router={router} saving={savingManagementPolicy} onSave={onSaveManagementPolicy} />
           <RouterProvisioningPanel router={router} />
           <RouterDiagnosticsPanel routerId={router.id} />
           <RouterFlagsPanel router={router} onRemoveFlag={onRemoveFlag} />
