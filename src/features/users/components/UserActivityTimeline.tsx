@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Clock3 } from 'lucide-react';
 import { ActivityTimeline } from '@/components/data-display/ActivityTimeline';
+import { EmptyState } from '@/components/feedback/EmptyState';
 import { InlineError } from '@/components/feedback/InlineError';
+import { SectionLoader } from '@/components/feedback/SectionLoader';
 import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Button } from '@/components/ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -64,8 +67,9 @@ export function UserActivityTimeline({ user }: { user: UserDetail }) {
           <RefreshButton loading={activityQuery.isFetching} onClick={() => void activityQuery.refetch()} />
         </div>
       </CardHeader>
+      {activityQuery.isPending ? <SectionLoader /> : null}
       {activityQuery.isError ? <InlineError message="Activity data could not be refreshed. Showing the last loaded account snapshot." /> : null}
-      <ActivityTimeline items={timelineItems} />
+      {timelineItems.length ? <ActivityTimeline items={timelineItems} /> : <EmptyState icon={Clock3} title="No activity yet" description="Subscriber activity will appear here as admins, billing, and service workflows interact with the account." />}
       {pagination && pagination.page < pagination.pages ? (
         <div className="pt-4">
           <Button variant="outline" onClick={() => setPage((current) => current + 1)}>

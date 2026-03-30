@@ -12,6 +12,8 @@ import {
   getUserActivity,
   getUserBilling,
   getUserById,
+  getUserFlags,
+  getUserNotes,
   getUserRouters,
   getUserSecurity,
   getUserServices,
@@ -94,14 +96,34 @@ export function useUserSupport(id: string) {
   });
 }
 
+export function useUserNotes(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.userDetail(id), "notes"],
+    queryFn: () => getUserNotes(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useUserFlags(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.userDetail(id), "flags"],
+    queryFn: () => getUserFlags(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 function useUserMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<{ message?: string }>, successMessage: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = String(variables[0]);
-      toast.success(successMessage);
+      toast.success(result?.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: queryKeys.users });
       await queryClient.invalidateQueries({ queryKey: queryKeys.userDetail(id) });
     },
@@ -156,8 +178,8 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: createUser,
-    onSuccess: async () => {
-      toast.success('Subscriber created successfully');
+    onSuccess: async (result) => {
+      toast.success(result?.message || 'Subscriber created successfully');
       await queryClient.invalidateQueries({ queryKey: queryKeys.users });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
@@ -172,8 +194,8 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: (variables: [string, string?]) => deleteUser(...variables),
-    onSuccess: async () => {
-      toast.success('Subscriber deleted');
+    onSuccess: async (result) => {
+      toast.success(result?.message || 'Subscriber deleted');
       await queryClient.invalidateQueries({ queryKey: queryKeys.users });
     },
     onError: (error: Error) => {
@@ -187,9 +209,9 @@ export function useEditUserProfile() {
 
   return useMutation({
     mutationFn: (variables: [string, Parameters<typeof editUserProfile>[1]]) => editUserProfile(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = String(variables[0]);
-      toast.success('Profile updated successfully');
+      toast.success(result?.message || 'Profile updated successfully');
       await queryClient.invalidateQueries({ queryKey: queryKeys.userDetail(id) });
       await queryClient.invalidateQueries({ queryKey: queryKeys.users });
     },

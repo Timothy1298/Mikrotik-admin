@@ -5,6 +5,7 @@ import type {
   VpnServerDetail,
   VpnServerDiagnosticsResult,
   VpnServerDirectoryResponse,
+  VpnServerHealthDetail,
   VpnServerPeerItem,
   VpnServerPaginationMeta,
   VpnServerQuery,
@@ -26,6 +27,21 @@ export async function getVpnServerStats() {
 export async function getVpnServerById(id: string) {
   const { data } = await apiClient.get<{ success: boolean; data: VpnServerDetail }>(endpoints.admin.vpnServerDetail(id));
   return data.data;
+}
+
+export async function getVpnServerHealth(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; health: VpnServerHealthDetail }>(endpoints.admin.vpnServerHealth(id));
+  return data.health;
+}
+
+export async function getVpnServerNotes(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: VpnServerDetail["notes"] }>(endpoints.admin.vpnServerNotes(id));
+  return data.items || [];
+}
+
+export async function getVpnServerFlags(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: VpnServerDetail["flags"] }>(endpoints.admin.vpnServerFlags(id));
+  return data.items || [];
 }
 
 export async function getVpnServerRouters(id: string, params?: { page?: number; limit?: number }) {

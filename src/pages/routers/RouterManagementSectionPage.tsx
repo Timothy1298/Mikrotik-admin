@@ -222,6 +222,8 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
         loading={detailQuery.isPending}
         router={detailQuery.data}
         error={detailQuery.isError}
+        onRefresh={() => void detailQuery.refetch()}
+        refreshing={detailQuery.isFetching}
         onClose={detailDisclosure.onClose}
         onDisable={disableDisclosure.onOpen}
         onDelete={deleteDisclosure.onOpen}

@@ -10,6 +10,7 @@ import {
   getServicePlanById,
   getServicePlans,
   getVouchers,
+  revokeVoucher,
   updateServicePlan,
 } from "@/features/service-plans/api/getServicePlans";
 
@@ -49,9 +50,13 @@ function useServicePlanMutation<TArgs extends unknown[], TResult>(mutationFn: (.
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const planId = variables[0] && typeof variables[0] === "string" ? String(variables[0]) : "";
-      toast.success(successMessage);
+      const resolvedMessage =
+        result && typeof result === "object" && "message" in result && typeof result.message === "string"
+          ? result.message
+          : successMessage;
+      toast.success(resolvedMessage);
       await queryClient.invalidateQueries({ queryKey: servicePlansBase });
       if (planId) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.servicePlanDetail(planId) });
@@ -94,4 +99,8 @@ export function useExportVouchers() {
       toast.error(error.message || "Failed to export vouchers");
     },
   });
+}
+
+export function useRevokeVoucher() {
+  return useServicePlanMutation((code: string, payload?: { reason?: string }) => revokeVoucher(code, payload), "Voucher revoked successfully");
 }

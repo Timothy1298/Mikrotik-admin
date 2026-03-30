@@ -111,8 +111,8 @@ function useLogsSecurityMutation<TArgs extends unknown[]>(mutationFn: (...args: 
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async () => {
-      toast.success(successMessage);
+    onSuccess: async (result) => {
+      toast.success(result.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: logsSecurityBase });
     },
     onError: (error: Error) => {
@@ -146,8 +146,8 @@ export function useMarkSecurityItemReviewed() {
       if (target.userId) return markUserSecurityReviewed(target.userId, reason);
       throw new Error("Review target is required");
     },
-    onSuccess: async () => {
-      toast.success("Review marked successfully");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Review marked successfully");
       await queryClient.invalidateQueries({ queryKey: logsSecurityBase });
     },
     onError: (error: Error) => {

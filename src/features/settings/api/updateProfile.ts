@@ -48,3 +48,8 @@ export async function disableTwoFactor(payload: { currentPassword: string; code:
   const { data } = await apiClient.post<{ success: boolean; message: string; user: AdminProfileResponse }>(endpoints.profile.twoFactorDisable, payload);
   return data;
 }
+
+export async function getResellerStatus() {
+  const { data } = await apiClient.get<{ success: boolean; items?: unknown[]; error?: string }>(endpoints.admin.resellers);
+  return data;
+}

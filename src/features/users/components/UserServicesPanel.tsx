@@ -1,4 +1,5 @@
 import { InlineError } from '@/components/feedback/InlineError';
+import { SectionLoader } from '@/components/feedback/SectionLoader';
 import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -27,6 +28,7 @@ export function UserServicesPanel({ user }: { user: UserDetail }) {
           <RefreshButton loading={servicesQuery.isFetching} onClick={() => void servicesQuery.refetch()} />
         </div>
       </CardHeader>
+      {servicesQuery.isPending ? <SectionLoader /> : null}
       {servicesQuery.isError ? <InlineError message="Services data could not be refreshed. Showing the last loaded account snapshot." /> : null}
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">

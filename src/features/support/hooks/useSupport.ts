@@ -5,6 +5,7 @@ import {
   addTicketFlag,
   addTicketNote,
   assignTicket,
+  assignTicketTeam,
   changeTicketCategory,
   changeTicketPriority,
   changeTicketStatus,
@@ -57,13 +58,13 @@ export const useSupportAgents = () => useQuery({ queryKey: [...supportBase, "age
 export const useTicketNotes = (id: string) => useQuery({ queryKey: [...supportBase, "notes", id], queryFn: () => getTicketNotes(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketFlags = (id: string) => useQuery({ queryKey: [...supportBase, "flags", id], queryFn: () => getTicketFlags(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 
-function useSupportMutation<TArgs extends unknown[], TResult>(mutationFn: (...args: TArgs) => Promise<TResult>, successMessage: string) {
+function useSupportMutation<TArgs extends unknown[], TResult extends { message?: string }>(mutationFn: (...args: TArgs) => Promise<TResult>, successMessage: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = variables[0] ? String(variables[0]) : "";
-      toast.success(successMessage);
+      toast.success(result.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: supportBase });
       if (id) {
         await queryClient.invalidateQueries({ queryKey: [...supportBase, "ticket", id] });
@@ -84,8 +85,8 @@ export function useCreateTicket() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTicket,
-    onSuccess: async () => {
-      toast.success("Ticket created successfully");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Ticket created successfully");
       await queryClient.invalidateQueries({ queryKey: supportBase });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
@@ -96,6 +97,7 @@ export function useCreateTicket() {
 }
 export const useReassignTicket = () => useSupportMutation(reassignTicket, "Ticket reassigned successfully");
 export const useUnassignTicket = () => useSupportMutation(unassignTicket, "Ticket unassigned successfully");
+export const useAssignTicketTeam = () => useSupportMutation(assignTicketTeam, "Ticket team updated successfully");
 export const useChangeTicketStatus = () => useSupportMutation(changeTicketStatus, "Ticket status updated successfully");
 export const useChangeTicketPriority = () => useSupportMutation(changeTicketPriority, "Priority updated successfully");
 export const useChangeTicketCategory = () => useSupportMutation(changeTicketCategory, "Category updated successfully");
@@ -106,6 +108,6 @@ export const useResolveTicket = () => useSupportMutation(resolveTicket, "Ticket 
 export const useCloseTicket = () => useSupportMutation(closeTicket, "Ticket closed successfully");
 export const useReplyToTicket = () => useSupportMutation(replyToTicket, "Reply sent successfully");
 export const useMarkTicketReviewed = () => useSupportMutation(markTicketReviewed, "Ticket reviewed successfully");
-export const useAddTicketNote = () => useSupportMutation(addTicketNote, "Internal note added successfully");
-export const useAddTicketFlag = () => useSupportMutation(addTicketFlag, "Ticket flag added successfully");
-export const useRemoveTicketFlag = () => useSupportMutation(removeTicketFlag, "Ticket flag removed successfully");
+export const useAddTicketNote = () => useSupportMutation(addTicketNote as (...args: Parameters<typeof addTicketNote>) => Promise<{ message?: string }>, "Internal note added successfully");
+export const useAddTicketFlag = () => useSupportMutation(addTicketFlag as (...args: Parameters<typeof addTicketFlag>) => Promise<{ message?: string }>, "Ticket flag added successfully");
+export const useRemoveTicketFlag = () => useSupportMutation(removeTicketFlag as (...args: Parameters<typeof removeTicketFlag>) => Promise<{ message?: string }>, "Ticket flag removed successfully");

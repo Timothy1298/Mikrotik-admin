@@ -1,9 +1,14 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
+import { useRouterMonitoring } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function RouterMonitoringPanel({ router }: { router: RouterDetail }) {
-  const monitoring = router.monitoring;
+  const monitoringQuery = useRouterMonitoring(router.id);
+  const monitoring = monitoringQuery.data || router.monitoring;
   const managementOnly = router.profile.connectionMode === "management_only";
   const ownerTunnel = monitoring.ownerTunnel;
   const transferRx = managementOnly && ownerTunnel ? ownerTunnel.transferRx : monitoring.transferRx;
@@ -16,7 +21,10 @@ export function RouterMonitoringPanel({ router }: { router: RouterDetail }) {
           <CardTitle>Monitoring / health</CardTitle>
           <CardDescription>Runtime health, telemetry recency, and resource-level operational signals.</CardDescription>
         </div>
+        <RefreshButton loading={monitoringQuery.isFetching} onClick={() => void monitoringQuery.refetch()} />
       </CardHeader>
+      {monitoringQuery.isPending ? <SectionLoader /> : null}
+      {monitoringQuery.isError ? <InlineError message="Unable to load router monitoring." /> : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Last seen</p>

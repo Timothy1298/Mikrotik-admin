@@ -11,6 +11,8 @@ export function RouterDetailsModal({
   router,
   error,
   onClose,
+  onRefresh,
+  refreshing,
   ...workspaceProps
 }: {
   open: boolean;
@@ -18,6 +20,8 @@ export function RouterDetailsModal({
   router?: RouterDetail;
   error?: boolean;
   onClose: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
   onDisable: () => void;
   onDelete: () => void;
   onReactivate: () => void;
@@ -47,7 +51,7 @@ export function RouterDetailsModal({
           </Button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
-          {loading ? <PageLoader /> : error || !router ? <ErrorState title="Unable to load router details" description="The router workspace could not be loaded. Retry after checking the admin router API." /> : <RouterDetailsWorkspace router={router} showRouteLink {...workspaceProps} />}
+          {loading ? <PageLoader /> : error || !router ? <ErrorState title="Unable to load router details" description="The router workspace could not be loaded. Retry after checking the admin router API." onAction={onRefresh ? () => void onRefresh() : undefined} /> : <RouterDetailsWorkspace router={router} showRouteLink onRefresh={onRefresh} refreshing={refreshing} {...workspaceProps} />}
         </div>
       </div>
     </div>

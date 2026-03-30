@@ -1,10 +1,15 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { RouterSetupBadge } from "@/features/routers/components/RouterSetupBadge";
+import { useRouterProvisioning } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function RouterProvisioningPanel({ router }: { router: RouterDetail }) {
-  const provisioning = router.provisioning;
+  const provisioningQuery = useRouterProvisioning(router.id);
+  const provisioning = provisioningQuery.data || router.provisioning;
   const managementOnly = router.profile.connectionMode === "management_only";
 
   return (
@@ -18,7 +23,10 @@ export function RouterProvisioningPanel({ router }: { router: RouterDetail }) {
               : "Setup lifecycle, generated configuration state, and provisioning timestamps."}
           </CardDescription>
         </div>
+        <RefreshButton loading={provisioningQuery.isFetching} onClick={() => void provisioningQuery.refetch()} />
       </CardHeader>
+      {provisioningQuery.isPending ? <SectionLoader /> : null}
+      {provisioningQuery.isError ? <InlineError message="Unable to load router provisioning." /> : null}
       <div className="flex flex-wrap items-center gap-3">
         <RouterSetupBadge status={provisioning.state} />
         <span className="rounded-xl border border-background-border bg-background-panel px-3 py-1 text-xs text-text-secondary">{provisioning.configGenerationStatus.replace(/_/g, " ")}</span>

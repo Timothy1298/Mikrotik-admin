@@ -221,6 +221,8 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
         trafficDetail={trafficDetailQuery.data}
         routersLoading={routersQuery.isPending}
         peersLoading={peersQuery.isPending}
+        onRefresh={() => void detailQuery.refetch()}
+        refreshing={detailQuery.isFetching}
         onRefreshRouters={() => void routersQuery.refetch()}
         onRefreshPeers={() => void peersQuery.refetch()}
         onClose={detailDisclosure.onClose}

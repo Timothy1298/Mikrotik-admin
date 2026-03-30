@@ -11,6 +11,8 @@ export function UserDetailsModal({
   user,
   error,
   onClose,
+  onRefresh,
+  refreshing,
   ...workspaceProps
 }: {
   open: boolean;
@@ -18,6 +20,8 @@ export function UserDetailsModal({
   user?: UserDetail;
   error?: boolean;
   onClose: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
   onSuspend: () => void;
   onReactivate: () => void;
   onVerify: () => void;
@@ -46,7 +50,7 @@ export function UserDetailsModal({
           </Button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
-          {loading ? <PageLoader /> : error || !user ? <ErrorState title="Unable to load user details" description="The account workspace could not be loaded. Retry after checking the admin users API." /> : <UserDetailsWorkspace user={user} showRouteLink {...workspaceProps} />}
+          {loading ? <PageLoader /> : error || !user ? <ErrorState title="Unable to load user details" description="The account workspace could not be loaded. Retry after checking the admin users API." onAction={onRefresh ? () => void onRefresh() : undefined} /> : <UserDetailsWorkspace user={user} showRouteLink onRefresh={onRefresh} refreshing={refreshing} {...workspaceProps} />}
         </div>
       </div>
     </div>

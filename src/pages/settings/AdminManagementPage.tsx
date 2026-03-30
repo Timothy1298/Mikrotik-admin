@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/app/store/auth.store";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
@@ -157,6 +157,9 @@ export function AdminManagementPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null);
   const [deletingAdmin, setDeletingAdmin] = useState<AdminAccount | null>(null);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const canManage = can(currentUser || undefined, permissions.settingsManage);
 
   const metrics = useMemo(() => {
@@ -164,13 +167,31 @@ export function AdminManagementPage() {
     const active = items.filter((item) => item.isActive).length;
     const deactivated = items.length - active;
     const rolesInUse = new Set(items.map((item) => item.adminRole).filter(Boolean)).size;
+    const recentLogins = items.filter((item) => item.lastLoginAt && Date.now() - new Date(item.lastLoginAt).getTime() <= 7 * 24 * 60 * 60 * 1000).length;
     return [
       { title: "Total Admins", value: String(items.length), progress: 100 },
       { title: "Active Admins", value: String(active), progress: items.length ? Math.round((active / items.length) * 100) : 0 },
       { title: "Roles in Use", value: String(rolesInUse), progress: Math.min(100, rolesInUse * 20) },
+      { title: "Logged In 7d", value: String(recentLogins), progress: items.length ? Math.round((recentLogins / items.length) * 100) : 0 },
       { title: "Deactivated", value: String(deactivated), progress: items.length ? Math.round((deactivated / items.length) * 100) : 0 },
     ];
   }, [adminsQuery.data]);
+
+  const filteredAdmins = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return (adminsQuery.data || []).filter((admin) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        admin.name.toLowerCase().includes(normalizedSearch) ||
+        admin.email.toLowerCase().includes(normalizedSearch);
+      const matchesRole = !roleFilter || admin.adminRole === roleFilter;
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === "active" && admin.isActive) ||
+        (statusFilter === "inactive" && !admin.isActive);
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [adminsQuery.data, roleFilter, search, statusFilter]);
 
   if (!canManage) {
     return <Navigate to={appRoutes.forbidden} replace />;
@@ -185,15 +206,64 @@ export function AdminManagementPage() {
     <SettingsShell
       title="Admin Accounts"
       description="Manage admin users, roles, and access permissions for the ISP control panel."
-      actions={<Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>Add Admin</Button>}
+      actions={
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            leftIcon={<RefreshCw className="h-4 w-4" />}
+            isLoading={adminsQuery.isFetching}
+            onClick={() => void adminsQuery.refetch()}
+          >
+            Refresh
+          </Button>
+          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setCreateOpen(true)}>Add Admin</Button>
+        </div>
+      }
     >
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid gap-4 xl:grid-cols-5">
         {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
       </div>
 
+      <Card className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Input
+            label="Search admins"
+            placeholder="Search by name or email"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            label="Role"
+            value={roleFilter}
+            onChange={(event) => setRoleFilter(event.target.value)}
+            options={[
+              { label: "All roles", value: "" },
+              { label: "Super Admin", value: "super_admin" },
+              { label: "Network Admin", value: "network_admin" },
+              { label: "Billing Admin", value: "billing_admin" },
+              { label: "Support Admin", value: "support_admin" },
+              { label: "Read Only", value: "read_only" },
+            ]}
+          />
+          <Select
+            label="Status"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            options={[
+              { label: "All statuses", value: "" },
+              { label: "Active", value: "active" },
+              { label: "Deactivated", value: "inactive" },
+            ]}
+          />
+        </div>
+        <p className="text-sm text-text-secondary">
+          Keep admin access lean and role-scoped. Use deactivation for temporary access removal, and reserve deletion for retired identities that should leave the audit surface.
+        </p>
+      </Card>
+
       <Card>
         <DataTable
-          data={adminsQuery.data || []}
+          data={filteredAdmins}
           columns={[
             {
               header: "Admin",
@@ -220,11 +290,21 @@ export function AdminManagementPage() {
                     <MoreHorizontal className="h-4 w-4 text-text-muted" />
                     <ActionButton disabled={isCurrent} onClick={(event) => { event.stopPropagation(); setEditingAdmin(row.original); }}>Edit role</ActionButton>
                     {row.original.isActive ? (
-                      <ActionButton disabled={isCurrent} onClick={(event) => { event.stopPropagation(); void deactivateMutation.mutateAsync([row.original.id, "Deactivated from admin management page"] as never); }}>Deactivate</ActionButton>
+                      <ActionButton
+                        disabled={isCurrent || deactivateMutation.isPending}
+                        onClick={(event) => { event.stopPropagation(); void deactivateMutation.mutateAsync([row.original.id, "Deactivated from admin management page"] as never); }}
+                      >
+                        {deactivateMutation.isPending ? "Deactivating..." : "Deactivate"}
+                      </ActionButton>
                     ) : (
-                      <ActionButton onClick={(event) => { event.stopPropagation(); void activateMutation.mutateAsync([row.original.id, "Activated from admin management page"] as never); }}>Activate</ActionButton>
+                      <ActionButton
+                        disabled={activateMutation.isPending}
+                        onClick={(event) => { event.stopPropagation(); void activateMutation.mutateAsync([row.original.id, "Activated from admin management page"] as never); }}
+                      >
+                        {activateMutation.isPending ? "Activating..." : "Activate"}
+                      </ActionButton>
                     )}
-                    <ActionButton disabled={isCurrent} onClick={(event) => { event.stopPropagation(); setDeletingAdmin(row.original); }}>
+                    <ActionButton disabled={isCurrent || adminsQuery.isFetching} onClick={(event) => { event.stopPropagation(); setDeletingAdmin(row.original); }}>
                       <span className="inline-flex items-center gap-1 text-danger"><Trash2 className="h-3.5 w-3.5" />Delete</span>
                     </ActionButton>
                   </div>
@@ -233,7 +313,7 @@ export function AdminManagementPage() {
             },
           ]}
           emptyTitle="No admin accounts"
-          emptyDescription="Create the first scoped admin to start enforcing role-based access."
+          emptyDescription={search || roleFilter || statusFilter ? "No admin accounts match the current filters." : "Create the first scoped admin to start enforcing role-based access."}
         />
       </Card>
 

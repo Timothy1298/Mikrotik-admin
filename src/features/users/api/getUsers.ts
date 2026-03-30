@@ -28,7 +28,7 @@ export async function getUserById(id: string) {
 }
 
 export async function createUser(payload: CreateUserPayload) {
-  const { data } = await apiClient.post<{ success: boolean; user: CreateUserResponse }>(endpoints.admin.createUser, payload);
+  const { data } = await apiClient.post<{ success: boolean; message?: string; user: CreateUserResponse }>(endpoints.admin.createUser, payload);
   return data;
 }
 
@@ -70,6 +70,16 @@ export async function getUserSecurity(id: string) {
 export async function getUserSupport(id: string) {
   const { data } = await apiClient.get<{ success: boolean; summary: UserDetail["support"]["summary"]; items: UserDetail["support"]["tickets"]; pagination: PaginationMeta }>(endpoints.admin.userSupport(id));
   return { summary: data.summary, tickets: data.items || [], pagination: data.pagination };
+}
+
+export async function getUserNotes(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: UserDetail["notes"] }>(endpoints.admin.userNotes(id));
+  return data.items || [];
+}
+
+export async function getUserFlags(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; riskStatus?: string; items: UserDetail["flags"] }>(endpoints.admin.userFlags(id));
+  return { items: data.items || [], riskStatus: data.riskStatus || null };
 }
 
 export async function suspendUser(id: string, reason: string) {

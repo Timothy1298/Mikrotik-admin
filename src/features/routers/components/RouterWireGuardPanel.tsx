@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { appRoutes } from "@/config/routes";
-import { useDiscoverRouterDownstreamMikrotiks, useTrackRouterRuntimePeer } from "@/features/routers/hooks/useRouter";
+import { useDiscoverRouterDownstreamMikrotiks, useRouterDownstreamMikrotiks, useTrackRouterRuntimePeer } from "@/features/routers/hooks/useRouter";
 import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTunnelHealthBadge";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatBytes } from "@/lib/formatters/bytes";
@@ -31,6 +32,7 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
   const navigate = useNavigate();
   const trackPeerMutation = useTrackRouterRuntimePeer();
   const downstreamDiscoveryMutation = useDiscoverRouterDownstreamMikrotiks();
+  const downstreamDiscoveryQuery = useRouterDownstreamMikrotiks(router.id);
   const [trackingPeerId, setTrackingPeerId] = useState<string | null>(null);
   const [trackName, setTrackName] = useState("");
   const [trackReason, setTrackReason] = useState("");
@@ -52,7 +54,7 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
   const primary = wireguard.primaryTunnel;
   const runtime = wireguard.runtime;
   const trackingSource = wireguard.trackingSource;
-  const downstreamDiscovery = router.downstreamDiscovery;
+  const downstreamDiscovery = downstreamDiscoveryQuery.data || router.downstreamDiscovery;
   const trackingPeer = useMemo(
     () => runtime?.peers.find((peer) => String(peer.id || "") === trackingPeerId) || null,
     [runtime?.peers, trackingPeerId],
@@ -473,6 +475,7 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <RefreshButton loading={downstreamDiscoveryQuery.isFetching || downstreamDiscoveryMutation.isPending} onClick={() => void downstreamDiscoveryQuery.refetch()} />
               <Button
                 type="button"
                 variant="outline"

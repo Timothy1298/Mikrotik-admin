@@ -1,4 +1,5 @@
 import { InlineError } from '@/components/feedback/InlineError';
+import { SectionLoader } from '@/components/feedback/SectionLoader';
 import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useUserSecurity } from '@/features/users/hooks';
@@ -15,6 +16,7 @@ export function UserSecurityPanel({ user }: { user: UserDetail }) {
     <div className="grid gap-6">
       <Card>
         <CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>Security summary</CardTitle><CardDescription>Login history, failed attempts, and risk posture.</CardDescription></div><RefreshButton loading={securityQuery.isFetching} onClick={() => void securityQuery.refetch()} /></div></CardHeader>
+        {securityQuery.isPending ? <SectionLoader /> : null}
         {securityQuery.isError ? <InlineError message="Security data could not be refreshed. Showing the last loaded account snapshot." /> : null}
         <div className="space-y-4 text-sm text-text-secondary">
           <div className="flex items-center justify-between"><span>Risk status</span><UserStatusBadge status={security.riskStatus} /></div>

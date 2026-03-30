@@ -8,23 +8,23 @@ export async function getAdminAccounts() {
 }
 
 export async function createAdminAccount(payload: CreateAdminPayload) {
-  const { data } = await apiClient.post<{ success: boolean; admin: AdminAccount }>(endpoints.admin.adminAccounts, payload);
-  return data.admin;
+  const { data } = await apiClient.post<{ success: boolean; message?: string; admin: AdminAccount }>(endpoints.admin.adminAccounts, payload);
+  return data;
 }
 
 export async function updateAdminAccount(id: string, payload: UpdateAdminPayload) {
-  const { data } = await apiClient.put<{ success: boolean; admin: AdminAccount }>(endpoints.admin.adminAccountDetail(id), payload);
-  return data.admin;
+  const { data } = await apiClient.put<{ success: boolean; message?: string; admin: AdminAccount }>(endpoints.admin.adminAccountDetail(id), payload);
+  return data;
 }
 
 export async function deactivateAdmin(id: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string; admin: AdminAccount }>(endpoints.admin.deactivateAdminAccount(id), { reason });
-  return data.admin;
+  return data;
 }
 
 export async function activateAdmin(id: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string; admin: AdminAccount }>(endpoints.admin.activateAdminAccount(id), { reason });
-  return data.admin;
+  return data;
 }
 
 export async function deleteAdmin(id: string, reason: string) {

@@ -34,11 +34,11 @@ export function IncidentsTable({
       cell: ({ row }) => (
         <Dropdown items={[
           { label: "Open details", onClick: () => onOpen(row.original) },
-          { label: "Acknowledge", onClick: () => onAcknowledge(row.original) },
-          { label: "Resolve", onClick: () => onResolve(row.original) },
-          { label: "Mark reviewed", onClick: () => onMarkReviewed(row.original) },
+          row.original.status === "open" ? { label: "Acknowledge", onClick: () => onAcknowledge(row.original) } : null,
+          row.original.status !== "resolved" ? { label: "Resolve", onClick: () => onResolve(row.original) } : null,
+          row.original.status === "resolved" ? { label: "Mark reviewed", onClick: () => onMarkReviewed(row.original) } : null,
           { label: "Add note", onClick: () => onAddNote(row.original) },
-        ]} />
+        ].filter(Boolean) as Array<{ label: string; onClick: () => void }>} />
       ),
     },
   ], [onAcknowledge, onAddNote, onMarkReviewed, onOpen, onResolve]);

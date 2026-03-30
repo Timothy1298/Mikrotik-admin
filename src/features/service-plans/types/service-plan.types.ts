@@ -48,3 +48,7 @@ export type GenerateVouchersPayload = {
   validityDays?: number;
   batchName?: string;
 };
+
+export type RevokeVoucherPayload = {
+  reason?: string;
+};

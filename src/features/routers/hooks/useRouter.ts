@@ -7,7 +7,15 @@ import {
   adoptRouterOnboardingClaim,
   cancelRouterOnboardingClaim,
   createRouterAdmin,
+  getRouterConnectivity,
+  getRouterDiagnostics,
   getRouterDiscoveryResults,
+  getRouterDownstreamMikrotiks,
+  getRouterFlags,
+  getRouterMonitoring,
+  getRouterNotes,
+  getRouterPorts,
+  getRouterProvisioning,
   createRouterOnboardingClaim,
   deleteRouter,
   disableRouter,
@@ -77,6 +85,88 @@ export function useRouterInterfaces(id: string) {
   });
 }
 
+export function useRouterConnectivity(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "connectivity"],
+    queryFn: () => getRouterConnectivity(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterPorts(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "ports"],
+    queryFn: () => getRouterPorts(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterMonitoring(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "monitoring"],
+    queryFn: () => getRouterMonitoring(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterProvisioning(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "provisioning"],
+    queryFn: () => getRouterProvisioning(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterDiagnostics(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "diagnostics"],
+    queryFn: () => getRouterDiagnostics(id),
+    enabled: Boolean(id),
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterNotes(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "notes"],
+    queryFn: () => getRouterNotes(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterFlags(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "flags"],
+    queryFn: () => getRouterFlags(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useRouterDownstreamMikrotiks(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.routerDetail(id), "downstream-mikrotiks"],
+    queryFn: () => getRouterDownstreamMikrotiks(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+}
+
 export function useRouterOnboardingClaims(params?: { status?: string }) {
   return useQuery({
     queryKey: [...queryKeys.routerOnboardingClaims, params],
@@ -106,9 +196,9 @@ function useRouterMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs)
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = String(variables[0]);
-      toast.success(successMessage);
+      toast.success(result?.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
       await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(id) });
     },

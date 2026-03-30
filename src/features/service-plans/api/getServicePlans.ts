@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
-import type { CreatePlanPayload, GenerateVouchersPayload, ServicePlan, UpdatePlanPayload, Voucher } from "@/features/service-plans/types/service-plan.types";
+import type { CreatePlanPayload, GenerateVouchersPayload, RevokeVoucherPayload, ServicePlan, UpdatePlanPayload, Voucher } from "@/features/service-plans/types/service-plan.types";
 
 function triggerCsvDownload(blobPart: BlobPart, filename: string) {
   const url = URL.createObjectURL(new Blob([blobPart], { type: "text/csv" }));
@@ -22,18 +22,18 @@ export async function getServicePlanById(id: string) {
 }
 
 export async function createServicePlan(payload: CreatePlanPayload) {
-  const { data } = await apiClient.post<{ success: boolean; plan: ServicePlan }>(endpoints.admin.servicePlans, payload);
-  return data.plan;
+  const { data } = await apiClient.post<{ success: boolean; message?: string; plan: ServicePlan }>(endpoints.admin.servicePlans, payload);
+  return data;
 }
 
 export async function updateServicePlan(id: string, payload: UpdatePlanPayload) {
-  const { data } = await apiClient.put<{ success: boolean; plan: ServicePlan }>(endpoints.admin.servicePlanDetail(id), payload);
-  return data.plan;
+  const { data } = await apiClient.put<{ success: boolean; message?: string; plan: ServicePlan }>(endpoints.admin.servicePlanDetail(id), payload);
+  return data;
 }
 
 export async function deactivateServicePlan(id: string) {
-  const { data } = await apiClient.post<{ success: boolean; message: string; plan: ServicePlan }>(endpoints.admin.deactivateServicePlan(id));
-  return data.plan;
+  const { data } = await apiClient.post<{ success: boolean; message: string; warning?: string; plan: ServicePlan }>(endpoints.admin.deactivateServicePlan(id));
+  return data;
 }
 
 export async function deleteServicePlan(id: string) {
@@ -54,4 +54,9 @@ export async function getVouchers(planId: string, params?: { status?: string; ba
 export async function exportVouchers(params: { planId?: string; batchId?: string }) {
   const { data } = await apiClient.get<Blob>(endpoints.admin.exportVouchers, { params, responseType: "blob" });
   triggerCsvDownload(data, `vouchers-${Date.now()}.csv`);
+}
+
+export async function revokeVoucher(code: string, payload?: RevokeVoucherPayload) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; voucher: Voucher }>(endpoints.admin.revokeVoucher(code), payload || {});
+  return data;
 }

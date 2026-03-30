@@ -1,16 +1,24 @@
 import { useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
+import { logsSecurityTabs } from "@/config/module-tabs";
 import {
+  useActivityLog,
   useAcknowledgeSecurityEvent,
+  useAudit,
   useMarkSecurityItemReviewed,
   useResolveSecurityEvent,
   useRevokeAllUserSessions,
   useRevokeSession,
+  useSecurityEvent,
+  useUserSecuritySummary,
 } from "@/features/logs-security/hooks/useLogsSecurity";
 import type { AuditTrailItem, LogsSecurityDetailItem, SecurityNote } from "@/features/logs-security/types/logs-security.types";
 import { formatDateTime } from "@/lib/formatters/date";
@@ -89,14 +97,45 @@ function getTitle(item: LogsSecurityDetailItem) {
 export function LogsSecurityWorkspacePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { kind = "", id = "" } = useParams();
   const state = (location.state || {}) as LogsWorkspaceState;
-  const detail = useMemo(() => state.detail || null, [state.detail]);
+  const activityItemQuery = useActivityLog(kind === "activity" ? id : "");
+  const auditItemQuery = useAudit(kind === "audit" ? id : "");
+  const securityEventQuery = useSecurityEvent(kind === "security-event" ? id : "");
+  const userSecurityQuery = useUserSecuritySummary(kind === "user-security" ? id : "");
+
+  const detail = useMemo<LogsSecurityDetailItem | null>(() => {
+    if (state.detail) return state.detail;
+    if (kind === "activity" && activityItemQuery.data) return { kind: "activity", item: activityItemQuery.data };
+    if (kind === "audit" && auditItemQuery.data) return { kind: "audit", item: auditItemQuery.data };
+    if (kind === "security-event" && securityEventQuery.data) return { kind: "security-event", item: securityEventQuery.data };
+    if (kind === "user-security" && userSecurityQuery.data) return { kind: "user-security", item: userSecurityQuery.data };
+    return null;
+  }, [activityItemQuery.data, auditItemQuery.data, kind, securityEventQuery.data, state.detail, userSecurityQuery.data]);
 
   const acknowledgeMutation = useAcknowledgeSecurityEvent();
   const resolveMutation = useResolveSecurityEvent();
   const reviewedMutation = useMarkSecurityItemReviewed();
   const revokeSessionMutation = useRevokeSession();
   const revokeAllMutation = useRevokeAllUserSessions();
+
+  const isPending = !state.detail && (
+    activityItemQuery.isPending
+    || auditItemQuery.isPending
+    || securityEventQuery.isPending
+    || userSecurityQuery.isPending
+  );
+
+  const refreshWorkspace = () => {
+    if (kind === "activity") void activityItemQuery.refetch();
+    if (kind === "audit") void auditItemQuery.refetch();
+    if (kind === "security-event") void securityEventQuery.refetch();
+    if (kind === "user-security") void userSecurityQuery.refetch();
+  };
+
+  if (isPending) {
+    return <SectionLoader />;
+  }
 
   if (!detail) {
     return <ErrorState title="Unable to load logs workspace" description="This logs workspace needs a selected record from the logs tables. Open the item again from Logs, Audit & Security." onAction={() => navigate(appRoutes.logsSecuritySecurityOverview)} />;
@@ -119,7 +158,14 @@ export function LogsSecurityWorkspacePage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title={userName} description="User-classified logs and security workspace for audit context, session review, and investigation actions." meta={userEmail} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={userName} description="User-classified logs and security workspace for audit context, session review, and investigation actions." meta={userEmail} />
+        <RefreshButton
+          loading={activityItemQuery.isFetching || auditItemQuery.isFetching || securityEventQuery.isFetching || userSecurityQuery.isFetching}
+          onClick={refreshWorkspace}
+        />
+      </div>
+      <Tabs tabs={[...logsSecurityTabs]} value={appRoutes.logsSecuritySecurityOverview} onChange={navigate} />
 
       <Card className="space-y-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -138,11 +184,11 @@ export function LogsSecurityWorkspacePage() {
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Security tools</p>
             <div className="flex flex-wrap gap-2">
-              {detail.kind === "security-event" ? <Button variant="outline" onClick={() => acknowledgeMutation.mutate([detail.item.eventId, "Workspace acknowledgment"] as never)}>Acknowledge</Button> : null}
-              {detail.kind === "security-event" ? <Button variant="outline" onClick={() => resolveMutation.mutate([detail.item.eventId, "Workspace resolution"] as never)}>Resolve</Button> : null}
-              {detail.kind === "security-event" ? <Button variant="outline" onClick={() => reviewedMutation.mutate([{ eventId: detail.item.eventId }, "Workspace review"], { })}>Mark reviewed</Button> : null}
-              {detail.kind === "session" ? <Button variant="outline" onClick={() => revokeSessionMutation.mutate([detail.item.sessionId, "Workspace revoke"] as never)}>Revoke session</Button> : null}
-              {detail.kind === "user-security" ? <Button variant="outline" onClick={() => revokeAllMutation.mutate([detail.item.user.id, "Workspace revoke all"] as never)}>Revoke all sessions</Button> : null}
+              {detail.kind === "security-event" ? <Button variant="outline" isLoading={acknowledgeMutation.isPending} onClick={() => acknowledgeMutation.mutate([detail.item.eventId, "Workspace acknowledgment"] as never)}>Acknowledge</Button> : null}
+              {detail.kind === "security-event" ? <Button variant="outline" isLoading={resolveMutation.isPending} onClick={() => resolveMutation.mutate([detail.item.eventId, "Workspace resolution"] as never)}>Resolve</Button> : null}
+              {detail.kind === "security-event" ? <Button variant="outline" isLoading={reviewedMutation.isPending} onClick={() => reviewedMutation.mutate([{ eventId: detail.item.eventId }, "Workspace review"])}>Mark reviewed</Button> : null}
+              {detail.kind === "session" ? <Button variant="outline" isLoading={revokeSessionMutation.isPending} onClick={() => revokeSessionMutation.mutate([detail.item.sessionId, "Workspace revoke"] as never)}>Revoke session</Button> : null}
+              {detail.kind === "user-security" ? <Button variant="outline" isLoading={revokeAllMutation.isPending} onClick={() => revokeAllMutation.mutate([detail.item.user.id, "Workspace revoke all"] as never)}>Revoke all sessions</Button> : null}
               <Button variant="ghost" onClick={() => navigate(appRoutes.logsSecuritySecurityOverview)}>Back to logs</Button>
             </div>
           </div>

@@ -1,9 +1,16 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
+import { useVpnServerFlags } from "@/features/vpn-servers/hooks/useVpnServers";
 import type { VpnServerDetail } from "@/features/vpn-servers/types/vpn-server.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function VpnServerFlagsPanel({ server, onRemoveFlag }: { server: VpnServerDetail; onRemoveFlag: (flag: VpnServerDetail["flags"][number]) => void }) {
+  const flagsQuery = useVpnServerFlags(server.id);
+  const flags = flagsQuery.data || server.flags;
+
   return (
     <Card>
       <CardHeader>
@@ -11,9 +18,12 @@ export function VpnServerFlagsPanel({ server, onRemoveFlag }: { server: VpnServe
           <CardTitle>Flags</CardTitle>
           <CardDescription>Active infrastructure flags attached to this server.</CardDescription>
         </div>
+        <RefreshButton loading={flagsQuery.isFetching} onClick={() => void flagsQuery.refetch()} />
       </CardHeader>
       <div className="space-y-3">
-        {server.flags.length ? server.flags.map((flag) => (
+        {flagsQuery.isPending ? <SectionLoader /> : null}
+        {flagsQuery.isError ? <InlineError message="Unable to load VPN server flags." /> : null}
+        {flags.length ? flags.map((flag) => (
           <div key={flag.id || `${flag.flag}-${flag.createdAt}`} className="rounded-2xl border border-background-border bg-background-panel p-4">
             <div className="flex items-start justify-between gap-3">
               <div>

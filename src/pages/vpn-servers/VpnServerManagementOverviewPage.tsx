@@ -5,6 +5,7 @@ import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { TableLoader } from "@/components/feedback/TableLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { StatCard } from "@/components/shared/StatCard";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,11 @@ export function VpnServerManagementOverviewPage() {
   const statsQuery = useVpnServerStats();
   const recentServersQuery = useVpnServers({ limit: 8, sortBy: "createdAt", sortOrder: "desc" });
   const attentionServersQuery = useVpnServers({ healthStatus: "degraded", limit: 5, sortBy: "lastHeartbeatAt", sortOrder: "asc" });
+  const refreshOverview = () => {
+    void statsQuery.refetch();
+    void recentServersQuery.refetch();
+    void attentionServersQuery.refetch();
+  };
 
   if (statsQuery.isPending) return <TableLoader />;
   if (statsQuery.isError || !statsQuery.data) {
@@ -41,13 +47,15 @@ export function VpnServerManagementOverviewPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title="VPN Server Management" description="Command-center overview for infrastructure health, maintenance, peer distribution, router impact, and VPN fleet operations." meta="Infrastructure operations" />
-
-      {can(user, permissions.vpnServersManage) ? (
-        <div className="flex justify-end">
-          <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Server</Button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title="VPN Server Management" description="Command-center overview for infrastructure health, maintenance, peer distribution, router impact, and VPN fleet operations." meta="Infrastructure operations" />
+        <div className="flex flex-wrap gap-3">
+          <RefreshButton loading={statsQuery.isFetching || recentServersQuery.isFetching || attentionServersQuery.isFetching} onClick={refreshOverview} />
+          {can(user, permissions.vpnServersManage) ? (
+            <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Server</Button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
 
       <Tabs tabs={[...vpnServerManagementTabs]} value={location.pathname} onChange={navigate} />
 

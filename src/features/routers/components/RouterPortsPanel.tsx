@@ -1,9 +1,14 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { RouterPortStatusBadge } from "@/features/routers/components/RouterPortStatusBadge";
+import { useRouterPorts } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 
 export function RouterPortsPanel({ router }: { router: RouterDetail }) {
-  const ports = router.accessPorts;
+  const portsQuery = useRouterPorts(router.id);
+  const ports = portsQuery.data || router.accessPorts;
   const managementOnly = router.profile.connectionMode === "management_only";
 
   return (
@@ -17,7 +22,10 @@ export function RouterPortsPanel({ router }: { router: RouterDetail }) {
               : "Winbox, SSH, and API mappings plus forwarding health visibility."}
           </CardDescription>
         </div>
+        <RefreshButton loading={portsQuery.isFetching} onClick={() => void portsQuery.refetch()} />
       </CardHeader>
+      {portsQuery.isPending ? <SectionLoader /> : null}
+      {portsQuery.isError ? <InlineError message="Unable to load router ports." /> : null}
       {managementOnly ? (
         <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-secondary">
           This router was attached for management only. Public proxy ports are not allocated. Use the stored local RouterOS API access path instead.

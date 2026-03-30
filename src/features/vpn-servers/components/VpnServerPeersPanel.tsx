@@ -3,6 +3,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -23,7 +24,7 @@ export function VpnServerPeersPanel({ items, loading, onRefresh }: { items: VpnS
         <RefreshButton loading={loading} onClick={onRefresh} />
       </CardHeader>
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-text-secondary">Loading peers…</p> : items.length ? items.map((peer) => {
+        {loading ? <SectionLoader /> : items.length ? items.map((peer) => {
           const healthTone = peer.health === "healthy" || peer.health === "fresh" ? "success" : peer.health === "stale" ? "warning" : "danger";
           return (
             <div key={peer.id} className="rounded-2xl border border-background-border bg-background-panel p-4">
@@ -37,7 +38,7 @@ export function VpnServerPeersPanel({ items, loading, onRefresh }: { items: VpnS
                     </span>
                     <Badge tone={healthTone}>{peer.health}</Badge>
                   </div>
-                  <p className="text-xs text-text-muted">↓ {formatBytes(peer.transferRx)} / ↑ {formatBytes(peer.transferTx)}</p>
+                  <p className="text-xs text-text-muted">RX {formatBytes(peer.transferRx)} / TX {formatBytes(peer.transferTx)}</p>
                   <p className="text-xs text-text-secondary">
                     {peer.router ? <Link className="transition hover:text-text-primary" to={appRoutes.routerDetail(peer.router.id)}>{peer.router.name}</Link> : "No linked router"}
                   </p>

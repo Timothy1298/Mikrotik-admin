@@ -126,6 +126,11 @@ export type BillingSubscriptionRow = {
   accountStatus: string;
   createdAt: string;
   updatedAt: string;
+  planNames?: string[];
+  subscriptionCount?: number;
+  activeSubscriptionCount?: number;
+  primarySubscriptionId?: string;
+  primaryPriceSummary?: number;
 };
 
 export type BillingTransaction = {

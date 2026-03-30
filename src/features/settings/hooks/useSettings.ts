@@ -8,6 +8,7 @@ import {
   enableTwoFactor,
   getAdminProfile,
   getPlatformConfig,
+  getResellerStatus,
   startTwoFactorSetup,
   updateAdminProfile,
 } from "@/features/settings/api/updateProfile";
@@ -42,13 +43,23 @@ export function useUpdateAdminProfile() {
           name: data.user.name || variables.name || auth.user.name,
         }, auth.sessionExpiresAt);
       }
-      toast.success("Profile updated successfully");
+      toast.success(data.message || "Profile updated successfully");
       await queryClient.invalidateQueries({ queryKey: queryKeys.me });
       await queryClient.invalidateQueries({ queryKey: queryKeys.settings });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update profile");
     },
+  });
+}
+
+export function useResellerStatus() {
+  return useQuery({
+    queryKey: queryKeys.resellerStatus,
+    queryFn: getResellerStatus,
+    retry: false,
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
   });
 }
 

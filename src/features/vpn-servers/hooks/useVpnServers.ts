@@ -11,6 +11,9 @@ import {
   enableServerMaintenance,
   getVpnServerById,
   getVpnServerDiagnostics,
+  getVpnServerFlags,
+  getVpnServerHealth,
+  getVpnServerNotes,
   getVpnServerPeers,
   getVpnServerRouters,
   getVpnServers,
@@ -49,6 +52,17 @@ export function useVpnServer(id: string) {
     queryFn: () => getVpnServerById(id),
     enabled: Boolean(id),
     staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useVpnServerHealth(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "health"],
+    queryFn: () => getVpnServerHealth(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchInterval: 30_000,
     refetchOnWindowFocus: false,
   });
 }
@@ -104,14 +118,34 @@ export function useVpnServerDiagnostics(id: string) {
   });
 }
 
+export function useVpnServerNotes(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "notes"],
+    queryFn: () => getVpnServerNotes(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useVpnServerFlags(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.vpnServerDetail(id), "flags"],
+    queryFn: () => getVpnServerFlags(id),
+    enabled: Boolean(id),
+    staleTime: 20_000,
+    refetchOnWindowFocus: false,
+  });
+}
+
 function useVpnServerMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<{ message?: string }>, successMessage: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = variables[0] ? String(variables[0]) : "";
-      toast.success(successMessage);
+      toast.success(result?.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: queryKeys.vpnServers });
       if (id) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.vpnServerDetail(id) });
@@ -128,8 +162,8 @@ export function useAddVpnServer() {
 
   return useMutation({
     mutationFn: (payload: Parameters<typeof addVpnServer>[0]) => addVpnServer(payload),
-    onSuccess: async () => {
-      toast.success("VPN server added successfully");
+    onSuccess: async (result) => {
+      toast.success(result?.message || "VPN server added successfully");
       await queryClient.invalidateQueries({ queryKey: queryKeys.vpnServers });
     },
     onError: (error: Error) => {

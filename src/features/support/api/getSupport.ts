@@ -13,6 +13,7 @@ import type {
   SupportMessage,
   SupportNote,
   SupportOverview,
+  SupportTeam,
   SupportTeamWorkload,
   SupportTicketDetail,
   SupportTicketRow,
@@ -115,6 +116,11 @@ export async function reassignTicket(ticketId: string, assigneeId: string, reaso
 
 export async function unassignTicket(ticketId: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.supportUnassignTicket(ticketId), { reason });
+  return data;
+}
+
+export async function assignTicketTeam(ticketId: string, team: SupportTeam, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; team: SupportTeam }>(endpoints.admin.supportAssignTicketTeam(ticketId), { team, reason });
   return data;
 }
 

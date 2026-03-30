@@ -9,7 +9,7 @@ import type { BillingAccountDetail } from "@/features/billing/types/billing.type
 import { formatCurrency } from "@/lib/formatters/currency";
 import { formatDateTime } from "@/lib/formatters/date";
 
-export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSuspend, onReactivate, onApplyGracePeriod, onResendInvoice, onRecordPayment, onCreateInvoice, onPayNow, onRunEnforcement }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void; onExtendTrial?: () => void; onSuspend?: () => void; onReactivate?: () => void; onApplyGracePeriod?: () => void; onResendInvoice?: () => void; onRecordPayment?: () => void; onCreateInvoice?: () => void; onPayNow?: () => void; onRunEnforcement?: () => void }) {
+export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSuspend, onReactivate, onApplyGracePeriod, onResendInvoice, onRecordPayment, onCreateInvoice, onPayNow, onRunEnforcement, onOpenWorkspace, onRefresh, refreshing = false }: { open: boolean; detail: BillingAccountDetail | null; onClose: () => void; onExtendTrial?: () => void; onSuspend?: () => void; onReactivate?: () => void; onApplyGracePeriod?: () => void; onResendInvoice?: () => void; onRecordPayment?: () => void; onCreateInvoice?: () => void; onPayNow?: () => void; onRunEnforcement?: () => void; onOpenWorkspace?: () => void; onRefresh?: () => void; refreshing?: boolean }) {
   if (!open || !detail) return null;
   const paymentActionVisible = ["past_due", "expired", "suspended"].includes(detail.overview.subscriptionStatus) || detail.overview.openInvoices > 0;
   return (
@@ -77,6 +77,8 @@ export function BillingDetailsModal({ open, detail, onClose, onExtendTrial, onSu
         </div>
       </Card>
       <div className="mt-2 flex flex-wrap gap-2 border-t border-background-border pt-4">
+        {onRefresh ? <Button variant="ghost" onClick={onRefresh} isLoading={refreshing}>Refresh</Button> : null}
+        {onOpenWorkspace ? <Button variant="ghost" onClick={onOpenWorkspace}>Open workspace</Button> : null}
         {detail.account.accountStatus !== "suspended" && onSuspend ? <Button variant="danger" onClick={onSuspend}>Suspend account</Button> : null}
         {detail.account.accountStatus === "suspended" && onReactivate ? <Button variant="outline" onClick={onReactivate}>Reactivate</Button> : null}
         {!detail.overview.gracePeriodActive && onApplyGracePeriod ? <Button variant="outline" onClick={onApplyGracePeriod}>Apply grace period</Button> : null}

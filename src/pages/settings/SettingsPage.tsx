@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import {
   AlertCircle,
@@ -558,6 +558,10 @@ export function SettingsPage() {
   const [twoFactorSetup, setTwoFactorSetup] = useState<{ secret: string; otpauthUrl: string; manualEntryKey: string; issuer: string } | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
 
+  useEffect(() => {
+    setDisplayName(user?.name || "");
+  }, [user?.name]);
+
   const handleProfileSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setProfileError(null);
@@ -680,12 +684,33 @@ export function SettingsPage() {
 
   const sessionStatus = sessionExpiresAt ? `Active until ${new Date(sessionExpiresAt).toLocaleString()}` : "Active session";
   const permissionMode = user?.adminRole ? formatAdminRole(user.adminRole) : "Legacy full admin";
+  const refreshAction = (
+    <Button
+      variant="outline"
+      onClick={() => {
+        if (location.pathname === appRoutes.settingsSystem) {
+          void Promise.all([settingsQuery.refetch(), platformQuery.refetch()]);
+          return;
+        }
+        if (location.pathname === appRoutes.settingsSecurity) {
+          void adminProfileQuery.refetch();
+          return;
+        }
+        void adminProfileQuery.refetch();
+      }}
+      leftIcon={<RefreshCw className="h-4 w-4" />}
+      isLoading={settingsQuery.isFetching || platformQuery.isFetching || adminProfileQuery.isFetching}
+    >
+      Refresh
+    </Button>
+  );
 
   return (
     <SettingsShell
         title="Settings"
         description="Manage operator profile details, account security, and platform defaults."
         meta={env.appEnv}
+        actions={refreshAction}
     >
           {location.pathname === appRoutes.settings ? (
             <ProfileTab

@@ -85,28 +85,30 @@ export function UsersTable({
     { header: 'Last login', cell: ({ row }) => <span className="font-mono text-sm text-text-secondary">{formatDateTime(row.original.lastLoginAt)}</span> },
     {
       header: 'Actions',
-      cell: ({ row }) => (
-        <Dropdown
-          items={[
-            { label: 'Open full page', onClick: () => openFullPage(row.original) },
-            { label: 'Open workspace', onClick: () => onOpenDetails(row.original) },
-            onEditProfile ? { label: 'Edit profile', onClick: () => onEditProfile(row.original) } : null,
-            row.original.verificationStatus !== 'verified' && onVerify
-              ? { label: 'Verify user', onClick: () => onVerify(row.original) }
-              : onExtendTrial ? { label: 'Extend trial', onClick: () => onExtendTrial(row.original) } : null,
-            row.original.verificationStatus !== 'verified' && onResendVerification
-              ? { label: 'Resend verification', onClick: () => onResendVerification(row.original) }
-              : onAddNote ? { label: 'Add note', onClick: () => onAddNote(row.original) } : null,
-            onPasswordReset ? { label: 'Send password reset', onClick: () => onPasswordReset(row.original) } : null,
-            onForceLogout ? { label: 'Force logout', onClick: () => onForceLogout(row.original) } : null,
-            onAddFlag ? { label: 'Flag account', onClick: () => onAddFlag(row.original) } : null,
-            row.original.accountStatus === 'suspended'
-              ? (onReactivate ? { label: 'Reactivate account', onClick: () => onReactivate(row.original) } : null)
-              : (onSuspend ? { label: 'Suspend account', onClick: () => onSuspend(row.original), danger: true } : null),
-            onDelete ? { label: 'Delete subscriber', onClick: () => onDelete(row.original), danger: true } : null,
-          ].filter(Boolean) as Array<{ label: string; onClick: () => void; danger?: boolean }>}
-        />
-      ),
+      cell: ({ row }) => {
+        const items = [
+          { label: 'Open full page', onClick: () => openFullPage(row.original) },
+          { label: 'Open workspace', onClick: () => onOpenDetails(row.original) },
+          onEditProfile ? { label: 'Edit profile', onClick: () => onEditProfile(row.original) } : null,
+          row.original.verificationStatus !== 'verified' && onVerify
+            ? { label: 'Verify user', onClick: () => onVerify(row.original) }
+            : null,
+          row.original.verificationStatus !== 'verified' && onResendVerification
+            ? { label: 'Resend verification', onClick: () => onResendVerification(row.original) }
+            : null,
+          onExtendTrial ? { label: 'Extend trial', onClick: () => onExtendTrial(row.original) } : null,
+          onAddNote ? { label: 'Add note', onClick: () => onAddNote(row.original) } : null,
+          onPasswordReset ? { label: 'Send password reset', onClick: () => onPasswordReset(row.original) } : null,
+          onForceLogout ? { label: 'Force logout', onClick: () => onForceLogout(row.original) } : null,
+          onAddFlag ? { label: 'Flag account', onClick: () => onAddFlag(row.original) } : null,
+          row.original.accountStatus === 'suspended'
+            ? (onReactivate ? { label: 'Reactivate account', onClick: () => onReactivate(row.original) } : null)
+            : (onSuspend ? { label: 'Suspend account', onClick: () => onSuspend(row.original), danger: true } : null),
+          onDelete ? { label: 'Delete subscriber', onClick: () => onDelete(row.original), danger: true } : null,
+        ].filter(Boolean) as Array<{ label: string; onClick: () => void; danger?: boolean }>;
+
+        return <Dropdown items={items} />;
+      },
     },
   ], [navigatingUserId, navigate, onAddFlag, onAddNote, onDelete, onEditProfile, onExtendTrial, onForceLogout, onOpenDetails, onPasswordReset, onReactivate, onResendVerification, onSuspend, onVerify]);
 

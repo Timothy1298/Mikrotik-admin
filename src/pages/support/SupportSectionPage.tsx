@@ -81,7 +81,9 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const [priorityValue, setPriorityValue] = useState("high");
   const [statusValue, setStatusValue] = useState("in_progress");
   const [categoryValue, setCategoryValue] = useState("technical");
+  const [flagValue, setFlagValue] = useState("manual_review");
   const [assigneeValue, setAssigneeValue] = useState("");
+  const [teamValue, setTeamValue] = useState("general");
 
   const assignDisclosure = useDisclosure(false);
   const reassignDisclosure = useDisclosure(false);
@@ -172,6 +174,8 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     setPriorityValue(ticket.priority);
     setStatusValue(ticket.status);
     setCategoryValue(ticket.category);
+    setFlagValue(ticket.flags[0]?.flag || "manual_review");
+    setTeamValue(ticket.assignedTeam || "general");
     setSelectedFlagId(ticket.flags[0]?.id || "");
     navigate(appRoutes.supportTicket(ticket.id));
   };
@@ -301,7 +305,7 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
       <SupportActionDialog open={replyDisclosure.open} title="Reply to ticket" description="Send an admin reply into the customer-visible support conversation." confirmLabel="Send reply" loading={replyMutation.isPending} textarea reasonOnly={false} cannedResponses={filteredCannedResponses} onClose={replyDisclosure.onClose} onConfirm={({ reason, body }) => selectedTicket && replyMutation.mutate([selectedTicket.id, { message: body || "", reason }] as never, { onSuccess: () => replyDisclosure.onClose() })} />
       <SupportActionDialog open={reviewedDisclosure.open} title="Mark reviewed" description="Record that the current ticket has been reviewed by support staff." confirmLabel="Mark reviewed" loading={reviewedMutation.isPending} onClose={reviewedDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && reviewedMutation.mutate([selectedTicket.id, reason] as never, { onSuccess: () => reviewedDisclosure.onClose() })} />
       <SupportActionDialog open={noteDisclosure.open} title="Add internal note" description="Add admin-only support context for follow-up and coordination." confirmLabel="Add note" loading={noteMutation.isPending} textarea reasonOnly={false} onClose={noteDisclosure.onClose} onConfirm={({ reason, body }) => selectedTicket && noteMutation.mutate([selectedTicket.id, { body: body || "", category: "support", reason }] as never, { onSuccess: () => noteDisclosure.onClose() })} />
-      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add a workflow flag such as VIP, billing-related, outage-related, or manual review." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: categoryValue, options: [...flagOptions], onValueChange: setCategoryValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && flagMutation.mutate([selectedTicket.id, { flag: categoryValue, severity: "medium", reason }] as never, { onSuccess: () => flagDisclosure.onClose() })} />
+      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add a workflow flag such as VIP, billing-related, outage-related, or manual review." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: flagValue, options: [...flagOptions], onValueChange: setFlagValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && flagMutation.mutate([selectedTicket.id, { flag: flagValue, severity: "medium", reason }] as never, { onSuccess: () => flagDisclosure.onClose() })} />
       <SupportActionDialog open={removeFlagDisclosure.open} title="Remove ticket flag" description="Remove the currently selected internal support flag." confirmLabel="Remove flag" loading={removeFlagMutation.isPending} onClose={removeFlagDisclosure.onClose} onConfirm={({ reason }) => selectedTicket && selectedFlagId && removeFlagMutation.mutate([selectedTicket.id, selectedFlagId, reason] as never, { onSuccess: () => removeFlagDisclosure.onClose() })} />
     </section>
   );

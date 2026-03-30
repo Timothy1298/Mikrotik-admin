@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RotateCcw } from "lucide-react";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -8,7 +9,9 @@ import { RouterActivityPanel } from "@/features/routers/components/RouterActivit
 import { RouterApiAccessPanel } from "@/features/routers/components/RouterApiAccessPanel";
 import { RouterConnectivityPanel } from "@/features/routers/components/RouterConnectivityPanel";
 import { RouterCustomerPanel } from "@/features/routers/components/RouterCustomerPanel";
+import { RouterDiagnosticsPanel } from "@/features/routers/components/RouterDiagnosticsPanel";
 import { RouterFlagsPanel } from "@/features/routers/components/RouterFlagsPanel";
+import { RouterInterfacesPanel } from "@/features/routers/components/RouterInterfacesPanel";
 import { RouterLiveHealthPanel } from "@/features/routers/components/RouterLiveHealthPanel";
 import { RouterMonitoringPanel } from "@/features/routers/components/RouterMonitoringPanel";
 import { RouterNotesPanel } from "@/features/routers/components/RouterNotesPanel";
@@ -48,6 +51,8 @@ export function RouterDetailsWorkspace({
   onAddNote,
   onAddFlag,
   onRemoveFlag,
+  onRefresh,
+  refreshing = false,
 }: {
   router: RouterDetail;
   showRouteLink?: boolean;
@@ -64,6 +69,8 @@ export function RouterDetailsWorkspace({
   onAddNote: () => void;
   onAddFlag: () => void;
   onRemoveFlag: (flag: RouterDetail["flags"][number]) => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const navigate = useNavigate();
   const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "wireguard" | "queues" | "firewall" | "network" | "backups" | "terminal" | "topology">("overview");
@@ -88,6 +95,7 @@ export function RouterDetailsWorkspace({
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Secondary tools</p>
             <div className="flex flex-wrap gap-2">
+            {onRefresh ? <RefreshButton loading={refreshing} onClick={onRefresh} /> : null}
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.routerDetail(router.id))}>Open full page</Button> : null}
             {router.profile.connectionMode !== "management_only" ? <Button variant="outline" onClick={onRegenerateSetup}>Regenerate setup</Button> : null}
             {router.profile.connectionMode !== "management_only" ? <Button variant="outline" onClick={onResetPeer}>Reset peer</Button> : null}
@@ -161,10 +169,12 @@ export function RouterDetailsWorkspace({
           <RouterCustomerPanel router={router} />
           <RouterConnectivityPanel router={router} />
           <RouterApiAccessPanel router={router} />
+          <RouterInterfacesPanel routerId={router.profile.id} />
           <RouterPortsPanel router={router} />
           <RouterMonitoringPanel router={router} />
           <RouterPingPanel router={router} />
           <RouterProvisioningPanel router={router} />
+          <RouterDiagnosticsPanel routerId={router.id} />
           <RouterFlagsPanel router={router} onRemoveFlag={onRemoveFlag} />
           <RouterNotesPanel router={router} />
           <RouterActivityPanel router={router} />

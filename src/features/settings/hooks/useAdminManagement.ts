@@ -26,8 +26,12 @@ function useAdminMutation<TArgs extends unknown[], TResult>(mutationFn: (...args
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async () => {
-      toast.success(successMessage);
+    onSuccess: async (result) => {
+      const resolvedMessage =
+        result && typeof result === "object" && "message" in result && typeof result.message === "string"
+          ? result.message
+          : successMessage;
+      toast.success(resolvedMessage);
       await queryClient.invalidateQueries({ queryKey: adminMgmtBase });
     },
     onError: (error: Error) => {

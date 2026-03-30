@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock3, Gift, HandCoins, ReceiptText, Search, ShieldAlert, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { TableLoader } from "@/components/feedback/TableLoader";
@@ -60,6 +60,7 @@ export function ReferralsPage() {
   const rejectMutation = useRejectReferral();
   const offerMutation = useOfferReferral();
   const markPaidMutation = useMarkReferralPaid();
+  const actionPending = approveMutation.isPending || rejectMutation.isPending || offerMutation.isPending || markPaidMutation.isPending;
 
   const isPending = overviewQuery.isPending || listQuery.isPending;
   const isError = overviewQuery.isError || listQuery.isError;
@@ -77,6 +78,28 @@ export function ReferralsPage() {
     setPayoutMethod(referral.payoutMethod || "account_credit");
     setPayoutReference(referral.payoutReference || "");
   };
+
+  useEffect(() => {
+    if (!items.length) {
+      setSelectedId(null);
+      return;
+    }
+
+    const nextSelected = items.find((item) => item.id === selectedId) || items[0];
+    if (!nextSelected) return;
+
+    if (nextSelected.id !== selectedId) {
+      syncSelectedReferral(nextSelected);
+      return;
+    }
+
+    setNote(nextSelected.reviewNote || nextSelected.payoutNote || "");
+    setOfferTitle(nextSelected.offerTitle || "Standard referral reward");
+    setOfferDescription(nextSelected.offerDescription || "Referral reward issued after admin review and payout approval.");
+    setRewardAmount(String(nextSelected.rewardAmount || 10));
+    setPayoutMethod(nextSelected.payoutMethod || "account_credit");
+    setPayoutReference(nextSelected.payoutReference || "");
+  }, [items, selectedId]);
 
   if (isPending) return <TableLoader />;
 
@@ -96,6 +119,10 @@ export function ReferralsPage() {
   const overview = overviewQuery.data;
   const pagination = listQuery.data.pagination;
   const totalPages = Math.max(1, pagination.pages || 1);
+  const canApprove = Boolean(selectedReferral && selectedReferral.reviewStatus === "pending_review");
+  const canQueuePayout = Boolean(selectedReferral && ["approved", "paid"].includes(selectedReferral.reviewStatus) && selectedReferral.payoutStatus !== "paid");
+  const canMarkPaid = Boolean(selectedReferral && ["approved", "paid"].includes(selectedReferral.reviewStatus) && ["offered", "queued"].includes(selectedReferral.payoutStatus));
+  const canReject = Boolean(selectedReferral && selectedReferral.reviewStatus === "pending_review");
 
   return (
     <section className="space-y-6">
@@ -171,17 +198,25 @@ export function ReferralsPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
-              <p className="text-sm font-medium text-text-primary">Top reward offers</p>
+              <p className="text-sm font-medium text-text-primary">Payout queue snapshot</p>
               <div className="mt-3 space-y-3">
-                {overview.activeOffers.length ? overview.activeOffers.map((offer) => (
-                  <div key={offer.title} className="rounded-xl border border-background-border bg-background-panel px-3 py-3">
+                {overview.payoutQueue.length ? overview.payoutQueue.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="w-full rounded-xl border border-background-border bg-background-panel px-3 py-3 text-left transition-colors hover:border-primary/40"
+                    onClick={() => syncSelectedReferral(item)}
+                  >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-text-primary">{offer.title}</p>
-                      <Badge tone="info">{offer.referrals} referrals</Badge>
+                      <div>
+                        <p className="font-medium text-text-primary">{item.referredUser?.name || "Referral record"}</p>
+                        <p className="text-xs text-text-secondary">{item.offerTitle || "Pending payout offer"} • {item.payoutMethod}</p>
+                      </div>
+                      <Badge tone="info">{item.payoutStatus}</Badge>
                     </div>
-                    <p className="mt-1 text-sm text-text-secondary">{formatCurrency(offer.totalReward)} allocated across active referral records.</p>
-                  </div>
-                )) : <p className="text-sm text-text-muted">No active payout offers have been defined yet.</p>}
+                    <p className="mt-1 text-sm text-text-secondary">{formatCurrency(item.rewardAmount)} ready for settlement or payout confirmation.</p>
+                  </button>
+                )) : <p className="text-sm text-text-muted">No referrals are waiting in the payout queue right now.</p>}
               </div>
             </div>
           </div>
@@ -247,6 +282,7 @@ export function ReferralsPage() {
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 <Button
                   isLoading={approveMutation.isPending}
+                  disabled={!canApprove || actionPending}
                   onClick={() => {
                     void approveMutation.mutate({
                       id: selectedReferral.id,
@@ -266,6 +302,7 @@ export function ReferralsPage() {
                 <Button
                   variant="outline"
                   isLoading={offerMutation.isPending}
+                  disabled={!canQueuePayout || actionPending}
                   onClick={() => {
                     void offerMutation.mutate({
                       id: selectedReferral.id,
@@ -286,6 +323,7 @@ export function ReferralsPage() {
                 <Button
                   variant="outline"
                   isLoading={markPaidMutation.isPending}
+                  disabled={!canMarkPaid || actionPending}
                   onClick={() => {
                     void markPaidMutation.mutate({
                       id: selectedReferral.id,
@@ -303,6 +341,7 @@ export function ReferralsPage() {
                 <Button
                   variant="ghost"
                   isLoading={rejectMutation.isPending}
+                  disabled={!canReject || actionPending}
                   onClick={() => {
                     void rejectMutation.mutate({
                       id: selectedReferral.id,
@@ -317,6 +356,11 @@ export function ReferralsPage() {
                   Reject
                 </Button>
               </div>
+              <p className="text-xs text-text-muted">
+                {selectedReferral.reviewStatus === "pending_review" ? "Pending referrals can be approved or rejected." : null}
+                {selectedReferral.reviewStatus === "approved" && selectedReferral.payoutStatus !== "paid" ? " Approved referrals should be offered, queued, and then marked paid once settled." : null}
+                {selectedReferral.payoutStatus === "paid" ? " This referral has already been settled and is now read-only from the payout desk." : null}
+              </p>
             </div>
           ) : (
             <EmptyState icon={Gift} title="No referral selected" description="Choose a referral record from the activity table to review or settle it." />

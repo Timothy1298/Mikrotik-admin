@@ -4,6 +4,8 @@ import type {
   CreateRouterPayload,
   CreateRouterResponse,
   RouterCommandResult,
+  RouterConnectivityDetail,
+  RouterDiagnostics,
   RouterDownstreamDiscoveryRun,
   RouterApiConnectionTest,
   RouterDetail,
@@ -11,6 +13,7 @@ import type {
   RouterDirectoryStats,
   RouterInterface,
   RouterLiveHealth,
+  RouterMonitoringDetail,
   RouterDiscoveryImportPayload,
   RouterDiscoveryImportResult,
   RouterDiscoveryScanPayload,
@@ -20,8 +23,12 @@ import type {
   RouterOnboardingClaimCreateResponse,
   RouterOnboardingClaimPayload,
   RouterPingResult,
+  RouterPortsDetail,
+  RouterProvisioningDetail,
   RouterQuery,
   RouterMetricPoint,
+  RouterNotesDetail,
+  RouterFlagsDetail,
   TrackRuntimePeerResult,
 } from "@/features/routers/types/router.types";
 
@@ -38,6 +45,11 @@ export async function getRouterStats() {
 export async function getRouterById(id: string) {
   const { data } = await apiClient.get<{ success: boolean; data: RouterDetail }>(endpoints.admin.routerDetail(id));
   return data.data;
+}
+
+export async function getRouterConnectivity(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; connectivity: RouterConnectivityDetail }>(endpoints.admin.routerConnectivity(id));
+  return data.connectivity;
 }
 
 export async function getRouterActivity(id: string, params?: { page?: number; limit?: number }) {
@@ -66,7 +78,11 @@ export async function createRouterOnboardingClaim(payload: RouterOnboardingClaim
 }
 
 export async function startRouterDiscoveryScan(payload?: RouterDiscoveryScanPayload) {
-  const { data } = await apiClient.post<{ success: boolean; session: RouterDiscoverySession }>(endpoints.admin.routerDiscoveryScan, payload || {});
+  const { data } = await apiClient.post<{ success: boolean; session: RouterDiscoverySession }>(
+    endpoints.admin.routerDiscoveryScan,
+    payload || {},
+    { timeout: 60_000 },
+  );
   return data.session;
 }
 
@@ -158,6 +174,36 @@ export async function getRouterInterfaces(id: string) {
   return { interfaces: data.interfaces || [] };
 }
 
+export async function getRouterPorts(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; ports: RouterPortsDetail }>(endpoints.admin.routerPorts(id));
+  return data.ports;
+}
+
+export async function getRouterMonitoring(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; monitoring: RouterMonitoringDetail }>(endpoints.admin.routerMonitoring(id));
+  return data.monitoring;
+}
+
+export async function getRouterProvisioning(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; provisioning: RouterProvisioningDetail }>(endpoints.admin.routerProvisioning(id));
+  return data.provisioning;
+}
+
+export async function getRouterDiagnostics(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; diagnostics: RouterDiagnostics }>(endpoints.admin.routerDiagnostics(id));
+  return data.diagnostics;
+}
+
+export async function getRouterNotes(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: RouterNotesDetail }>(endpoints.admin.routerNotes(id));
+  return data.items || [];
+}
+
+export async function getRouterFlags(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; items: RouterFlagsDetail }>(endpoints.admin.routerFlags(id));
+  return data.items || [];
+}
+
 export async function getRouterLiveHealth(id: string) {
   const { data } = await apiClient.get<{ success: boolean; health: RouterLiveHealth }>(endpoints.admin.routerLiveHealth(id));
   return data.health;
@@ -218,5 +264,10 @@ export async function discoverRouterDownstreamMikrotiks(
   },
 ) {
   const { data } = await apiClient.post<{ success: boolean; data: RouterDownstreamDiscoveryRun }>(endpoints.admin.routerDiscoverDownstreamMikrotiks(id), payload || {});
+  return data.data;
+}
+
+export async function getRouterDownstreamMikrotiks(id: string) {
+  const { data } = await apiClient.get<{ success: boolean; data: RouterDownstreamDiscoveryRun }>(endpoints.admin.routerDownstreamMikrotiks(id));
   return data.data;
 }

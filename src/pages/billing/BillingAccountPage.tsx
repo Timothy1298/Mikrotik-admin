@@ -4,10 +4,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
+import { Tabs } from "@/components/ui/Tabs";
 import {
   AddBalanceDialog,
   BillingActionDialog,
@@ -43,6 +45,7 @@ import { useDisclosure } from "@/hooks/ui/useDisclosure";
 import { formatCurrency } from "@/lib/formatters/currency";
 import { formatDateTime } from "@/lib/formatters/date";
 import { appRoutes } from "@/config/routes";
+import { billingTabs } from "@/config/module-tabs";
 
 function SummaryMetric({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
@@ -136,6 +139,10 @@ export function BillingAccountPage() {
   return (
     <section className="space-y-6">
       <PageHeader title={detail.account.name} description="Route-driven billing workspace for collections, subscriptions, entitlements, invoices, and follow-up actions." meta={detail.account.email} />
+      <Tabs tabs={[...billingTabs]} value={appRoutes.billingSubscriptions} onChange={navigate} />
+      <div className="flex justify-end">
+        <RefreshButton loading={accountQuery.isFetching} onClick={() => void accountQuery.refetch()} />
+      </div>
 
       <Card className="space-y-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">

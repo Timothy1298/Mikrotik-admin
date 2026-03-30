@@ -16,7 +16,6 @@ import { appRoutes } from "@/config/routes";
 import {
   BillingActionDialog,
   BillingActivityTable,
-  BillingDetailsModal,
   BillingFilters,
   BillingReportsSection,
   CreateInvoiceDialog,
@@ -73,6 +72,69 @@ const sectionIcons: Record<BillingSection, typeof CreditCard> = {
   "notes-flags": ShieldAlert,
 };
 
+const activeSubscriptionStates = ["active", "paid", "current"];
+const atRiskSubscriptionStates = ["past_due", "overdue", "grace", "failed", "suspended", "expired"];
+
+function getStatusWeight(status: string) {
+  if (atRiskSubscriptionStates.includes(status)) return 5;
+  if (status === "trial") return 4;
+  if (activeSubscriptionStates.includes(status)) return 3;
+  if (status === "pending") return 2;
+  return 1;
+}
+
+function pickPrimarySubscription(rows: BillingSubscriptionRow[]) {
+  return [...rows].sort((left, right) => {
+    const statusDelta = getStatusWeight(right.subscriptionStatus) - getStatusWeight(left.subscriptionStatus);
+    if (statusDelta !== 0) return statusDelta;
+    const invoiceDelta = (right.openInvoiceCount || 0) - (left.openInvoiceCount || 0);
+    if (invoiceDelta !== 0) return invoiceDelta;
+    return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+  })[0];
+}
+
+function pickSoonestBillingDate(rows: BillingSubscriptionRow[]) {
+  return rows
+    .map((row) => row.nextBillingDate)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(left).getTime() - new Date(right).getTime())[0] || null;
+}
+
+function summarizeSubscriptionRows(rows: BillingSubscriptionRow[]) {
+  const grouped = new Map<string, BillingSubscriptionRow[]>();
+  for (const row of rows) {
+    const key = row.account?.id || `subscription:${row.subscriptionId || row.id}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.push(row);
+    } else {
+      grouped.set(key, [row]);
+    }
+  }
+
+  return Array.from(grouped.values()).map((groupRows) => {
+    const primary = pickPrimarySubscription(groupRows);
+    const planNames = [...new Set(groupRows.map((row) => row.planName).filter(Boolean))];
+
+    return {
+      ...primary,
+      id: primary.account?.id || primary.id,
+      planName: planNames.length > 1 ? `${planNames.length} plans` : primary.planName,
+      planNames,
+      subscriptionCount: groupRows.length,
+      activeSubscriptionCount: groupRows.filter((row) => activeSubscriptionStates.includes(row.subscriptionStatus)).length,
+      primarySubscriptionId: primary.subscriptionId,
+      primaryPriceSummary: primary.priceSummary,
+      billableRouterCount: Math.max(...groupRows.map((row) => row.billableRouterCount || 0)),
+      priceSummary: groupRows.reduce((total, row) => total + (Number(row.priceSummary) || 0), 0),
+      nextBillingDate: pickSoonestBillingDate(groupRows),
+      overdue: groupRows.some((row) => row.overdue || atRiskSubscriptionStates.includes(row.subscriptionStatus)),
+      openInvoiceCount: Math.max(...groupRows.map((row) => row.openInvoiceCount || 0)),
+      updatedAt: groupRows.map((row) => row.updatedAt).sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] || primary.updatedAt,
+    };
+  });
+}
+
 export function BillingSectionPage({ section }: { section: BillingSection }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -84,7 +146,6 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string>("");
   const [selectedFlag] = useState<{ id?: string } | null>(null);
 
-  const detailDisclosure = useDisclosure(false);
   const invoiceDisclosure = useDisclosure(false);
   const paymentDisclosure = useDisclosure(false);
   const extendDisclosure = useDisclosure(false);
@@ -136,9 +197,9 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   }, [section]);
 
   const subscriptionRows = useMemo(() => {
-    const items = subscriptionsQuery.data?.items || [];
-    if (section === "active-paid") return items.filter((item) => item.subscriptionStatus === "active" && item.planName === "monthly");
-    if (section === "overdue-risk") return items.filter((item) => item.overdue);
+    const items = summarizeSubscriptionRows(subscriptionsQuery.data?.items || []);
+    if (section === "active-paid") return items.filter((item) => activeSubscriptionStates.includes(item.subscriptionStatus));
+    if (section === "overdue-risk") return items.filter((item) => item.overdue || atRiskSubscriptionStates.includes(item.subscriptionStatus));
     if (section === "notes-flags") return items;
     return items;
   }, [section, subscriptionsQuery.data?.items]);
@@ -152,9 +213,11 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
   const selectedInvoice = (invoicesQuery.data?.items || []).find((item) => item.id === selectedInvoiceId) || null;
   const selectedPayment = (paymentsQuery.data?.items || []).find((item) => item.id === selectedPaymentId) || null;
   const selectedSubscriptionId = detailQuery.data?.subscription?.id
+    || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.primarySubscriptionId
     || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.subscriptionId
     || "";
   const selectedSubscriptionAmount = detailQuery.data?.subscription?.pricePerMonth
+    || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.primaryPriceSummary
     || subscriptionRows.find((item) => item.account?.id === selectedAccountId)?.priceSummary
     || 0;
 
@@ -261,20 +324,6 @@ export function BillingSectionPage({ section }: { section: BillingSection }) {
         <div className="mt-4">{renderContent()}</div>
       </Card>
 
-      <BillingDetailsModal
-        open={detailDisclosure.open}
-        detail={detailQuery.data || null}
-        onClose={detailDisclosure.onClose}
-        onExtendTrial={() => { detailDisclosure.onClose(); extendDisclosure.onOpen(); }}
-        onSuspend={() => { detailDisclosure.onClose(); suspendDisclosure.onOpen(); }}
-        onReactivate={() => { detailDisclosure.onClose(); reactivateDisclosure.onOpen(); }}
-        onApplyGracePeriod={() => { detailDisclosure.onClose(); applyGraceDisclosure.onOpen(); }}
-        onResendInvoice={() => { detailDisclosure.onClose(); resendDisclosure.onOpen(); }}
-        onPayNow={() => { detailDisclosure.onClose(); mpesaDisclosure.onOpen(); }}
-        onRunEnforcement={() => enforceBillingMutation.mutate([undefined] as never)}
-        onRecordPayment={canRecordPayment ? () => { detailDisclosure.onClose(); recordPaymentDisclosure.onOpen(); } : undefined}
-        onCreateInvoice={canCreateInvoice ? () => { detailDisclosure.onClose(); createInvoiceDisclosure.onOpen(); } : undefined}
-      />
       <InvoiceDetailsModal open={invoiceDisclosure.open} invoice={selectedInvoice} onClose={invoiceDisclosure.onClose} />
       <PaymentDetailsModal open={paymentDisclosure.open} payment={selectedPayment} onClose={paymentDisclosure.onClose} />
 

@@ -52,6 +52,33 @@ export type DashboardStatsResponse = {
   };
 };
 
+export type ProxyStatusResponse = {
+  success: boolean;
+  proxies: unknown[];
+  detailedStatus: Array<{
+    routerId: string;
+    routerName: string;
+    vpnIp: string | null;
+    ports?: {
+      winbox?: number | null;
+      ssh?: number | null;
+      api?: number | null;
+      [key: string]: unknown;
+    };
+    proxyStatus?: {
+      isRunning?: boolean;
+      status?: string;
+      activeConnections?: number;
+      lastError?: string | null;
+      [key: string]: unknown;
+    } | null;
+    routerStatus: string;
+    lastSeen?: string | null;
+  }>;
+  count: number;
+  totalRouters: number;
+};
+
 export type DashboardSummaryMetric = {
   title: string;
   value: string;

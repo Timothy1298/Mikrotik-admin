@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { appRoutes } from "@/config/routes";
 import {
   AddRouterFlagDialog,
@@ -82,10 +83,15 @@ export function RouterDetailsPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title={router.profile.name} description="Route-driven router workspace for operational diagnostics, connectivity actions, and customer-impact context." meta={router.profile.vpnIp || undefined} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={router.profile.name} description="Route-driven router workspace for operational diagnostics, connectivity actions, and customer-impact context." meta={router.profile.vpnIp || undefined} />
+        <RefreshButton loading={routerQuery.isFetching} onClick={() => void routerQuery.refetch()} />
+      </div>
 
       <RouterDetailsWorkspace
         router={router}
+        onRefresh={() => void routerQuery.refetch()}
+        refreshing={routerQuery.isFetching}
         onDisable={disableDisclosure.onOpen}
         onDelete={deleteDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}

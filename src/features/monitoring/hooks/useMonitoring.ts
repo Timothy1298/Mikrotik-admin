@@ -152,9 +152,9 @@ function useMonitoringIncidentMutation<TArgs extends unknown[]>(mutationFn: (...
 
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = variables[0] ? String(variables[0]) : "";
-      toast.success(successMessage);
+      toast.success(result?.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: monitoringBase });
       if (id) {
         await queryClient.invalidateQueries({ queryKey: [...monitoringBase, "incident", id] });

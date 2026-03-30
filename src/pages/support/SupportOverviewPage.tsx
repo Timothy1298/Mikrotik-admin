@@ -100,7 +100,7 @@ export function SupportOverviewPage() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Card>
           <CardHeader><div><CardTitle>Recent urgent tickets</CardTitle><CardDescription>Urgent tickets needing immediate support operator attention.</CardDescription></div></CardHeader>
-          {urgentQuery.isPending ? <SectionLoader /> : urgentQuery.isError ? <ErrorState title="Unable to load urgent tickets" description="Retry after confirming the support ticket directory endpoint is available." onAction={() => void urgentQuery.refetch()} /> : (urgentQuery.data?.items || []).length ? <TicketsTable rows={urgentQuery.data?.items || []} onOpen={() => undefined} /> : <EmptyState icon={ShieldAlert} title="No urgent tickets" description="There are no urgent tickets in the current queue." />}
+          {urgentQuery.isPending ? <SectionLoader /> : urgentQuery.isError ? <ErrorState title="Unable to load urgent tickets" description="Retry after confirming the support ticket directory endpoint is available." onAction={() => void urgentQuery.refetch()} /> : (urgentQuery.data?.items || []).length ? <TicketsTable rows={urgentQuery.data?.items || []} onOpen={(row) => navigate(appRoutes.supportTicket(row.id))} /> : <EmptyState icon={ShieldAlert} title="No urgent tickets" description="There are no urgent tickets in the current queue." />}
         </Card>
         <Card>
           <CardHeader><div><CardTitle>Assignee workload</CardTitle><CardDescription>Current open ticket burden by support operator.</CardDescription></div></CardHeader>

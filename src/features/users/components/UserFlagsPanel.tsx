@@ -1,5 +1,9 @@
 import { Button } from '@/components/ui/Button';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { InlineError } from '@/components/feedback/InlineError';
+import { RefreshButton } from '@/components/shared/RefreshButton';
+import { SectionLoader } from '@/components/feedback/SectionLoader';
+import { useUserFlags } from '@/features/users/hooks';
 import { UserStatusBadge } from '@/features/users/components/UserStatusBadge';
 import type { UserDetail } from '@/features/users/types/user.types';
 import { formatDateTime } from '@/lib/formatters/date';
@@ -13,7 +17,8 @@ export function UserFlagsPanel({
   onAddFlag?: () => void;
   onRemoveFlag?: (flag: UserDetail['flags'][number]) => void;
 }) {
-  const flags = user.flags || [];
+  const flagsQuery = useUserFlags(user.id);
+  const flags = flagsQuery.data?.items || user.flags || [];
 
   return (
     <Card>
@@ -23,10 +28,15 @@ export function UserFlagsPanel({
             <CardTitle>Flags and review context</CardTitle>
             <CardDescription>Manual review markers, billing risk flags, and internal operational context.</CardDescription>
           </div>
-          {onAddFlag ? <Button variant="outline" onClick={onAddFlag}>Add Flag</Button> : null}
+          <div className="flex items-center gap-2">
+            <RefreshButton loading={flagsQuery.isFetching} onClick={() => void flagsQuery.refetch()} />
+            {onAddFlag ? <Button variant="outline" onClick={onAddFlag}>Add Flag</Button> : null}
+          </div>
         </div>
       </CardHeader>
       <div className="space-y-4">
+        {flagsQuery.isPending ? <SectionLoader /> : null}
+        {flagsQuery.isError ? <InlineError message="Unable to load user flags." /> : null}
         {flags.length ? flags.map((flag) => (
           <div key={`${flag.flag}-${flag.createdAt}`} className="rounded-2xl border border-background-border bg-background-panel p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">

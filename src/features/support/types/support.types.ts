@@ -212,6 +212,14 @@ export type SupportAgent = {
   supportTeam: string;
 };
 
+export type SupportTeam =
+  | "general"
+  | "networking"
+  | "billing"
+  | "security"
+  | "vip"
+  | "operations";
+
 export type SupportFilterState = {
   q?: string;
   status?: string;

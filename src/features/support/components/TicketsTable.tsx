@@ -53,7 +53,7 @@ export function TicketsTable({
           {row.original.assignee && onReassign ? <Button size="sm" variant="ghost" onClick={() => onReassign(row.original)}>Reassign</Button> : null}
           {row.original.assignee && onUnassign ? <Button size="sm" variant="ghost" onClick={() => onUnassign(row.original)}>Unassign</Button> : null}
           {onReply ? <Button size="sm" variant="ghost" onClick={() => onReply(row.original)}>Reply</Button> : null}
-          {onResolve ? <Button size="sm" variant="ghost" onClick={() => onResolve(row.original)}>Resolve</Button> : null}
+          {onResolve && row.original.status !== "resolved" && row.original.status !== "closed" ? <Button size="sm" variant="ghost" onClick={() => onResolve(row.original)}>Resolve</Button> : null}
           {onEscalate && !row.original.escalated ? <Button size="sm" variant="ghost" onClick={() => onEscalate(row.original)}>Escalate</Button> : null}
         </div>
       ),

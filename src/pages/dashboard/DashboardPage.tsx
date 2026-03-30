@@ -36,6 +36,7 @@ import { AnalyticsChartCard } from "@/components/data-display/AnalyticsChartCard
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
@@ -46,7 +47,7 @@ import { queryKeys } from "@/config/queryKeys";
 import { appRoutes } from "@/config/routes";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { TrafficChartCard } from "@/features/dashboard/components";
-import { useDashboardStats } from "@/features/dashboard/hooks";
+import { useDashboardStats, useProxyStatus } from "@/features/dashboard/hooks";
 import { useRouterStats, useRouters } from "@/features/routers/hooks/useRouters";
 import type { DashboardQuickAction } from "@/features/dashboard/types";
 import { useWebSocket } from "@/hooks/api/useWebSocket";
@@ -138,6 +139,7 @@ function RouterStatusSummary({
 export function DashboardPage() {
   const queryClient = useQueryClient();
   const dashboardQuery = useDashboardStats();
+  const proxyStatusQuery = useProxyStatus();
   const currentUserQuery = useCurrentUser(true);
   const featuredRoutersQuery = useRouters({ limit: 6, sortBy: "lastSeen", sortOrder: "desc" });
   const { lastMessage, isConnected } = useWebSocket(["router:all"]);
@@ -402,6 +404,9 @@ export function DashboardPage() {
   const showBillingSection = can(user || undefined, permissions.billingView);
   const showMonitoringSection = can(user || undefined, permissions.monitoringView);
   const showLogsSection = can(user || undefined, permissions.logsView);
+  const proxyStatus = proxyStatusQuery.data;
+  const activeProxyRouters = proxyStatus?.detailedStatus.filter((item) => item.proxyStatus?.isRunning || item.proxyStatus?.status === "running") ?? [];
+  const proxyErrorRouters = proxyStatus?.detailedStatus.filter((item) => item.proxyStatus?.lastError || item.proxyStatus?.status === "error") ?? [];
 
   return (
     <section className="space-y-6">
@@ -459,6 +464,77 @@ export function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-5">
         <RouterStatusSummary isConnected={isConnected} />
+        <Card className="surface-card-3d overflow-hidden p-0">
+          <div className="rounded-2xl border border-background-border bg-background-elevated p-4 md:p-5">
+            <CardHeader>
+              <div>
+                <CardTitle>Proxy Access Status</CardTitle>
+                <CardDescription>Administrative TCP proxy reachability for managed routers that expose Winbox, SSH, or API access.</CardDescription>
+              </div>
+              <Badge tone={proxyStatusQuery.isError ? "danger" : activeProxyRouters.length > 0 ? "success" : "warning"}>
+                {proxyStatusQuery.isError ? "Unavailable" : `${activeProxyRouters.length}/${proxyStatus?.totalRouters ?? 0} active`}
+              </Badge>
+            </CardHeader>
+
+            {proxyStatusQuery.isPending ? (
+              <SectionLoader />
+            ) : proxyStatusQuery.isError ? (
+              <ErrorState
+                title="Proxy status unavailable"
+                description="The admin proxy status endpoint did not return a usable response."
+                onAction={() => void proxyStatusQuery.refetch()}
+              />
+            ) : (
+              <div className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Active proxies</p>
+                    <p className="mt-3 text-2xl font-semibold text-text-primary">{proxyStatus?.count ?? 0}</p>
+                  </div>
+                  <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Routers covered</p>
+                    <p className="mt-3 text-2xl font-semibold text-text-primary">{proxyStatus?.totalRouters ?? 0}</p>
+                  </div>
+                  <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Errors detected</p>
+                    <p className={cn("mt-3 text-2xl font-semibold", proxyErrorRouters.length ? "text-danger" : "text-success")}>{proxyErrorRouters.length}</p>
+                  </div>
+                </div>
+
+                {(proxyStatus?.detailedStatus.length ?? 0) ? (
+                  <div className="grid gap-3">
+                    {proxyStatus?.detailedStatus.slice(0, 4).map((item) => (
+                      <div key={item.routerId} className="rounded-2xl border border-background-border bg-background-panel p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">{item.routerName}</p>
+                            <p className="text-xs text-text-muted">
+                              {item.vpnIp || "No VPN IP"} · Router {item.routerStatus}
+                            </p>
+                          </div>
+                          <Badge tone={item.proxyStatus?.lastError ? "danger" : item.proxyStatus?.isRunning || item.proxyStatus?.status === "running" ? "success" : "warning"}>
+                            {item.proxyStatus?.status || (item.proxyStatus?.isRunning ? "running" : "idle")}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-text-secondary">
+                          <span className="rounded-full border border-background-border px-3 py-1">Winbox {item.ports?.winbox ?? "n/a"}</span>
+                          <span className="rounded-full border border-background-border px-3 py-1">SSH {item.ports?.ssh ?? "n/a"}</span>
+                          <span className="rounded-full border border-background-border px-3 py-1">API {item.ports?.api ?? "n/a"}</span>
+                          <span className="rounded-full border border-background-border px-3 py-1">Connections {item.proxyStatus?.activeConnections ?? 0}</span>
+                        </div>
+                        {item.proxyStatus?.lastError ? (
+                          <p className="mt-3 text-sm text-danger">{item.proxyStatus.lastError}</p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={Router} title="No proxy sessions yet" description="Proxy status will appear once managed routers expose admin access through the platform." />
+                )}
+              </div>
+            )}
+          </div>
+        </Card>
         {featuredRouter ? (
           <TrafficChartCard routerId={featuredRouter.id} title={`Live Telemetry: ${featuredRouter.name}`} />
         ) : (

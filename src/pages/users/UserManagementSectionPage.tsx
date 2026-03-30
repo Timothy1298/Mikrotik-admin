@@ -238,6 +238,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
         loading={detailQuery.isPending}
         user={detailQuery.data}
         error={detailQuery.isError}
+        onRefresh={() => void detailQuery.refetch()}
+        refreshing={detailQuery.isFetching}
         onClose={detailDisclosure.onClose}
         onSuspend={suspendDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}

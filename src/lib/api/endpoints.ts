@@ -284,6 +284,7 @@ export const endpoints = {
     markSecurityEventReviewed: (id: string) => `/api/admin/security/events/${id}/mark-reviewed`,
     securityEventNotes: (id: string) => `/api/admin/security/events/${id}/notes`,
     platformConfig: "/api/admin/settings/platform",
+    resellers: "/api/admin/resellers",
     adminAccounts: "/api/admin/management/admins",
     adminAccountDetail: (id: string) => `/api/admin/management/admins/${id}`,
     deactivateAdminAccount: (id: string) => `/api/admin/management/admins/${id}/deactivate`,

@@ -1,9 +1,14 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
+import { useRouterNotes } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function RouterNotesPanel({ router }: { router: RouterDetail }) {
-  const notes = router.notes || [];
+  const notesQuery = useRouterNotes(router.id);
+  const notes = notesQuery.data || router.notes || [];
 
   return (
     <Card>
@@ -12,8 +17,11 @@ export function RouterNotesPanel({ router }: { router: RouterDetail }) {
           <CardTitle>Internal notes</CardTitle>
           <CardDescription>Admin-only operational context captured for support and infrastructure follow-up.</CardDescription>
         </div>
+        <RefreshButton loading={notesQuery.isFetching} onClick={() => void notesQuery.refetch()} />
       </CardHeader>
       <div className="space-y-3">
+        {notesQuery.isPending ? <SectionLoader /> : null}
+        {notesQuery.isError ? <InlineError message="Unable to load router notes." /> : null}
         {notes.length ? notes.map((note) => (
           <div key={note.id || `${note.author}-${note.createdAt}`} className="rounded-2xl border border-background-border bg-background-panel p-4">
             <div className="flex items-start justify-between gap-3">

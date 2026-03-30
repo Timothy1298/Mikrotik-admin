@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { BadgeCheck, Plus, Trash2 } from "lucide-react";
+import { BadgeCheck, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useAuthStore } from "@/app/store/auth.store";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { MetricCard } from "@/components/shared/MetricCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -22,6 +23,7 @@ import {
   useDeleteServicePlan,
   useExportVouchers,
   useGenerateVouchers,
+  useRevokeVoucher,
   useServicePlans,
   useUpdateServicePlan,
   useVouchers,
@@ -182,22 +184,30 @@ function VoucherPanel({
   setVoucherQuantity,
   voucherValidityDays,
   setVoucherValidityDays,
+  voucherBatchName,
+  setVoucherBatchName,
   voucherStatus,
   setVoucherStatus,
   vouchersQuery,
   generateMutation,
   exportMutation,
+  revokeMutation,
+  onRequestRevoke,
 }: {
   plan: ServicePlan;
   voucherQuantity: string;
   setVoucherQuantity: (value: string) => void;
   voucherValidityDays: string;
   setVoucherValidityDays: (value: string) => void;
+  voucherBatchName: string;
+  setVoucherBatchName: (value: string) => void;
   voucherStatus: string;
   setVoucherStatus: (value: string) => void;
   vouchersQuery: ReturnType<typeof useVouchers>;
   generateMutation: ReturnType<typeof useGenerateVouchers>;
   exportMutation: ReturnType<typeof useExportVouchers>;
+  revokeMutation: ReturnType<typeof useRevokeVoucher>;
+  onRequestRevoke: (voucher: Voucher) => void;
 }) {
   const handleGenerate = () =>
     void generateMutation
@@ -206,9 +216,13 @@ function VoucherPanel({
         {
           quantity: Number(voucherQuantity) || 1,
           validityDays: voucherValidityDays ? Number(voucherValidityDays) : undefined,
+          batchName: voucherBatchName.trim() || undefined,
         },
       ] as never)
-      .then(() => void vouchersQuery.refetch());
+      .then(() => {
+        setVoucherBatchName("");
+        void vouchersQuery.refetch();
+      });
 
   const handleExport = () => void exportMutation.mutate({ planId: plan.id });
 
@@ -223,7 +237,7 @@ function VoucherPanel({
       </CardHeader>
 
       <div className="space-y-4 rounded-xl border border-background-border bg-background-elevated/50 p-4">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <Input
             label="Quantity (max 500)"
             type="number"
@@ -239,6 +253,13 @@ function VoucherPanel({
             placeholder={`Default: ${plan.validityDays} days`}
             value={voucherValidityDays}
             onChange={(event) => setVoucherValidityDays(event.target.value)}
+          />
+          <Input
+            label="Batch label"
+            placeholder="campus-term-2"
+            value={voucherBatchName}
+            onChange={(event) => setVoucherBatchName(event.target.value)}
+            hint="Optional internal label added to the generated batch id."
           />
         </div>
         <p className="text-sm text-text-secondary">
@@ -278,14 +299,25 @@ function VoucherPanel({
           onAction={() => void vouchersQuery.refetch()}
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-background-border">
-          <table className="min-w-full divide-y divide-brand-500/10 text-sm">
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-background-border bg-background-elevated/40 px-4 py-3 text-sm text-text-secondary">
+            <span>
+              Showing <span className="font-medium text-text-primary">{vouchersQuery.data?.items.length || 0}</span> vouchers
+              {voucherStatus ? ` with status "${voucherStatus}"` : ""}.
+            </span>
+            <span>
+              Total tracked: <span className="font-medium text-text-primary">{vouchersQuery.data?.pagination.total || 0}</span>
+            </span>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-background-border">
+            <table className="min-w-full divide-y divide-brand-500/10 text-sm">
             <thead className="bg-background-panel text-left text-text-secondary">
               <tr>
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Validity</th>
                 <th className="px-4 py-3">Expires</th>
+                <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-500/10">
@@ -304,10 +336,20 @@ function VoucherPanel({
                   </td>
                   <td className="px-4 py-3 text-text-secondary">{voucher.validityDays} days</td>
                   <td className="px-4 py-3 font-mono text-text-secondary">{formatDateTime(voucher.expiresAt)}</td>
+                  <td className="px-4 py-3 text-right">
+                    {voucher.status !== "revoked" ? (
+                      <Button variant="ghost" size="sm" isLoading={revokeMutation.isPending} onClick={() => onRequestRevoke(voucher)}>
+                        Revoke
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-text-muted">Already revoked</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       )}
     </Card>
@@ -552,26 +594,56 @@ function PlanFormModal({
 
 export function ServicePlansPage() {
   const user = useAuthStore((state) => state.user);
-  const plansQuery = useServicePlans();
+  const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState("");
+  const [planTypeFilter, setPlanTypeFilter] = useState("");
+  const planFilters = useMemo(
+    () => ({
+      q: search.trim() || undefined,
+      isActive: activeFilter || undefined,
+      planType: planTypeFilter || undefined,
+    }),
+    [activeFilter, planTypeFilter, search],
+  );
+  const plansQuery = useServicePlans(planFilters);
   const deactivateMutation = useDeactivateServicePlan();
   const deleteMutation = useDeleteServicePlan();
   const generateMutation = useGenerateVouchers();
   const exportMutation = useExportVouchers();
+  const revokeVoucherMutation = useRevokeVoucher();
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [editingPlan, setEditingPlan] = useState<ServicePlan | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [voucherQuantity, setVoucherQuantity] = useState("10");
   const [voucherValidityDays, setVoucherValidityDays] = useState("");
+  const [voucherBatchName, setVoucherBatchName] = useState("");
   const [voucherStatus, setVoucherStatus] = useState("");
+  const [voucherToRevoke, setVoucherToRevoke] = useState<Voucher | null>(null);
+  const [voucherRevokeReason, setVoucherRevokeReason] = useState("");
   const [planToDelete, setPlanToDelete] = useState<ServicePlan | null>(null);
   const [planToDeactivate, setPlanToDeactivate] = useState<ServicePlan | null>(null);
   const deleteDialog = useDisclosure(false);
   const deactivateDialog = useDisclosure(false);
+  const revokeVoucherDialog = useDisclosure(false);
   const canViewPlans = can(user || undefined, permissions.servicePlansView);
   const selectedPlan = (plansQuery.data || []).find((item) => item.id === selectedPlanId) || null;
   const vouchersQuery = useVouchers(selectedPlanId, { status: voucherStatus || undefined });
 
   const planCards = useMemo(() => plansQuery.data || [], [plansQuery.data]);
+  const metrics = useMemo(() => {
+    const items = plansQuery.data || [];
+    const activePlans = items.filter((item) => item.isActive).length;
+    const prepaidPlans = items.filter((item) => item.planType === "prepaid").length;
+    const attachedSubscribers = items.reduce((sum, item) => sum + item.subscriberCount, 0);
+    const fupPlans = items.filter((item) => item.fupEnabled).length;
+    return [
+      { title: "Plans in view", value: String(items.length), progress: 100 },
+      { title: "Active plans", value: String(activePlans), progress: items.length ? Math.round((activePlans / items.length) * 100) : 0 },
+      { title: "Prepaid plans", value: String(prepaidPlans), progress: items.length ? Math.round((prepaidPlans / items.length) * 100) : 0 },
+      { title: "Subscribers mapped", value: String(attachedSubscribers), progress: Math.min(100, attachedSubscribers || 0) },
+      { title: "FUP enabled", value: String(fupPlans), progress: items.length ? Math.round((fupPlans / items.length) * 100) : 0 },
+    ];
+  }, [plansQuery.data]);
 
   useEffect(() => {
     if (!planCards.length) {
@@ -604,17 +676,67 @@ export function ServicePlansPage() {
       title="Service Plans"
       description="Manage ISP subscription plans, speeds, data caps, FUP policies, and prepaid vouchers."
       actions={
-        <Button
-          leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => {
-            setEditingPlan(null);
-            setDialogOpen(true);
-          }}
-        >
-          New Plan
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            leftIcon={<RefreshCw className="h-4 w-4" />}
+            isLoading={plansQuery.isFetching}
+            onClick={() => void plansQuery.refetch()}
+          >
+            Refresh
+          </Button>
+          <Button
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={() => {
+              setEditingPlan(null);
+              setDialogOpen(true);
+            }}
+          >
+            New Plan
+          </Button>
+        </div>
       }
     >
+      <div className="grid gap-4 xl:grid-cols-5">
+        {metrics.map((metric) => <MetricCard key={metric.title} title={metric.title} value={metric.value} progress={metric.progress} />)}
+      </div>
+
+      <Card className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Input
+            label="Search plans"
+            placeholder="Search by name or description"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <Select
+            label="Status"
+            value={activeFilter}
+            onChange={(event) => setActiveFilter(event.target.value)}
+            options={[
+              { label: "All statuses", value: "" },
+              { label: "Active", value: "true" },
+              { label: "Inactive", value: "false" },
+            ]}
+          />
+          <Select
+            label="Billing type"
+            value={planTypeFilter}
+            onChange={(event) => setPlanTypeFilter(event.target.value)}
+            options={[
+              { label: "All types", value: "" },
+              { label: "Monthly", value: "monthly" },
+              { label: "Weekly", value: "weekly" },
+              { label: "Daily", value: "daily" },
+              { label: "Prepaid", value: "prepaid" },
+            ]}
+          />
+        </div>
+        <p className="text-sm text-text-secondary">
+          Service plans define subscriber entitlements, queue shaping, and voucher products. Filter the catalog before editing live offerings or generating a new prepaid batch.
+        </p>
+      </Card>
+
 
       <div className="grid gap-4">
         {planCards.length ? (
@@ -654,11 +776,19 @@ export function ServicePlansPage() {
           setVoucherQuantity={setVoucherQuantity}
           voucherValidityDays={voucherValidityDays}
           setVoucherValidityDays={setVoucherValidityDays}
+          voucherBatchName={voucherBatchName}
+          setVoucherBatchName={setVoucherBatchName}
           voucherStatus={voucherStatus}
           setVoucherStatus={setVoucherStatus}
           vouchersQuery={vouchersQuery}
           generateMutation={generateMutation}
           exportMutation={exportMutation}
+          revokeMutation={revokeVoucherMutation}
+          onRequestRevoke={(voucher) => {
+            setVoucherToRevoke(voucher);
+            setVoucherRevokeReason("");
+            revokeVoucherDialog.onOpen();
+          }}
         />
       ) : null}
 
@@ -669,6 +799,7 @@ export function ServicePlansPage() {
         title="Deactivate service plan"
         description={`Deactivate ${planToDeactivate?.name || "this plan"}? Operators will no longer assign it to new subscribers.`}
         confirmLabel="Deactivate plan"
+        isLoading={deactivateMutation.isPending}
         onClose={() => {
           deactivateDialog.onClose();
           setPlanToDeactivate(null);
@@ -687,6 +818,7 @@ export function ServicePlansPage() {
         title="Delete service plan"
         description={`Archive ${planToDelete?.name || "this plan"}? This action should only be used when the plan is no longer needed.`}
         confirmLabel="Delete plan"
+        isLoading={deleteMutation.isPending}
         onClose={() => {
           deleteDialog.onClose();
           setPlanToDelete(null);
@@ -699,6 +831,55 @@ export function ServicePlansPage() {
           });
         }}
       />
+
+      <Modal
+        open={revokeVoucherDialog.open}
+        title="Revoke voucher"
+        description={`Revoke voucher ${voucherToRevoke?.code || ""} so it can no longer be redeemed.`}
+        onClose={() => {
+          revokeVoucherDialog.onClose();
+          setVoucherToRevoke(null);
+          setVoucherRevokeReason("");
+        }}
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-background-border bg-background-elevated/60 p-4 text-sm text-text-secondary">
+            This is an admin action for invalidating an issued prepaid code. Use it when a voucher was exposed, issued in error, or should no longer be honored.
+          </div>
+          <Textarea
+            label="Reason"
+            placeholder="Optional internal reason for the revoke action"
+            value={voucherRevokeReason}
+            onChange={(event) => setVoucherRevokeReason(event.target.value)}
+          />
+        </div>
+        <div className="mt-6 flex justify-end gap-3 border-t border-background-border pt-4">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              revokeVoucherDialog.onClose();
+              setVoucherToRevoke(null);
+              setVoucherRevokeReason("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            isLoading={revokeVoucherMutation.isPending}
+            onClick={() => {
+              if (!voucherToRevoke) return;
+              void revokeVoucherMutation.mutateAsync([voucherToRevoke.code, { reason: voucherRevokeReason.trim() || undefined }] as never).then(() => {
+                revokeVoucherDialog.onClose();
+                setVoucherToRevoke(null);
+                setVoucherRevokeReason("");
+                void vouchersQuery.refetch();
+              });
+            }}
+          >
+            Revoke voucher
+          </Button>
+        </div>
+      </Modal>
     </SettingsShell>
   );
 }

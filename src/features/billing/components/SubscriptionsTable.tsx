@@ -41,7 +41,20 @@ export function SubscriptionsTable({
 }) {
   const columns = useMemo<ColumnDef<BillingSubscriptionRow>[]>(() => [
     { header: "Account", cell: ({ row }) => <div><p className="font-medium text-text-primary">{row.original.account?.name || "Unknown"}</p><p className="text-xs text-text-muted">{row.original.account?.email}</p></div> },
-    { header: "Plan", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.planName}</span> },
+    {
+      header: "Plan",
+      cell: ({ row }) => {
+        const planNames = row.original.planNames || [row.original.planName];
+        const subscriptionCount = row.original.subscriptionCount || 1;
+        return (
+          <div>
+            <p className="text-sm text-text-primary">{row.original.planName}</p>
+            {planNames.length > 1 ? <p className="text-xs text-text-muted">{planNames.join(" • ")}</p> : null}
+            {subscriptionCount > 1 ? <p className="text-xs text-text-muted">{subscriptionCount} subscriptions on this account</p> : null}
+          </div>
+        );
+      },
+    },
     { header: "Subscription", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.subscriptionStatus} /> },
     { header: "Trial", cell: ({ row }) => <SubscriptionStatusBadge status={row.original.trialStatus} /> },
     { header: "Billable routers", cell: ({ row }) => <span className="text-sm text-text-primary">{row.original.billableRouterCount}</span> },

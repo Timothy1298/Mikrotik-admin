@@ -146,9 +146,9 @@ function useBillingMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: TArgs) => mutationFn(...variables),
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       const id = variables[0] ? String(variables[0]) : "";
-      toast.success(successMessage);
+      toast.success(result.message || successMessage);
       await queryClient.invalidateQueries({ queryKey: billingBase });
       if (id) {
         await queryClient.invalidateQueries({ queryKey: [...billingBase, "account", id] });
@@ -180,8 +180,8 @@ export function useRecordPayment() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: [import("@/features/billing/types/billing.types").RecordPaymentPayload]) => recordPayment(variables[0]),
-    onSuccess: async () => {
-      toast.success("Payment recorded successfully");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Payment recorded successfully");
       await queryClient.invalidateQueries({ queryKey: billingBase });
     },
     onError: (error: Error) => toast.error(error.message || "Billing action failed"),
@@ -192,8 +192,8 @@ export function useAddBalance() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: [string, import("@/features/billing/types/billing.types").AddBalancePayload]) => addBalance(...variables),
-    onSuccess: async () => {
-      toast.success("Balance top-up link created");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Balance top-up link created");
       await queryClient.invalidateQueries({ queryKey: billingBase });
     },
     onError: (error: Error) => toast.error(error.message || "Billing action failed"),
@@ -204,8 +204,8 @@ export function useCreateInvoice() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: [import("@/features/billing/types/billing.types").CreateInvoicePayload]) => createInvoice(variables[0]),
-    onSuccess: async () => {
-      toast.success("Invoice created successfully");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Invoice created successfully");
       await queryClient.invalidateQueries({ queryKey: billingBase });
     },
     onError: (error: Error) => toast.error(error.message || "Billing action failed"),
@@ -216,8 +216,8 @@ export function useIssueRefund() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (variables: [import("@/features/billing/types/billing.types").IssueRefundPayload]) => issueRefund(variables[0]),
-    onSuccess: async () => {
-      toast.success("Refund recorded successfully");
+    onSuccess: async (result) => {
+      toast.success(result.message || "Refund recorded successfully");
       await queryClient.invalidateQueries({ queryKey: billingBase });
     },
     onError: (error: Error) => toast.error(error.message || "Billing action failed"),

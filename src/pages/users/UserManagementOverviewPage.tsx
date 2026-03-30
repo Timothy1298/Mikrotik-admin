@@ -5,6 +5,7 @@ import { ErrorState } from '@/components/feedback/ErrorState';
 import { SectionLoader } from '@/components/feedback/SectionLoader';
 import { TableLoader } from '@/components/feedback/TableLoader';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { RefreshButton } from '@/components/shared/RefreshButton';
 import { MetricCard } from '@/components/shared/MetricCard';
 import { StatCard } from '@/components/shared/StatCard';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +29,11 @@ export function UserManagementOverviewPage() {
   const statsQuery = useUsersStats();
   const recentUsersQuery = useUsers({ limit: 5, sortBy: 'createdAt', sortOrder: 'desc' });
   const reviewUsersQuery = useUsers({ riskStatus: 'flagged', limit: 5 });
+  const refreshOverview = () => {
+    void statsQuery.refetch();
+    void recentUsersQuery.refetch();
+    void reviewUsersQuery.refetch();
+  };
   if (statsQuery.isPending) {
     return <TableLoader />;
   }
@@ -41,8 +47,13 @@ export function UserManagementOverviewPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title="User Management" description="Command-center overview for customer identity, trial pressure, billing risk, support impact, verification, and security review." meta="Sidebar-driven user operations" />
-      {can(currentUser, permissions.usersManage) ? <div className="flex justify-end"><Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Subscriber</Button></div> : null}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title="User Management" description="Command-center overview for customer identity, trial pressure, billing risk, support impact, verification, and security review." meta="Sidebar-driven user operations" />
+        <div className="flex flex-wrap gap-3">
+          <RefreshButton loading={statsQuery.isFetching || recentUsersQuery.isFetching || reviewUsersQuery.isFetching} onClick={refreshOverview} />
+          {can(currentUser, permissions.usersManage) ? <Button leftIcon={<Plus className="h-4 w-4" />} onClick={addDisclosure.onOpen}>Add Subscriber</Button> : null}
+        </div>
+      </div>
 
       <Tabs tabs={[...userManagementTabs]} value={location.pathname} onChange={navigate} />
 

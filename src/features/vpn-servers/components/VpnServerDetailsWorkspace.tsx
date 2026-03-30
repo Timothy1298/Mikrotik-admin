@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { appRoutes } from "@/config/routes";
 import { useCurrentUser } from "@/features/auth/hooks/useCurrentUser";
 import { VpnServerActivityPanel } from "@/features/vpn-servers/components/VpnServerActivityPanel";
@@ -29,6 +30,8 @@ export function VpnServerDetailsWorkspace({
   routersLoading,
   peersLoading,
   showRouteLink = false,
+  onRefresh,
+  refreshing = false,
   onRefreshRouters,
   onRefreshPeers,
   onDisable,
@@ -50,6 +53,8 @@ export function VpnServerDetailsWorkspace({
   routersLoading?: boolean;
   peersLoading?: boolean;
   showRouteLink?: boolean;
+  onRefresh?: () => void;
+  refreshing?: boolean;
   onRefreshRouters?: () => void;
   onRefreshPeers?: () => void;
   onDisable: () => void;
@@ -84,6 +89,7 @@ export function VpnServerDetailsWorkspace({
             <p className="text-sm text-text-secondary">{server.profile.nodeId} • {server.profile.region} • {server.profile.hostname || server.profile.endpoint || "No hostname"}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {onRefresh ? <RefreshButton loading={refreshing} onClick={onRefresh} /> : null}
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.vpnServerDetail(server.id))}>Open full page</Button> : null}
             {canManageServers ? <Button variant="outline" onClick={onRestartVpn}>Restart VPN</Button> : null}
             {canManageServers ? <Button variant="outline" onClick={onReconcile}>Reconcile</Button> : null}

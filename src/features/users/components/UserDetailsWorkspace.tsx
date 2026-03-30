@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react';
+import { RefreshButton } from '@/components/shared/RefreshButton';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -40,6 +41,8 @@ export function UserDetailsWorkspace({
   onRemoveFlag,
   onDelete,
   onEditProfile,
+  onRefresh,
+  refreshing = false,
 }: {
   user: UserDetail;
   showRouteLink?: boolean;
@@ -55,6 +58,8 @@ export function UserDetailsWorkspace({
   onRemoveFlag: (flag: UserDetail['flags'][number]) => void;
   onDelete: () => void;
   onEditProfile: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }) {
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser(true);
@@ -80,6 +85,7 @@ export function UserDetailsWorkspace({
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Secondary tools</p>
             <div className="flex flex-wrap gap-2">
+            {onRefresh ? <RefreshButton loading={refreshing} onClick={onRefresh} /> : null}
             {showRouteLink ? <Button variant="outline" onClick={() => navigate(appRoutes.userDetail(user.id))}>Open full page</Button> : null}
             {canManageUsers ? <Button variant="outline" leftIcon={<Pencil className="h-4 w-4" />} onClick={onEditProfile}>Edit Profile</Button> : null}
             {canManageUsers ? <Button variant="outline" onClick={onResendVerification}>Resend verification</Button> : null}

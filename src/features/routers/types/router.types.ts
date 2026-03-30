@@ -374,6 +374,20 @@ export type RouterLiveHealth = {
   error?: string;
 };
 
+export type RouterConnectivityDetail = RouterDetail["connectivity"];
+export type RouterPortsDetail = RouterDetail["accessPorts"];
+export type RouterMonitoringDetail = RouterDetail["monitoring"];
+export type RouterProvisioningDetail = RouterDetail["provisioning"];
+export type RouterNotesDetail = RouterDetail["notes"];
+export type RouterFlagsDetail = RouterDetail["flags"];
+
+export type RouterDiagnostics = {
+  status: string;
+  issues: Array<{ code: string; severity: string; message: string }>;
+  proxyStatus?: Record<string, unknown>;
+  recommendedActions: string[];
+};
+
 export type RouterInterface = {
   name: string;
   type: string;

@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -76,6 +77,11 @@ export function MonitoringWorkspacePage() {
   const resolveMutation = useResolveIncident();
   const reviewedMutation = useMarkIncidentReviewed();
   const noteMutation = useAddIncidentNote();
+  const refreshWorkspace = () => {
+    if (kind === "incident") {
+      void incidentQuery.refetch();
+    }
+  };
 
   const detail = useMemo<MonitoringDetailItem | null>(() => {
     if (kind === "incident") {
@@ -93,7 +99,10 @@ export function MonitoringWorkspacePage() {
   const title = getTitle(detail);
   return (
     <section className="space-y-6">
-      <PageHeader title={title} description="Route-driven monitoring workspace for operational context, infrastructure impact, and incident actions." meta={detail.kind.replace(/-/g, " ")} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={title} description="Route-driven monitoring workspace for operational context, infrastructure impact, and incident actions." meta={detail.kind.replace(/-/g, " ")} />
+        {kind === "incident" ? <RefreshButton loading={incidentQuery.isFetching} onClick={refreshWorkspace} /> : null}
+      </div>
 
       <Card className="space-y-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api/client';
 import { endpoints } from '@/lib/api/endpoints';
-import { env } from '@/config/env';
+import { AxiosError } from 'axios';
 
 interface DeviceMarker {
   id: string;
@@ -22,6 +22,8 @@ interface ConnectionStats {
   accessPoints: number;
   routers: number;
   clients: number;
+  switches: number;
+  unknown: number;
 }
 
 interface ParentLocation {
@@ -43,6 +45,13 @@ interface ConnectedDevicesResponse {
     deviceType: string;
     ipAddress: string;
     lastSeen: string;
+    classificationConfidence?: number;
+    classificationEvidence?: string[];
+    interfaceName?: string;
+    macAddress?: string;
+    manufacturer?: string;
+    model?: string;
+    bandwidth?: number;
     signal?: number;
     latency?: number;
   }>;
@@ -67,13 +76,14 @@ interface NetworkTopology {
   }>;
 }
 
-const apiBaseUrl = env.apiBaseUrl?.replace(/\/+$/, '') || 'http://localhost:5000';
-
-function getAbsoluteApiUrl(path: string) {
-  const sanitizedPath = path.startsWith('/') ? path : `/${path}`;
-  const url = `${apiBaseUrl}${sanitizedPath}`;
-  console.debug('[Topology] getAbsoluteApiUrl', { path, apiBaseUrl, url });
-  return url;
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof AxiosError) {
+    return error.response?.data?.error || error.message || fallback;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
 }
 
 /**
@@ -84,20 +94,18 @@ export function useConnectedDevices(routerId: string) {
     queryKey: ['connected-devices', routerId],
     queryFn: async (): Promise<ConnectedDevicesResponse> => {
       try {
-        const url = getAbsoluteApiUrl(endpoints.admin.routerTopologyDevices(routerId));
-        const response = await apiClient.get(url);
-        const responseData = response.data;
-        if (responseData && responseData.data) {
-          return responseData.data;
+        const response = await apiClient.get(endpoints.admin.routerTopologyDevices(routerId));
+        if (response.data?.data) {
+          return response.data.data;
         }
-        return { parentLocation: null, devices: [] };
+        throw new Error('Topology device response was empty');
       } catch (error) {
-        console.error('Failed to fetch connected devices:', error);
-        return { parentLocation: null, devices: [] };
+        throw new Error(getErrorMessage(error, 'Failed to fetch connected devices'));
       }
     },
     enabled: !!routerId,
-    staleTime: 30000 // 30 seconds
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -109,20 +117,18 @@ export function useNetworkTopology(routerId: string) {
     queryKey: ['network-topology', routerId],
     queryFn: async (): Promise<NetworkTopology> => {
       try {
-        const url = getAbsoluteApiUrl(endpoints.admin.routerTopologyNetwork(routerId));
-        const response = await apiClient.get(url);
-        const responseData = response.data;
-        if (responseData && responseData.data) {
-          return responseData.data;
+        const response = await apiClient.get(endpoints.admin.routerTopologyNetwork(routerId));
+        if (response.data?.data) {
+          return response.data.data;
         }
-        return { router: { id: routerId, name: '', status: '', location: null }, connections: [] };
+        throw new Error('Network topology response was empty');
       } catch (error) {
-        console.error('Failed to fetch network topology:', error);
-        return { router: { id: routerId, name: '', status: '', location: null }, connections: [] };
+        throw new Error(getErrorMessage(error, 'Failed to fetch network topology'));
       }
     },
     enabled: !!routerId,
-    staleTime: 30000
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -134,36 +140,13 @@ export function useConnectionStats(routerId: string) {
     queryKey: ['connection-stats', routerId],
     queryFn: async (): Promise<ConnectionStats> => {
       try {
-        const url = getAbsoluteApiUrl(endpoints.admin.routerTopologyStats(routerId));
-        const response = await apiClient.get(url);
-        const responseData = response.data;
-        if (responseData && responseData.data) {
-          return responseData.data;
+        const response = await apiClient.get(endpoints.admin.routerTopologyStats(routerId));
+        if (response.data?.data) {
+          return response.data.data;
         }
-        return {
-          totalDevices: 0,
-          onlineDevices: 0,
-          offlineDevices: 0,
-          avgLatency: 0,
-          avgPacketLoss: 0,
-          avgBandwidth: 0,
-          accessPoints: 0,
-          routers: 0,
-          clients: 0,
-        };
+        throw new Error('Connection stats response was empty');
       } catch (error) {
-        console.error('Failed to fetch connection stats:', error);
-        return {
-          totalDevices: 0,
-          onlineDevices: 0,
-          offlineDevices: 0,
-          avgLatency: 0,
-          avgPacketLoss: 0,
-          avgBandwidth: 0,
-          accessPoints: 0,
-          routers: 0,
-          clients: 0,
-        };
+        throw new Error(getErrorMessage(error, 'Failed to fetch connection stats'));
       }
     },
     enabled: !!routerId,
@@ -180,20 +163,18 @@ export function useDeviceClusters(routerId: string, zoom: number = 4) {
     queryKey: ['device-clusters', routerId, zoom],
     queryFn: async (): Promise<any[]> => {
       try {
-        const url = getAbsoluteApiUrl(endpoints.admin.routerTopologyClusters(routerId, zoom));
-        const response = await apiClient.get(url);
-        const responseData = response.data;
-        if (responseData && responseData.data) {
-          return responseData.data;
+        const response = await apiClient.get(endpoints.admin.routerTopologyClusters(routerId, zoom));
+        if (response.data?.data) {
+          return response.data.data;
         }
-        return [];
+        throw new Error('Device cluster response was empty');
       } catch (error) {
-        console.error('Failed to fetch device clusters:', error);
-        return [];
+        throw new Error(getErrorMessage(error, 'Failed to fetch device clusters'));
       }
     },
     enabled: !!routerId,
-    staleTime: 60000
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -216,27 +197,13 @@ export function transformDevicesToMarkers(devices: any[], parentLocation: Parent
 /**
  * Trigger device discovery on a router
  */
-export async function discoverRouterDevices(routerId: string) {
-  const route = endpoints.admin.routerTopologyDiscover(routerId);
-  const fullUrl = getAbsoluteApiUrl(route);
-
-  console.debug('[Topology] discoverRouterDevices', { route, fullUrl, baseURL: apiClient.defaults.baseURL });
-
-  const response = await fetch(fullUrl, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Topology discovery failed ${response.status}: ${errorText}`);
+export async function discoverRouterDevices(routerId: string, options?: { timeoutMs?: number; sources?: string[] }) {
+  try {
+    const response = await apiClient.post(endpoints.admin.routerTopologyDiscover(routerId), options || {});
+    return response.data;
+  } catch (error) {
+    throw new Error(getErrorMessage(error, 'Topology discovery failed'));
   }
-
-  const data = await response.json();
-  return data;
 }
 
 

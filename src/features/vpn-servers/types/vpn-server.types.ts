@@ -183,3 +183,24 @@ export type VpnServerDiagnosticsResult = {
   healthChecks: Array<{ check: string; passed: boolean; detail?: string }>;
   generatedAt: string;
 };
+
+export type VpnServerHealthDetail = {
+  status: string;
+  staleTelemetry: boolean;
+  issues: string[];
+  load: {
+    peerCount: number;
+    activePeerCount: number;
+    routerCount: number;
+    onlineRouters: number;
+    offlineRouters: number;
+    maxPeers: number | null;
+    maxRouters: number | null;
+    peerUtilization: number | null;
+    routerUtilization: number | null;
+    overloaded: boolean;
+    nearCapacity: boolean;
+  };
+  lastHeartbeatAt?: string | null;
+  generatedAt?: string | null;
+};

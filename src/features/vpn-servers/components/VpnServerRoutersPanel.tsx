@@ -3,6 +3,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Router } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -22,7 +23,7 @@ export function VpnServerRoutersPanel({ items, loading, onRefresh }: { items: Vp
         <RefreshButton loading={loading} onClick={onRefresh} />
       </CardHeader>
       <div className="space-y-3">
-        {loading ? <p className="text-sm text-text-secondary">Loading routers…</p> : items.length ? items.map((router) => {
+        {loading ? <SectionLoader /> : items.length ? items.map((router) => {
           const statusTone = router.status === "active" ? "bg-success" : router.status === "pending" ? "bg-warning" : "bg-danger";
           const provisioningTone = router.provisioningState === "connected" ? "success" : router.provisioningState === "awaiting_connection" ? "warning" : router.provisioningState === "failed" ? "danger" : "neutral";
           return (
@@ -46,9 +47,9 @@ export function VpnServerRoutersPanel({ items, loading, onRefresh }: { items: Vp
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {[
-                  { label: "Winbox", value: router.publicPorts.winbox ?? "—" },
-                  { label: "SSH", value: router.publicPorts.ssh ?? "—" },
-                  { label: "API", value: router.publicPorts.api ?? "—" },
+                  { label: "Winbox", value: router.publicPorts.winbox ?? "-" },
+                  { label: "SSH", value: router.publicPorts.ssh ?? "-" },
+                  { label: "API", value: router.publicPorts.api ?? "-" },
                 ].map((port) => (
                   <span key={port.label} className="rounded-xl border border-background-border bg-background-elevated px-3 py-1 text-xs text-text-secondary">
                     {port.label}: <span className="font-mono text-text-primary">{port.value}</span>

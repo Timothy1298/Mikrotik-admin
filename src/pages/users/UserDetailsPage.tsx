@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { PageLoader } from '@/components/feedback/PageLoader';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { RefreshButton } from '@/components/shared/RefreshButton';
 import {
   AddUserFlagDialog,
   AddUserNoteDialog,
@@ -78,10 +79,15 @@ export function UserDetailsPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title={user.profile.name} description="Route-driven account workspace for deep user investigation, admin actions, and linked operational context." meta={user.profile.email} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={user.profile.name} description="Route-driven account workspace for deep user investigation, admin actions, and linked operational context." meta={user.profile.email} />
+        <RefreshButton loading={userQuery.isFetching} onClick={() => void userQuery.refetch()} />
+      </div>
 
       <UserDetailsWorkspace
         user={user}
+        onRefresh={() => void userQuery.refetch()}
+        refreshing={userQuery.isFetching}
         onSuspend={suspendDisclosure.onOpen}
         onReactivate={reactivateDisclosure.onOpen}
         onVerify={verifyDisclosure.onOpen}

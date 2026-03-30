@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { LifeBuoy, MessageSquare } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { appRoutes } from "@/config/routes";
 import { cannedResponses } from "@/features/support/config/cannedResponses";
@@ -21,6 +22,7 @@ import {
   useAddTicketFlag,
   useAddTicketNote,
   useAssignTicket,
+  useAssignTicketTeam,
   useChangeTicketCategory,
   useChangeTicketPriority,
   useChangeTicketStatus,
@@ -41,6 +43,8 @@ import {
   useTicketNotes,
   useUnassignTicket,
 } from "@/features/support/hooks/useSupport";
+import type { SupportTeam } from "@/features/support/types/support.types";
+import { supportTabs } from "@/config/module-tabs";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
 import { formatDateTime } from "@/lib/formatters/date";
 import { can } from "@/lib/permissions/can";
@@ -65,16 +69,20 @@ function formatAwaiting(value: string) {
 
 export function TicketDetailsPage() {
   const { id = "" } = useParams();
+  const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser(true);
   const [replyBody, setReplyBody] = useState("");
   const [assigneeValue, setAssigneeValue] = useState("");
   const [priorityValue, setPriorityValue] = useState("high");
   const [statusValue, setStatusValue] = useState("in_progress");
   const [categoryValue, setCategoryValue] = useState("technical");
+  const [teamValue, setTeamValue] = useState<SupportTeam>("general");
+  const [flagValue, setFlagValue] = useState("manual_review");
   const [selectedFlagId, setSelectedFlagId] = useState("");
 
   const assignDisclosure = useDisclosure(false);
   const reassignDisclosure = useDisclosure(false);
+  const teamDisclosure = useDisclosure(false);
   const unassignDisclosure = useDisclosure(false);
   const escalateDisclosure = useDisclosure(false);
   const deEscalateDisclosure = useDisclosure(false);
@@ -98,6 +106,7 @@ export function TicketDetailsPage() {
 
   const assignMutation = useAssignTicket();
   const reassignMutation = useReassignTicket();
+  const teamMutation = useAssignTicketTeam();
   const unassignMutation = useUnassignTicket();
   const escalateMutation = useEscalateTicket();
   const deEscalateMutation = useDeEscalateTicket();
@@ -121,6 +130,21 @@ export function TicketDetailsPage() {
     () => cannedResponses.filter((item) => item.category === detail?.ticket.category || item.category === "general"),
     [detail?.ticket.category],
   );
+
+  useEffect(() => {
+    if (!detail) return;
+    setAssigneeValue(detail.ticket.assignee?.id || "");
+    setPriorityValue(detail.ticket.priority);
+    setStatusValue(detail.ticket.status);
+    setCategoryValue(detail.ticket.category);
+    setTeamValue((detail.ticket.assignedTeam as SupportTeam) || "general");
+  }, [detail]);
+
+  useEffect(() => {
+    const firstFlag = flagsQuery.data?.[0];
+    setFlagValue(firstFlag?.flag || "manual_review");
+    setSelectedFlagId(firstFlag?.id || "");
+  }, [flagsQuery.data]);
 
   const timelineItems = useMemo(
     () => (activityQuery.data?.items || []).map((item) => ({
@@ -148,6 +172,7 @@ export function TicketDetailsPage() {
         <PageHeader title={detail.context.customer?.name || detail.ticket.customer?.name || detail.ticket.subject} description="User-classified support workspace for subscriber context, ticket handling, and operational follow-up." meta={detail.context.customer?.email || detail.ticket.ticketReference} />
         <RefreshButton loading={ticketQuery.isFetching || messagesQuery.isFetching || notesQuery.isFetching || flagsQuery.isFetching || activityQuery.isFetching} onClick={refreshAll} />
       </div>
+      <Tabs tabs={[...supportTabs]} value={appRoutes.supportTickets} onChange={navigate} />
 
       <Card className="space-y-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -169,6 +194,7 @@ export function TicketDetailsPage() {
               {showReplyActions ? <Button variant="outline" onClick={() => document.getElementById("ticket-inline-reply")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Reply</Button> : null}
               {showManageActions && !detail.ticket.assignee ? <Button variant="outline" onClick={assignDisclosure.onOpen}>Assign</Button> : null}
               {showManageActions && detail.ticket.assignee ? <Button variant="outline" onClick={reassignDisclosure.onOpen}>Reassign</Button> : null}
+              {showManageActions ? <Button variant="outline" onClick={teamDisclosure.onOpen}>Assign team</Button> : null}
               {showManageActions && detail.ticket.assignee ? <Button variant="ghost" onClick={unassignDisclosure.onOpen}>Unassign</Button> : null}
               {showManageActions && !detail.ticket.escalated ? <Button variant="outline" onClick={escalateDisclosure.onOpen}>Escalate</Button> : null}
               {showManageActions && detail.ticket.escalated ? <Button variant="outline" onClick={deEscalateDisclosure.onOpen}>De-escalate</Button> : null}
@@ -388,6 +414,7 @@ export function TicketDetailsPage() {
 
       <SupportActionDialog open={assignDisclosure.open} title="Assign ticket" description="Assign the selected ticket to a support agent." confirmLabel="Assign ticket" loading={assignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={assignDisclosure.onClose} onConfirm={({ reason }) => assigneeValue && assignMutation.mutate([id, assigneeValue, reason] as never, { onSuccess: () => { assignDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={reassignDisclosure.open} title="Reassign ticket" description="Move ticket ownership to another support agent." confirmLabel="Reassign ticket" loading={reassignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={reassignDisclosure.onClose} onConfirm={({ reason }) => assigneeValue && reassignMutation.mutate([id, assigneeValue, reason] as never, { onSuccess: () => { reassignDisclosure.onClose(); void ticketQuery.refetch(); } })} />
+      <SupportActionDialog open={teamDisclosure.open} title="Assign support team" description="Route this ticket to the team that should own the next step." confirmLabel="Assign team" loading={teamMutation.isPending} select={{ label: "Team", value: teamValue, options: [{ label: "General", value: "general" }, { label: "Networking", value: "networking" }, { label: "Billing", value: "billing" }, { label: "Security", value: "security" }, { label: "VIP", value: "vip" }, { label: "Operations", value: "operations" }], onValueChange: (value) => setTeamValue(value as SupportTeam) }} onClose={teamDisclosure.onClose} onConfirm={({ reason }) => teamMutation.mutate([id, teamValue, reason] as never, { onSuccess: () => { teamDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={unassignDisclosure.open} title="Unassign ticket" description="Remove the current owner from this ticket." confirmLabel="Unassign ticket" loading={unassignMutation.isPending} onClose={unassignDisclosure.onClose} onConfirm={({ reason }) => unassignMutation.mutate([id, reason] as never, { onSuccess: () => { unassignDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={escalateDisclosure.open} title="Escalate ticket" description="Raise the ticket priority for urgent review." confirmLabel="Escalate ticket" loading={escalateMutation.isPending} onClose={escalateDisclosure.onClose} onConfirm={({ reason }) => escalateMutation.mutate([id, reason] as never, { onSuccess: () => { escalateDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={deEscalateDisclosure.open} title="De-escalate ticket" description="Clear the escalation state for this ticket." confirmLabel="De-escalate ticket" loading={deEscalateMutation.isPending} onClose={deEscalateDisclosure.onClose} onConfirm={({ reason }) => deEscalateMutation.mutate([id, reason] as never, { onSuccess: () => { deEscalateDisclosure.onClose(); void ticketQuery.refetch(); } })} />
@@ -396,7 +423,7 @@ export function TicketDetailsPage() {
       <SupportActionDialog open={reopenDisclosure.open} title="Reopen ticket" description="Return this ticket to the active queue." confirmLabel="Reopen ticket" loading={reopenMutation.isPending} onClose={reopenDisclosure.onClose} onConfirm={({ reason }) => reopenMutation.mutate([id, reason] as never, { onSuccess: () => { reopenDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={reviewedDisclosure.open} title="Mark reviewed" description="Record that this ticket has been reviewed." confirmLabel="Mark reviewed" loading={reviewedMutation.isPending} onClose={reviewedDisclosure.onClose} onConfirm={({ reason }) => reviewedMutation.mutate([id, reason] as never, { onSuccess: () => { reviewedDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={noteDisclosure.open} title="Add internal note" description="Add internal support context to this ticket." confirmLabel="Add note" loading={noteMutation.isPending} textarea reasonOnly={false} onClose={noteDisclosure.onClose} onConfirm={({ reason, body }) => noteMutation.mutate([id, { body: body || "", category: "support", reason }] as never, { onSuccess: () => { noteDisclosure.onClose(); void notesQuery.refetch(); } })} />
-      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add an internal workflow flag to this ticket." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: categoryValue, options: [...flagOptions], onValueChange: setCategoryValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => flagMutation.mutate([id, { flag: categoryValue, severity: "medium", reason }] as never, { onSuccess: () => { flagDisclosure.onClose(); void flagsQuery.refetch(); } })} />
+      <SupportActionDialog open={flagDisclosure.open} title="Add ticket flag" description="Add an internal workflow flag to this ticket." confirmLabel="Add flag" loading={flagMutation.isPending} select={{ label: "Flag", value: flagValue, options: [...flagOptions], onValueChange: setFlagValue }} onClose={flagDisclosure.onClose} onConfirm={({ reason }) => flagMutation.mutate([id, { flag: flagValue, severity: "medium", reason }] as never, { onSuccess: () => { flagDisclosure.onClose(); void flagsQuery.refetch(); } })} />
       <SupportActionDialog open={removeFlagDisclosure.open} title="Remove ticket flag" description="Remove the selected ticket flag." confirmLabel="Remove flag" loading={removeFlagMutation.isPending} onClose={removeFlagDisclosure.onClose} onConfirm={({ reason }) => selectedFlagId && removeFlagMutation.mutate([id, selectedFlagId, reason] as never, { onSuccess: () => { removeFlagDisclosure.onClose(); void flagsQuery.refetch(); } })} />
       <SupportActionDialog open={statusDisclosure.open} title="Change status" description="Update the ticket lifecycle state." confirmLabel="Update status" loading={statusMutation.isPending} select={{ label: "Status", value: statusValue, options: [{ label: "Open", value: "open" }, { label: "In progress", value: "in_progress" }, { label: "Resolved", value: "resolved" }, { label: "Closed", value: "closed" }], onValueChange: setStatusValue }} onClose={statusDisclosure.onClose} onConfirm={({ reason }) => statusMutation.mutate([id, statusValue, reason] as never, { onSuccess: () => { statusDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={priorityDisclosure.open} title="Change priority" description="Update the ticket priority." confirmLabel="Update priority" loading={priorityMutation.isPending} select={{ label: "Priority", value: priorityValue, options: [{ label: "Low", value: "low" }, { label: "Medium", value: "medium" }, { label: "High", value: "high" }, { label: "Urgent", value: "urgent" }], onValueChange: setPriorityValue }} onClose={priorityDisclosure.onClose} onConfirm={({ reason }) => priorityMutation.mutate([id, priorityValue, reason] as never, { onSuccess: () => { priorityDisclosure.onClose(); void ticketQuery.refetch(); } })} />

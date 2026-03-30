@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { PageLoader } from "@/components/feedback/PageLoader";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { RefreshButton } from "@/components/shared/RefreshButton";
 import {
   AddServerFlagDialog,
   AddServerNoteDialog,
@@ -79,7 +80,10 @@ export function VpnServerDetailsPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title={server.profile.name} description="Route-driven VPN server workspace for health, capacity, traffic, and peer operations." meta={server.profile.nodeId} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={server.profile.name} description="Route-driven VPN server workspace for health, capacity, traffic, and peer operations." meta={server.profile.nodeId} />
+        <RefreshButton loading={serverQuery.isFetching || routersQuery.isFetching || peersQuery.isFetching || trafficDetailQuery.isFetching} onClick={() => { void serverQuery.refetch(); void routersQuery.refetch(); void peersQuery.refetch(); void trafficDetailQuery.refetch(); }} />
+      </div>
 
       <VpnServerDetailsWorkspace
         server={server}
@@ -88,6 +92,8 @@ export function VpnServerDetailsPage() {
         trafficDetail={trafficDetailQuery.data}
         routersLoading={routersQuery.isPending}
         peersLoading={peersQuery.isPending}
+        onRefresh={() => void serverQuery.refetch()}
+        refreshing={serverQuery.isFetching}
         onRefreshRouters={() => void routersQuery.refetch()}
         onRefreshPeers={() => void peersQuery.refetch()}
         onDisable={disableDisclosure.onOpen}

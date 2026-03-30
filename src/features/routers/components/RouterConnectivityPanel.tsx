@@ -1,10 +1,15 @@
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineError } from "@/components/feedback/InlineError";
+import { RefreshButton } from "@/components/shared/RefreshButton";
+import { SectionLoader } from "@/components/feedback/SectionLoader";
+import { useRouterConnectivity } from "@/features/routers/hooks/useRouter";
 import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTunnelHealthBadge";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
 export function RouterConnectivityPanel({ router }: { router: RouterDetail }) {
-  const connectivity = router.connectivity;
+  const connectivityQuery = useRouterConnectivity(router.id);
+  const connectivity = connectivityQuery.data || router.connectivity;
   const managementOnly = router.profile.connectionMode === "management_only";
   const ownerTunnel = connectivity.ownerTunnel;
 
@@ -19,7 +24,10 @@ export function RouterConnectivityPanel({ router }: { router: RouterDetail }) {
               : "Peer linkage, server assignment, handshake state, and transfer summaries."}
           </CardDescription>
         </div>
+        <RefreshButton loading={connectivityQuery.isFetching} onClick={() => void connectivityQuery.refetch()} />
       </CardHeader>
+      {connectivityQuery.isPending ? <SectionLoader /> : null}
+      {connectivityQuery.isError ? <InlineError message="Unable to load router connectivity." /> : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <p className="text-xs uppercase tracking-[0.18em] text-text-muted">{managementOnly ? "Connection state" : "Tunnel state"}</p>

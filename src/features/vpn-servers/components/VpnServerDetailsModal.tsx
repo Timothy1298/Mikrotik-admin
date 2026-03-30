@@ -16,6 +16,8 @@ export function VpnServerDetailsModal({
   routersLoading,
   peersLoading,
   onClose,
+  onRefresh,
+  refreshing,
   ...workspaceProps
 }: {
   open: boolean;
@@ -28,6 +30,8 @@ export function VpnServerDetailsModal({
   routersLoading?: boolean;
   peersLoading?: boolean;
   onClose: () => void;
+  onRefresh?: () => void;
+  refreshing?: boolean;
   onDisable: () => void;
   onReactivate: () => void;
   onEnableMaintenance: () => void;
@@ -55,7 +59,7 @@ export function VpnServerDetailsModal({
           <Button variant="ghost" size="icon" onClick={onClose}><X className="h-4 w-4" /></Button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 md:px-6">
-          {loading ? <PageLoader /> : error || !server ? <ErrorState title="Unable to load VPN server details" description="The VPN server workspace could not be loaded. Retry after checking the admin VPN server API." /> : <VpnServerDetailsWorkspace server={server} routers={routers} peers={peers} trafficDetail={trafficDetail} routersLoading={routersLoading} peersLoading={peersLoading} showRouteLink {...workspaceProps} />}
+          {loading ? <PageLoader /> : error || !server ? <ErrorState title="Unable to load VPN server details" description="The VPN server workspace could not be loaded. Retry after checking the admin VPN server API." onAction={onRefresh ? () => void onRefresh() : undefined} /> : <VpnServerDetailsWorkspace server={server} routers={routers} peers={peers} trafficDetail={trafficDetail} routersLoading={routersLoading} peersLoading={peersLoading} showRouteLink onRefresh={onRefresh} refreshing={refreshing} {...workspaceProps} />}
         </div>
       </div>
     </div>
