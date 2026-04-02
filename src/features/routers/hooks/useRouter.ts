@@ -26,6 +26,7 @@ import {
   getRouterOnboardingClaims,
   importDiscoveredRouter,
   markRouterReviewed,
+  markRouterBootstrapApplied,
   moveRouterServer,
   pingRouter,
   reactivateRouter,
@@ -39,6 +40,8 @@ import {
   resetRouterPeer,
   discoverRouterDownstreamMikrotiks,
   setRouterCredentials,
+  setRouterAccess,
+  setRouterSafeMode,
   updateRouterManagementPolicy,
   trackRouterRuntimePeer,
   verifyDiscoveredRouter,
@@ -192,7 +195,7 @@ export function useRouterDiscoveryResults(sessionId?: string) {
   });
 }
 
-function useRouterMutation<TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<{ message?: string }>, successMessage: string) {
+function useRouterMutation<TResult extends { message?: string }, TArgs extends unknown[]>(mutationFn: (...args: TArgs) => Promise<TResult>, successMessage: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -348,6 +351,36 @@ export function useSetRouterCredentials() {
   });
 }
 
+export function useSetRouterAccess() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { managementHost?: string; hostname?: string; apiPort?: number; sshPort?: number; reason?: string } }) => setRouterAccess(id, payload),
+    onSuccess: async (_, variables) => {
+      toast.success("Router management endpoint updated");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update router management endpoint");
+    },
+  });
+}
+
+export function useSetRouterSafeMode() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: { enabled: boolean; requireBreakGlass?: boolean; breakGlassCode?: string; note?: string; reason?: string } }) => setRouterSafeMode(id, payload),
+    onSuccess: async (_, variables) => {
+      toast.success("Router safe mode updated");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update router safe mode");
+    },
+  });
+}
+
 export function useTestRouterConnection() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -359,6 +392,21 @@ export function useTestRouterConnection() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "RouterOS API connection failed");
+    },
+  });
+}
+
+export function useMarkRouterBootstrapApplied() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload?: { note?: string; reason?: string } }) => markRouterBootstrapApplied(id, payload),
+    onSuccess: async (_, variables) => {
+      toast.success("Bootstrap package marked as applied");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to mark bootstrap package as applied");
     },
   });
 }

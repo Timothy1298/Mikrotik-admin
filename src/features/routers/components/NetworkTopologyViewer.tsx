@@ -256,6 +256,11 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
                         </p>
                       ) : null}
                       <div className="mt-2 flex flex-wrap gap-2">
+                        {device.discoverySource ? (
+                          <Badge tone={device.discoverySource === 'route_next_hop' ? 'info' : 'neutral'}>
+                            {device.discoverySource === 'route_next_hop' ? 'Route hop' : device.discoverySource}
+                          </Badge>
+                        ) : null}
                         {typeof device.classificationConfidence === 'number' ? (
                           <Badge tone={device.classificationConfidence >= 80 ? 'success' : device.classificationConfidence >= 60 ? 'info' : 'warning'}>
                             Confidence {device.classificationConfidence}%

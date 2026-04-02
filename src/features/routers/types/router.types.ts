@@ -80,6 +80,34 @@ export type RouterRow = {
   } | null;
 };
 
+export type RouterEndpointContract = {
+  state: "unknown" | "local_only" | "tunnel_ready" | "verified_local" | "verified_wireguard" | "mismatch" | "conflict";
+  expectedIdentity: string | null;
+  expectedSerial: string | null;
+  verifiedEndpointId: string | null;
+  verifiedEndpointHost: string | null;
+  verifiedTransport: string | null;
+  verifiedAt: string | null;
+  mismatchReason: string | null;
+};
+
+export type RouterManagementEndpoint = {
+  id: string;
+  kind: string;
+  host: string;
+  port: number;
+  transport: string;
+  priority: number;
+  enabled: boolean;
+  health: string;
+  authScope: string;
+  lastSuccessAt: string | null;
+  lastFailureAt: string | null;
+  failureType: string | null;
+  latencyMs: number | null;
+  derived?: boolean;
+};
+
 export type RouterDirectoryResponse = {
   items: RouterRow[];
   pagination: RouterPaginationMeta;
@@ -142,6 +170,9 @@ export type RouterDetail = {
     configGenerationStatus: string;
     rekeyEligible: boolean;
     reconciliationState: string;
+    endpointHealthSummary?: string;
+    endpointContract?: RouterEndpointContract;
+    endpoints?: RouterManagementEndpoint[];
     ownerTunnel?: {
       source: string;
       sourceRouterId: string;
@@ -159,6 +190,95 @@ export type RouterDetail = {
       tunnelStatus: string;
       peerCreatedAt: string | null;
     } | null;
+  };
+  management: {
+    endpointHistory: Array<{
+      changedAt: string | null;
+      changedBy: string;
+      reason: string;
+      previousHost: string | null;
+      nextHost: string | null;
+      previousIdentity: string | null;
+      nextIdentity: string | null;
+      previousApiPort: number | null;
+      nextApiPort: number | null;
+      validationState: "pending" | "verified" | "mismatch" | "failed";
+      validationMessage: string | null;
+    }>;
+    endpointConfidence: {
+      score: number;
+      band: "high" | "medium" | "low";
+      factors: string[];
+    };
+    pathMap: {
+      primaryPath: {
+        endpointId: string;
+        label: string;
+        host: string;
+        port: number;
+        transport: string;
+        pathType: string;
+        health: string;
+        failureType: string | null;
+        lastSuccessAt: string | null;
+        lastFailureAt: string | null;
+      } | null;
+      candidates: Array<{
+        endpointId: string;
+        label: string;
+        host: string;
+        port: number;
+        transport: string;
+        pathType: string;
+        health: string;
+        failureType: string | null;
+        lastSuccessAt: string | null;
+        lastFailureAt: string | null;
+      }>;
+      recentObservations: Array<{
+        observedAt: string | null;
+        endpointId: string | null;
+        host: string | null;
+        port: number | null;
+        transport: string | null;
+        pathType: string;
+        operationName: string | null;
+        outcome: string;
+        failureType: string | null;
+        message: string | null;
+      }>;
+    };
+    drift: {
+      activeCount: number;
+      lastDetectedAt: string | null;
+      events: Array<{
+        detectedAt: string | null;
+        eventType: string;
+        severity: "info" | "warning" | "critical";
+        message: string;
+        previousValue: string | null;
+        currentValue: string | null;
+        endpointHost: string | null;
+        resolvedAt: string | null;
+      }>;
+    };
+    safeMode: {
+      enabled: boolean;
+      requireBreakGlass: boolean;
+      breakGlassConfigured: boolean;
+      lastEnabledAt: string | null;
+      lastEnabledBy: string | null;
+      note: string | null;
+    };
+    bootstrap: {
+      managementInterfaceName: string;
+      bootstrapMode: "wireguard_only" | "wireguard_with_api" | "wireguard_with_api_ssh";
+      preferredManagementSubnet: string | null;
+      apiAllowedSources: string[];
+      sshAllowedSources: string[];
+      generatedAt: string | null;
+      lastAppliedAt: string | null;
+    };
   };
   discovery: {
     localAddress: string | null;
@@ -192,6 +312,40 @@ export type RouterDetail = {
       issues: string[];
     };
     ownerTunnel?: RouterDetail["connectivity"]["ownerTunnel"];
+  };
+  backupSummary: {
+    count: number;
+    latest: {
+      id: string;
+      filename: string;
+      triggeredBy: string;
+      createdAt: string;
+      metadata: {
+        routerosVersion?: string | null;
+        boardName?: string | null;
+        model?: string | null;
+        serialNumber?: string | null;
+        restoreCompatible?: boolean;
+        lastRestoreTestAt?: string | null;
+        restoreValidationSignals?: string[];
+      };
+    } | null;
+    recent: Array<{
+      id: string;
+      filename: string;
+      triggeredBy: string;
+      createdAt: string;
+      sizeBytes: number;
+      metadata: {
+        routerosVersion?: string | null;
+        boardName?: string | null;
+        model?: string | null;
+        serialNumber?: string | null;
+        restoreCompatible?: boolean;
+        lastRestoreTestAt?: string | null;
+        restoreValidationSignals?: string[];
+      };
+    }>;
   };
   wireguard: {
     mode: "owner_tunnel" | "router_tunnel";
@@ -394,6 +548,12 @@ export type RouterDiagnostics = {
   status: string;
   issues: Array<{ code: string; severity: string; message: string }>;
   proxyStatus?: Record<string, unknown>;
+  endpointDiagnostics?: {
+    contract: RouterEndpointContract;
+    confidence: RouterDetail["management"]["endpointConfidence"];
+    pathMap: RouterDetail["management"]["pathMap"];
+    drift: RouterDetail["management"]["drift"];
+  };
   recommendedActions: string[];
 };
 
@@ -545,6 +705,14 @@ export type CreateRouterPayload = {
   testConnectionOnCreate?: boolean;
 };
 
+export type RouterAccessUpdatePayload = {
+  managementHost?: string;
+  hostname?: string;
+  apiPort?: number;
+  sshPort?: number;
+  reason?: string;
+};
+
 export type RouterManagementPolicyProfile = RouterDetail["policy"]["profile"];
 
 export type CreateRouterResponse = {
@@ -569,6 +737,8 @@ export type RouterSetupArtifacts = {
   generatedAt: string;
   wireguardConfig: string;
   mikrotikScript: string;
+  managementBootstrapScript?: string;
+  bootstrapProfile?: RouterDetail["management"]["bootstrap"];
   connectivity: {
     endpoint: string;
     serverPublicKey: string;

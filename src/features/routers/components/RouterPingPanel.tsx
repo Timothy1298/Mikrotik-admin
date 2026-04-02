@@ -8,7 +8,7 @@ import { usePingRouter } from "@/features/routers/hooks/useRouter";
 import type { RouterDetail, RouterPingResult } from "@/features/routers/types/router.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
-export function RouterPingPanel({ router }: { router: RouterDetail }) {
+export function RouterPingPanel({ router, anchorId }: { router: RouterDetail; anchorId?: string }) {
   const pingMutation = usePingRouter();
   const defaultTarget = router.profile.connectionMode === "management_only" ? "8.8.8.8" : "10.0.0.1";
   const [target, setTarget] = useState(defaultTarget);
@@ -28,6 +28,7 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
   };
 
   return (
+    <div id={anchorId}>
     <Card>
       <CardHeader>
         <div>
@@ -102,6 +103,7 @@ export function RouterPingPanel({ router }: { router: RouterDetail }) {
         </div>
       )}
     </Card>
+    </div>
   );
 }
 

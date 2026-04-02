@@ -45,6 +45,7 @@ export function RouterDetailsPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [selectedFlag, setSelectedFlag] = useState<RouterDetail["flags"][number] | null>(null);
+  const [setupArtifacts, setSetupArtifacts] = useState<import("@/features/routers/types/router.types").RouterSetupArtifacts | null>(null);
   const routerQuery = useRouter(id);
 
   const disableDisclosure = useDisclosure(false);
@@ -109,6 +110,7 @@ export function RouterDetailsPage() {
         onRemoveFlag={(flag) => { setSelectedFlag(flag); removeFlagDisclosure.onOpen(); }}
         onSaveManagementPolicy={(profile) => updateManagementPolicyMutation.mutate([router.id, { policyProfile: profile }] as never)}
         savingManagementPolicy={updateManagementPolicyMutation.isPending}
+        setupArtifacts={setupArtifacts}
       />
 
       <DisableRouterDialog open={disableDisclosure.open} loading={disableMutation.isPending} onClose={disableDisclosure.onClose} onConfirm={(reason) => disableMutation.mutate([router.id, reason] as never, { onSuccess: () => disableDisclosure.onClose() })} />
@@ -116,8 +118,8 @@ export function RouterDetailsPage() {
       <ReactivateRouterDialog open={reactivateDisclosure.open} loading={reactivateMutation.isPending} onClose={reactivateDisclosure.onClose} onConfirm={(reason) => reactivateMutation.mutate([router.id, reason] as never, { onSuccess: () => reactivateDisclosure.onClose() })} />
       <ReprovisionRouterDialog open={reprovisionDisclosure.open} loading={reprovisionMutation.isPending} onClose={reprovisionDisclosure.onClose} onConfirm={(reason) => reprovisionMutation.mutate([router.id, reason] as never, { onSuccess: () => reprovisionDisclosure.onClose() })} />
       <RebootRouterDialog open={rebootDisclosure.open} loading={rebootMutation.isPending} onClose={rebootDisclosure.onClose} onConfirm={(reason) => rebootMutation.mutate([router.id, reason] as never, { onSuccess: () => rebootDisclosure.onClose() })} />
-      <RegenerateSetupDialog open={regenerateDisclosure.open} loading={regenerateMutation.isPending} onClose={regenerateDisclosure.onClose} onConfirm={(reason) => regenerateMutation.mutate([router.id, reason] as never, { onSuccess: () => regenerateDisclosure.onClose() })} />
-      <ResetPeerDialog open={resetPeerDisclosure.open} loading={resetPeerMutation.isPending} onClose={resetPeerDisclosure.onClose} onConfirm={(reason) => resetPeerMutation.mutate([router.id, reason] as never, { onSuccess: () => resetPeerDisclosure.onClose() })} />
+      <RegenerateSetupDialog open={regenerateDisclosure.open} loading={regenerateMutation.isPending} onClose={regenerateDisclosure.onClose} onConfirm={(reason) => regenerateMutation.mutate([router.id, reason] as never, { onSuccess: (result) => { setSetupArtifacts(result.artifacts || null); regenerateDisclosure.onClose(); } })} />
+      <ResetPeerDialog open={resetPeerDisclosure.open} loading={resetPeerMutation.isPending} onClose={resetPeerDisclosure.onClose} onConfirm={(reason) => resetPeerMutation.mutate([router.id, reason] as never, { onSuccess: (result) => { setSetupArtifacts(result.artifacts || null); resetPeerDisclosure.onClose(); } })} />
       <ReassignPortsDialog open={reassignPortsDisclosure.open} loading={reassignPortsMutation.isPending} onClose={reassignPortsDisclosure.onClose} onConfirm={(payload) => reassignPortsMutation.mutate([router.id, payload] as never, { onSuccess: () => reassignPortsDisclosure.onClose() })} />
       <MoveServerDialog open={moveServerDisclosure.open} loading={moveServerMutation.isPending} onClose={moveServerDisclosure.onClose} onConfirm={(payload) => moveServerMutation.mutate([router.id, payload] as never, { onSuccess: () => moveServerDisclosure.onClose() })} />
       <MarkRouterReviewedDialog open={reviewedDisclosure.open} loading={markReviewedMutation.isPending} onClose={reviewedDisclosure.onClose} onConfirm={(reason) => markReviewedMutation.mutate([router.id, reason] as never, { onSuccess: () => reviewedDisclosure.onClose() })} />

@@ -9,6 +9,15 @@ export type RouterBackup = {
   triggeredBy: BackupTrigger;
   createdBy: string;
   note: string;
+  metadata?: {
+    routerosVersion?: string | null;
+    boardName?: string | null;
+    model?: string | null;
+    serialNumber?: string | null;
+    restoreCompatible?: boolean;
+    lastRestoreTestAt?: string | null;
+    restoreValidationSignals?: string[];
+  };
   createdAt: string;
   updatedAt: string;
 };

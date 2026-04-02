@@ -54,6 +54,8 @@ interface ConnectedDevicesResponse {
     bandwidth?: number;
     signal?: number;
     latency?: number;
+    discoverySource?: string;
+    hopCount?: number | null;
   }>;
 }
 
@@ -73,6 +75,7 @@ interface NetworkTopology {
       location: ParentLocation | null;
     };
     childConnections: number;
+    pathRole?: string;
   }>;
 }
 

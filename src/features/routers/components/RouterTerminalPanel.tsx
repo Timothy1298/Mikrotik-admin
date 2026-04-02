@@ -13,7 +13,7 @@ import { can } from "@/lib/permissions/can";
 import { permissions } from "@/lib/permissions/permissions";
 import { storageKeys } from "@/lib/utils/storage";
 
-export function RouterTerminalPanel({ routerId }: { routerId: string }) {
+export function RouterTerminalPanel({ routerId, anchorId }: { routerId: string; anchorId?: string }) {
   const autoReconnectAttemptsRef = useRef(0);
   const autoReconnectTimerRef = useRef<number | null>(null);
   const reconnectVersionRef = useRef(0);
@@ -27,6 +27,8 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const resizeListenerRef = useRef<{ dispose: () => void } | null>(null);
   const [connectionState, setConnectionState] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [lastError, setLastError] = useState<string | null>(null);
+  const [terminalMode, setTerminalMode] = useState<string | null>(null);
+  const [terminalEndpoint, setTerminalEndpoint] = useState<{ host?: string | null; port?: number | null; transport?: string | null; pathType?: string | null } | null>(null);
   const [reconnectVersion, setReconnectVersion] = useState(0);
 
   useEffect(() => {
@@ -87,6 +89,8 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
 
     setConnectionState("connecting");
     setLastError(null);
+    setTerminalMode(null);
+    setTerminalEndpoint(null);
     terminal.clear();
     terminal.writeln("Connecting to router terminal...");
 
@@ -130,6 +134,8 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
         if (payload.type === "status" && payload.state === "connected") {
           terminalReady = true;
           autoReconnectAttemptsRef.current = 0;
+          setTerminalMode(typeof payload.mode === "string" ? payload.mode : null);
+          setTerminalEndpoint(payload.endpoint || null);
           return;
         }
         if (payload.type === "error") {
@@ -208,12 +214,13 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
   const tone = connectionState === "connected" ? "success" : connectionState === "connecting" ? "warning" : "danger";
 
   return (
+    <div id={anchorId}>
     <Card className="space-y-5">
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <CardTitle>Live terminal</CardTitle>
-            <CardDescription>Interactive RouterOS shell over a browser-based SSH relay.</CardDescription>
+            <CardDescription>Interactive RouterOS console using the best available remote path, with API console fallback when SSH is unreachable.</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Badge tone={tone}>{connectionState}</Badge>
@@ -235,9 +242,18 @@ export function RouterTerminalPanel({ routerId }: { routerId: string }) {
 
       {lastError ? <div className="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">{lastError}</div> : null}
 
+      {terminalMode || terminalEndpoint ? (
+        <div className="rounded-2xl border border-background-border bg-background-panel px-4 py-3 text-sm text-text-secondary">
+          <p>Mode: <span className="text-text-primary">{terminalMode || "unknown"}</span></p>
+          <p className="mt-1">Path: <span className="text-text-primary">{terminalEndpoint?.pathType || "unknown"}</span></p>
+          <p className="mt-1">Endpoint: <span className="font-mono text-text-primary">{terminalEndpoint?.host || "unknown"}{terminalEndpoint?.port ? `:${terminalEndpoint.port}` : ""} {terminalEndpoint?.transport ? `• ${terminalEndpoint.transport}` : ""}</span></p>
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-background-border bg-[#111827] p-2">
         <div ref={terminalHostRef} className="min-h-[28rem] w-full" />
       </div>
     </Card>
+    </div>
   );
 }

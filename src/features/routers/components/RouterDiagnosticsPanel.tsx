@@ -25,6 +25,22 @@ export function RouterDiagnosticsPanel({ routerId }: { routerId: string }) {
             <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Status</p>
             <p className="mt-2 text-sm text-text-primary">{diagnostics.status.replace(/_/g, " ")}</p>
           </div>
+          {diagnostics.endpointDiagnostics ? (
+            <div className="grid gap-4 xl:grid-cols-3">
+              <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Endpoint confidence</p>
+                <p className="mt-2 text-sm text-text-primary">{diagnostics.endpointDiagnostics.confidence.score} • {diagnostics.endpointDiagnostics.confidence.band}</p>
+              </div>
+              <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Endpoint contract</p>
+                <p className="mt-2 text-sm text-text-primary">{diagnostics.endpointDiagnostics.contract.state.replace(/_/g, " ")}</p>
+              </div>
+              <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Active drift events</p>
+                <p className="mt-2 text-sm text-text-primary">{diagnostics.endpointDiagnostics.drift.activeCount}</p>
+              </div>
+            </div>
+          ) : null}
           <div className="space-y-3">
             <p className="text-sm font-medium text-text-primary">Issues</p>
             {diagnostics.issues.length ? (

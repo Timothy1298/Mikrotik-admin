@@ -51,10 +51,15 @@ export function RouterBackupsPanel({ routerId }: { routerId: string }) {
         </div>
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Latest trigger</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Restore readiness</p>
             <FileText className="h-4 w-4 text-primary" />
           </div>
-          <p className="mt-3 text-sm font-semibold text-text-primary">{latest?.triggeredBy || "Unavailable"}</p>
+          <p className="mt-3 text-sm font-semibold text-text-primary">{latest?.metadata?.restoreCompatible === false ? "Review required" : "Validated"}</p>
+          <p className="mt-1 text-xs text-text-secondary">
+            {latest?.metadata?.lastRestoreTestAt
+              ? `Validated ${new Date(latest.metadata.lastRestoreTestAt).toLocaleString()}`
+              : (latest?.metadata?.routerosVersion || latest?.triggeredBy || "Unavailable")}
+          </p>
         </div>
         <div className="rounded-2xl border border-background-border bg-background-panel p-4">
           <div className="flex items-center justify-between gap-3">
@@ -62,6 +67,7 @@ export function RouterBackupsPanel({ routerId }: { routerId: string }) {
             <Clock3 className="h-4 w-4 text-primary" />
           </div>
           <p className="mt-3 text-sm font-semibold text-text-primary">{latest?.createdAt ? new Date(latest.createdAt).toLocaleString() : "Never"}</p>
+          {latest?.metadata?.serialNumber ? <p className="mt-1 text-xs text-text-secondary">Serial {latest.metadata.serialNumber}</p> : null}
         </div>
       </div>
 

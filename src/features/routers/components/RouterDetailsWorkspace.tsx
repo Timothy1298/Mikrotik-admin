@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { RouterActivityPanel } from "@/features/routers/components/RouterActivityPanel";
+import { RouterAdvancedManagementPanel } from "@/features/routers/components/RouterAdvancedManagementPanel";
 import { RouterApiAccessPanel } from "@/features/routers/components/RouterApiAccessPanel";
+import { RouterBootstrapArtifactsPanel } from "@/features/routers/components/RouterBootstrapArtifactsPanel";
 import { RouterConnectivityPanel } from "@/features/routers/components/RouterConnectivityPanel";
 import { RouterCustomerPanel } from "@/features/routers/components/RouterCustomerPanel";
 import { RouterDiagnosticsPanel } from "@/features/routers/components/RouterDiagnosticsPanel";
@@ -31,7 +33,7 @@ import { RouterNetworkPanel } from "@/features/network-config";
 import { RouterPppoePanel } from "@/features/pppoe";
 import { RouterQueuesPanel } from "@/features/queues";
 import { RouterBackupsPanel } from "@/features/backups";
-import type { RouterDetail } from "@/features/routers/types/router.types";
+import type { RouterDetail, RouterSetupArtifacts } from "@/features/routers/types/router.types";
 import { appRoutes } from "@/config/routes";
 import { useNavigate } from "react-router-dom";
 import { formatDateTime } from "@/lib/formatters/date";
@@ -56,6 +58,7 @@ export function RouterDetailsWorkspace({
   onRefresh,
   refreshing = false,
   savingManagementPolicy = false,
+  setupArtifacts = null,
 }: {
   router: RouterDetail;
   showRouteLink?: boolean;
@@ -76,10 +79,26 @@ export function RouterDetailsWorkspace({
   onRefresh?: () => void;
   refreshing?: boolean;
   savingManagementPolicy?: boolean;
+  setupArtifacts?: RouterSetupArtifacts | null;
 }) {
   const navigate = useNavigate();
   const [liveSection, setLiveSection] = useState<"overview" | "hotspot" | "pppoe" | "wireguard" | "queues" | "firewall" | "network" | "backups" | "terminal" | "topology">("overview");
   const ownerTunnel = router.connectivity.ownerTunnel;
+  const scrollToAnchor = (anchorId: string) => {
+    window.requestAnimationFrame(() => {
+      document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+  const openOverviewAnchor = (anchorId: string) => {
+    setLiveSection("overview");
+    scrollToAnchor(anchorId);
+  };
+  const openTerminal = () => {
+    setLiveSection("terminal");
+    window.setTimeout(() => {
+      document.getElementById("router-terminal-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  };
 
   return (
     <div className="space-y-6">
@@ -172,12 +191,21 @@ export function RouterDetailsWorkspace({
           </div>
           <RouterLiveHealthPanel routerId={router.profile.id} />
           <RouterCustomerPanel router={router} />
-          <RouterConnectivityPanel router={router} />
-          <RouterApiAccessPanel router={router} />
+          <RouterConnectivityPanel router={router} anchorId="router-connectivity-panel" />
+          <RouterApiAccessPanel router={router} anchorId="router-api-access-panel" />
+          <RouterBootstrapArtifactsPanel
+            router={router}
+            artifacts={setupArtifacts}
+            onOpenApiAccess={() => openOverviewAnchor("router-api-access-panel")}
+            onOpenPingTest={() => openOverviewAnchor("router-ping-panel")}
+            onOpenConnectivity={() => openOverviewAnchor("router-connectivity-panel")}
+            onOpenTerminal={openTerminal}
+          />
+          <RouterAdvancedManagementPanel router={router} />
           <RouterInterfacesPanel routerId={router.profile.id} />
           <RouterPortsPanel router={router} />
           <RouterMonitoringPanel router={router} />
-          <RouterPingPanel router={router} />
+          <RouterPingPanel router={router} anchorId="router-ping-panel" />
           <RouterManagementPolicyPanel router={router} saving={savingManagementPolicy} onSave={onSaveManagementPolicy} />
           <RouterProvisioningPanel router={router} />
           <RouterDiagnosticsPanel routerId={router.id} />
@@ -194,7 +222,7 @@ export function RouterDetailsWorkspace({
       {liveSection === "firewall" ? <RouterFirewallPanel routerId={router.profile.id} /> : null}
       {liveSection === "network" ? <RouterNetworkPanel routerId={router.profile.id} /> : null}
       {liveSection === "backups" ? <RouterBackupsPanel routerId={router.profile.id} /> : null}
-      {liveSection === "terminal" ? <RouterTerminalPanel routerId={router.profile.id} /> : null}
+      {liveSection === "terminal" ? <RouterTerminalPanel routerId={router.profile.id} anchorId="router-terminal-panel" /> : null}
     </div>
   );
 }

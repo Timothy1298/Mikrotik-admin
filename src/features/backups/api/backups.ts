@@ -12,6 +12,7 @@ type BackupRecord = {
   triggeredBy?: "manual" | "auto" | "pre-change";
   createdBy?: string;
   note?: string;
+  metadata?: RouterBackup["metadata"];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -26,6 +27,7 @@ function mapBackup(item: BackupRecord): RouterBackup {
     triggeredBy: item.triggeredBy || "manual",
     createdBy: item.createdBy || "system",
     note: item.note || "",
+    metadata: item.metadata || undefined,
     createdAt: item.createdAt || new Date(0).toISOString(),
     updatedAt: item.updatedAt || item.createdAt || new Date(0).toISOString(),
   };

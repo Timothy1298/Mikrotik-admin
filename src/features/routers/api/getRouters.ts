@@ -14,6 +14,7 @@ import type {
   RouterInterface,
   RouterLiveHealth,
   RouterMonitoringDetail,
+  RouterSetupArtifacts,
   RouterDiscoveryImportPayload,
   RouterDiscoveryImportResult,
   RouterDiscoveryScanPayload,
@@ -29,6 +30,7 @@ import type {
   RouterMetricPoint,
   RouterNotesDetail,
   RouterFlagsDetail,
+  RouterAccessUpdatePayload,
   RouterManagementPolicyProfile,
   TrackRuntimePeerResult,
 } from "@/features/routers/types/router.types";
@@ -128,12 +130,20 @@ export async function reprovisionRouter(id: string, reason?: string) {
 }
 
 export async function regenerateRouterSetup(id: string, reason?: string) {
-  const { data } = await apiClient.post<{ success: boolean; message: string; artifacts?: Record<string, unknown> }>(endpoints.admin.regenerateRouterSetup(id), { reason });
+  const { data } = await apiClient.post<{ success: boolean; message: string; artifacts?: RouterSetupArtifacts | null }>(endpoints.admin.regenerateRouterSetup(id), { reason });
   return data;
 }
 
 export async function resetRouterPeer(id: string, reason?: string) {
-  const { data } = await apiClient.post<{ success: boolean; message: string; artifacts?: Record<string, unknown> }>(endpoints.admin.resetRouterPeer(id), { reason });
+  const { data } = await apiClient.post<{ success: boolean; message: string; artifacts?: RouterSetupArtifacts | null }>(endpoints.admin.resetRouterPeer(id), { reason });
+  return data;
+}
+
+export async function markRouterBootstrapApplied(id: string, payload?: { note?: string; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: { lastAppliedAt: string; bootstrap: RouterDetail["management"]["bootstrap"] } }>(
+    endpoints.admin.markRouterBootstrapApplied(id),
+    payload || {},
+  );
   return data;
 }
 
@@ -217,6 +227,30 @@ export async function getRouterMetrics(id: string, hours = 24) {
 
 export async function setRouterCredentials(id: string, payload: { apiUsername: string; apiPassword?: string; apiPort: number; reason?: string }) {
   const { data } = await apiClient.post<{ success: boolean; message: string; data: { apiUsername: string; apiPort: number; hasPassword: boolean } }>(endpoints.admin.routerSetCredentials(id), payload);
+  return data;
+}
+
+export async function setRouterAccess(id: string, payload: RouterAccessUpdatePayload) {
+  const { data } = await apiClient.post<{
+    success: boolean;
+    message: string;
+    data: {
+      managementHost: string | null;
+      hostname: string | null;
+      apiPort: number | null;
+      sshPort: number | null;
+      connectionMode: "wireguard" | "management_only";
+    };
+  }>(endpoints.admin.routerSetAccess(id), payload);
+  return data;
+}
+
+export async function setRouterSafeMode(id: string, payload: { enabled: boolean; requireBreakGlass?: boolean; breakGlassCode?: string; note?: string; reason?: string }) {
+  const { data } = await apiClient.post<{
+    success: boolean;
+    message: string;
+    data: RouterDetail["management"]["safeMode"];
+  }>(endpoints.admin.routerSafeMode(id), payload);
   return data;
 }
 
