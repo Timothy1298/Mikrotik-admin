@@ -104,8 +104,8 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const location = useLocation();
   const navigate = useNavigate();
   const sectionMeta = vpnServerManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters ?? {};
-  const sectionFilters = { ...lockedFilters, ...defaultVpnServerFilters };
+  const lockedFilters = useMemo(() => sectionMeta.lockedFilters ?? {}, [sectionMeta.lockedFilters]);
+  const sectionFilters = useMemo(() => ({ ...lockedFilters, ...defaultVpnServerFilters }), [lockedFilters]);
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof VpnServerQuery>;
 
   const [filters, setFilters] = useState<VpnServerQuery>(sectionFilters);
@@ -136,7 +136,7 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
 
   useEffect(() => {
     setFilters((current) => (areFiltersEqual(current, sectionFilters) ? current : sectionFilters));
-  }, [section]);
+  }, [sectionFilters]);
 
   const addMutation = useAddVpnServer();
   const disableMutation = useDisableVpnServer();
@@ -154,10 +154,6 @@ export function VpnServerManagementSectionPage({ section }: { section: VpnServer
   const baseRows = serversQuery.data?.items || [];
   const rows = filterRowsForSection(section, baseRows);
   const total = rows.length;
-  const unhealthyCount = rows.filter((row) => row.healthSummary.status === "degraded").length;
-  const overloadedCount = rows.filter((row) => row.loadCapacitySummary.overloaded).length;
-  const routerCount = rows.reduce((sum, row) => sum + row.routerCount, 0);
-  const peerCount = rows.reduce((sum, row) => sum + row.activePeerCount, 0);
 
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== "").length;
   const Icon = sectionIcons[section];

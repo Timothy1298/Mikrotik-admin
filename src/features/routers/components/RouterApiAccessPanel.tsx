@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useSetRouterAccess, useSetRouterCredentials, useTestRouterConnection } from "@/features/routers/hooks/useRouter";
 import type { RouterApiConnectionTest, RouterDetail } from "@/features/routers/types/router.types";
+import { parseManagementHostInput } from "@/features/routers/utils/managementEndpoint";
 import { formatDateTime } from "@/lib/formatters/date";
 
 function StatusBadge({ state }: { state: RouterDetail["apiAccess"]["state"] }) {
@@ -28,11 +29,12 @@ export function RouterApiAccessPanel({ router, anchorId }: { router: RouterDetai
   const setAccessMutation = useSetRouterAccess();
   const setCredentialsMutation = useSetRouterCredentials();
   const testConnectionMutation = useTestRouterConnection();
-  const primaryManualEndpoint = (router.connectivity.endpoints || []).find((endpoint) => !endpoint.derived) || null;
+  const primaryManualEndpoint = (router.connectivity.endpoints || []).find((endpoint) => endpoint.source === "manual") || null;
+  const discoveryEndpoint = (router.connectivity.endpoints || []).find((endpoint) => endpoint.source === "discovery") || null;
   const [apiUsername, setApiUsername] = useState(router.apiAccess.username || "admin");
   const [apiPassword, setApiPassword] = useState("");
   const [apiPort, setApiPort] = useState(String(router.apiAccess.apiPort || 8728));
-  const [managementHost, setManagementHost] = useState(primaryManualEndpoint?.host || router.discovery.localAddress || "");
+  const [managementHost, setManagementHost] = useState(primaryManualEndpoint?.host || "");
   const [hostname, setHostname] = useState(router.connectivity.endpointContract?.expectedIdentity || router.discovery.hostname || router.profile.hostname || "");
   const [sshPort, setSshPort] = useState(String(primaryManualEndpoint?.transport === "ssh" ? primaryManualEndpoint.port : (router.accessPorts.ssh.targetPort || 22)));
   const [reason, setReason] = useState("");
@@ -41,10 +43,10 @@ export function RouterApiAccessPanel({ router, anchorId }: { router: RouterDetai
   const mismatchState = router.connectivity.endpointContract?.state === "mismatch";
 
   useEffect(() => {
-    const nextManualEndpoint = (router.connectivity.endpoints || []).find((endpoint) => !endpoint.derived) || null;
+    const nextManualEndpoint = (router.connectivity.endpoints || []).find((endpoint) => endpoint.source === "manual") || null;
     setApiUsername(router.apiAccess.username || "admin");
     setApiPort(String(router.apiAccess.apiPort || 8728));
-    setManagementHost(nextManualEndpoint?.host || router.discovery.localAddress || "");
+    setManagementHost(nextManualEndpoint?.host || "");
     setHostname(router.connectivity.endpointContract?.expectedIdentity || router.discovery.hostname || router.profile.hostname || "");
     setSshPort(String(nextManualEndpoint?.transport === "ssh" ? nextManualEndpoint.port : (router.accessPorts.ssh.targetPort || 22)));
     setApiPassword("");
@@ -93,9 +95,10 @@ export function RouterApiAccessPanel({ router, anchorId }: { router: RouterDetai
   };
 
   const handleSaveAccess = async (runTest = false) => {
-    const trimmedHost = managementHost.trim();
+    const normalizedEndpoint = parseManagementHostInput(managementHost);
+    const trimmedHost = normalizedEndpoint.host;
     const trimmedHostname = hostname.trim();
-    const parsedApiPort = Number(apiPort);
+    const parsedApiPort = normalizedEndpoint.port ?? Number(apiPort);
     const parsedSshPort = Number(sshPort);
 
     if (!trimmedHost && !trimmedHostname) {
@@ -188,11 +191,16 @@ export function RouterApiAccessPanel({ router, anchorId }: { router: RouterDetai
             <p className="mt-2 text-sm text-text-secondary">
               Update the router host and expected identity, clear the mismatch quarantine, and optionally run a fresh RouterOS API validation.
             </p>
+            {!primaryManualEndpoint && discoveryEndpoint ? (
+              <p className="mt-2 text-sm text-warning">
+                Current stored endpoint is a discovery-local address: <span className="font-mono text-text-primary">{discoveryEndpoint.host}:{discoveryEndpoint.port}</span>. Save a remote management host here to replace that local path.
+              </p>
+            ) : null}
           </div>
           {mismatchState ? <span className="inline-flex rounded-full border border-danger/30 bg-danger/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-danger">Mismatch quarantined</span> : null}
         </div>
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.6fr)]">
-          <Input label="Management host" placeholder="192.168.100.8 or router.example.com" value={managementHost} onChange={(event) => setManagementHost(event.target.value)} />
+          <Input label="Management host" placeholder="192.168.100.8, 192.168.100.8:8728, or router.example.com" hint="Host:port is accepted and will be normalized before save." value={managementHost} onChange={(event) => setManagementHost(event.target.value)} />
           <Input label="Expected identity" placeholder="RouterOS /system identity" value={hostname} onChange={(event) => setHostname(event.target.value)} />
           <Input label="SSH port" type="number" min="1" max="65535" value={sshPort} onChange={(event) => setSshPort(event.target.value)} />
         </div>

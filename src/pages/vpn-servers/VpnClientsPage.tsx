@@ -1,4 +1,4 @@
-import { CheckCircle2, Copy, Download, KeyRound, Plus, RefreshCcw, Search, Server, ShieldX, Trash2, Wifi } from "lucide-react";
+import { CheckCircle2, Copy, Download, ExternalLink, KeyRound, Link2Off, Plus, RefreshCcw, Search, Server, ShieldX, Trash2, Wifi } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { EmptyState } from "@/components/feedback/EmptyState";
@@ -34,7 +34,8 @@ import {
   useVpnClient,
   useVpnClients,
 } from "@/features/vpn-clients/hooks/useVpnClients";
-import type { CreateVpnClientPayload, UpdateVpnClientPayload, VpnClientDetail, VpnClientRow } from "@/features/vpn-clients/types/vpn-client.types";
+import type { CreateVpnClientPayload, UpdateVpnClientPayload, VpnClientRow } from "@/features/vpn-clients/types/vpn-client.types";
+import { useUnlinkRouterClient } from "@/features/routers/hooks/useRouter";
 import { useCopyToClipboard } from "@/hooks/utils/useCopyToClipboard";
 import { useDisclosure } from "@/hooks/ui/useDisclosure";
 import { formatDateTime } from "@/lib/formatters/date";
@@ -97,6 +98,69 @@ function ClientForm({
   );
 }
 
+function PingClientDialog({
+  loading,
+  defaultTarget,
+  onClose,
+  onSubmit,
+}: {
+  loading?: boolean;
+  defaultTarget?: string | null;
+  onClose: () => void;
+  onSubmit: (payload: { target?: string; count: number }) => void;
+}) {
+  const [target, setTarget] = useState(defaultTarget || "");
+  const [count, setCount] = useState("3");
+
+  useEffect(() => setTarget(defaultTarget || ""), [defaultTarget]);
+
+  return (
+    <Modal open title="Ping client" description="Optionally override the target IP and probe count before running the connectivity test." onClose={onClose} maxWidthClass="max-w-[min(96vw,30rem)]">
+      <div className="grid gap-4">
+        <Input label="Target IP" value={target} placeholder="Leave blank to use the client tunnel IP" onChange={(event) => setTarget(event.target.value)} />
+        <Input label="Probe count" type="number" min="1" max="10" value={count} onChange={(event) => setCount(event.target.value)} />
+      </div>
+      <div className="mt-5 flex justify-end gap-3">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button isLoading={loading} onClick={() => onSubmit({ target: target.trim() || undefined, count: Math.max(1, Number(count) || 3) })}>Run ping</Button>
+      </div>
+    </Modal>
+  );
+}
+
+function MikrotikScriptDialog({
+  loading,
+  initialIface,
+  initialSubnet,
+  onClose,
+  onSubmit,
+}: {
+  loading?: boolean;
+  initialIface?: string;
+  initialSubnet?: string;
+  onClose: () => void;
+  onSubmit: (payload: { iface?: string; subnet?: string }) => void;
+}) {
+  const [iface, setIface] = useState(initialIface || "");
+  const [subnet, setSubnet] = useState(initialSubnet || "");
+
+  useEffect(() => setIface(initialIface || ""), [initialIface]);
+  useEffect(() => setSubnet(initialSubnet || ""), [initialSubnet]);
+
+  return (
+    <Modal open title="MikroTik script options" description="Override the generated interface name or subnet before downloading the script." onClose={onClose} maxWidthClass="max-w-[min(96vw,30rem)]">
+      <div className="grid gap-4">
+        <Input label="Interface override" value={iface} placeholder="Optional interface name" onChange={(event) => setIface(event.target.value)} />
+        <Input label="Subnet override" value={subnet} placeholder="Optional subnet such as 10.0.0.0/24" onChange={(event) => setSubnet(event.target.value)} />
+      </div>
+      <div className="mt-5 flex justify-end gap-3">
+        <Button variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button isLoading={loading} onClick={() => onSubmit({ iface: iface.trim() || undefined, subnet: subnet.trim() || undefined })}>Download script</Button>
+      </div>
+    </Modal>
+  );
+}
+
 export function VpnClientsPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -104,15 +168,20 @@ export function VpnClientsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [enabled, setEnabled] = useState("all");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedNames, setSelectedNames] = useState<string[]>([]);
   const [selectedClient, setSelectedClient] = useState<VpnClientRow | null>(null);
+  const [pingDialogOpen, setPingDialogOpen] = useState(false);
+  const [mikrotikDialogOpen, setMikrotikDialogOpen] = useState(false);
+  const [unlinkTarget, setUnlinkTarget] = useState<{ id: string; name: string } | null>(null);
 
   const createDisclosure = useDisclosure(false);
   const editDisclosure = useDisclosure(false);
   const deleteDisclosure = useDisclosure(false);
   const bulkDeleteDisclosure = useDisclosure(false);
 
-  const listQuery = useVpnClients({ page, limit: PAGE_SIZE, search, enabled: enabled === "all" ? undefined : enabled });
+  const listQuery = useVpnClients({ page, limit: PAGE_SIZE, search, enabled: enabled === "all" ? undefined : enabled, sortBy, sortOrder });
   const detailQuery = useVpnClient(selectedClient?.name || "");
 
   const createMutation = useCreateVpnClient();
@@ -126,9 +195,14 @@ export function VpnClientsPage() {
   const downloadConfigMutation = useDownloadVpnClientConfig();
   const downloadAutoconfigMutation = useDownloadVpnClientAutoconfig();
   const downloadMikrotikMutation = useDownloadVpnClientMikrotik();
+  const unlinkRouterClientMutation = useUnlinkRouterClient();
 
-  const rows = listQuery.data?.items || [];
+  const rows = useMemo(() => listQuery.data?.items || [], [listQuery.data?.items]);
   const pagination = listQuery.data?.pagination;
+  const selectedDetail = detailQuery.data;
+  const selectedClientLinkedRouters = selectedDetail?.linkedRouters || [];
+  const selectedClientDeleteBlocked = selectedClientLinkedRouters.length > 0;
+  const bulkDeleteBlocked = selectedNames.some((name) => rows.find((row) => row.name === name)?.linkedRouterCount);
 
   useEffect(() => {
     if (!selectedClient && rows.length) {
@@ -136,10 +210,9 @@ export function VpnClientsPage() {
     }
   }, [rows, selectedClient]);
 
-  const selectedDetail = detailQuery.data;
-
   const columns = useMemo<ColumnDef<VpnClientRow>[]>(() => [
     {
+      id: "select",
       header: "",
       cell: ({ row }) => (
         <input
@@ -153,23 +226,28 @@ export function VpnClientsPage() {
       ),
     },
     {
+      id: "client",
       header: "Client",
       cell: ({ row }) => (
         <div>
           <p className="font-medium text-text-primary">{row.original.name}</p>
           <p className="text-xs text-text-secondary">{row.original.ip}</p>
+          {row.original.linkedRouterCount ? <p className="text-xs text-text-secondary">{row.original.linkedRouterCount} linked router{row.original.linkedRouterCount === 1 ? "" : "s"}</p> : null}
         </div>
       ),
     },
     {
+      id: "status",
       header: "Status",
       cell: ({ row }) => <Badge tone={row.original.enabled ? "success" : "warning"}>{row.original.enabled ? "enabled" : "disabled"}</Badge>,
     },
     {
+      id: "traffic",
       header: "Traffic",
       cell: ({ row }) => <span className="text-text-secondary">{safeFormatBytes(row.original.transferRx)} / {safeFormatBytes(row.original.transferTx)}</span>,
     },
     {
+      id: "lastHandshake",
       header: "Last handshake",
       cell: ({ row }) => <span className="text-text-secondary">{row.original.lastHandshake ? formatDateTime(row.original.lastHandshake) : "Never"}</span>,
     },
@@ -206,13 +284,13 @@ export function VpnClientsPage() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Button leftIcon={<Plus className="h-4 w-4" />} onClick={createDisclosure.onOpen}>Create Client</Button>
-              <Button variant="outline" leftIcon={<Trash2 className="h-4 w-4" />} disabled={!selectedNames.length} onClick={bulkDeleteDisclosure.onOpen}>Bulk Delete</Button>
+              <Button variant="outline" leftIcon={<Trash2 className="h-4 w-4" />} disabled={!selectedNames.length || bulkDeleteBlocked} onClick={bulkDeleteDisclosure.onOpen}>Bulk Delete</Button>
               <RefreshButton loading={listQuery.isFetching} onClick={() => void listQuery.refetch()} />
             </div>
           </div>
         </CardHeader>
 
-        <div className="grid gap-4 md:grid-cols-[1.6fr_0.7fr]">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Input label="Search" value={search} onChange={(event) => { setPage(1); setSearch(event.target.value); }} placeholder="Search client name, notes, or tunnel IP" leftIcon={<Search className="h-4 w-4" />} />
           <Select
             label="Enabled state"
@@ -222,6 +300,26 @@ export function VpnClientsPage() {
               { label: "All clients", value: "all" },
               { label: "Enabled only", value: "true" },
               { label: "Disabled only", value: "false" },
+            ]}
+          />
+          <Select
+            label="Sort by"
+            value={sortBy}
+            onChange={(event) => { setPage(1); setSortBy(event.target.value); }}
+            options={[
+              { label: "Created time", value: "createdAt" },
+              { label: "Updated time", value: "updatedAt" },
+              { label: "Client name", value: "name" },
+              { label: "Last handshake", value: "lastHandshake" },
+            ]}
+          />
+          <Select
+            label="Sort order"
+            value={sortOrder}
+            onChange={(event) => { setPage(1); setSortOrder(event.target.value as "asc" | "desc"); }}
+            options={[
+              { label: "Descending", value: "desc" },
+              { label: "Ascending", value: "asc" },
             ]}
           />
         </div>
@@ -243,6 +341,9 @@ export function VpnClientsPage() {
             <Button variant="outline" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))}>Next</Button>
           </div>
         </div>
+        {selectedNames.length && bulkDeleteBlocked ? (
+          <p className="px-6 pb-6 text-sm text-text-secondary">Bulk delete is blocked because one or more selected clients are still linked to routers. Unlink those routers first.</p>
+        ) : null}
       </Card>
 
       <Card>
@@ -296,15 +397,38 @@ export function VpnClientsPage() {
                   <p className="text-text-secondary">Last handshake: <span className="text-text-primary">{selectedDetail.lastHandshake ? formatDateTime(selectedDetail.lastHandshake) : "Never"}</span></p>
                   <p className="text-text-secondary">Last connection IP: <span className="text-text-primary">{selectedDetail.lastConnectionIp || "Unknown"}</span></p>
                   <p className="text-text-secondary">Traffic: <span className="text-text-primary">{safeFormatBytes(selectedDetail.transferRx)} RX / {safeFormatBytes(selectedDetail.transferTx)} TX</span></p>
+                  <p className="text-text-secondary">Linked routers: <span className="text-text-primary">{selectedClientLinkedRouters.length}</span></p>
                 </div>
               </div>
             </div>
 
+            {selectedClientLinkedRouters.length ? (
+              <div className="rounded-2xl border border-background-border bg-background-elevated p-4">
+                <p className="text-sm font-medium text-text-primary">Assigned routers</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {selectedClientLinkedRouters.map((router) => (
+                    <div key={router._id} className="rounded-xl border border-background-border bg-background-panel p-3 text-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="font-medium text-text-primary">{router.name}</p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" variant="outline" leftIcon={<ExternalLink className="h-4 w-4" />} onClick={() => navigate(appRoutes.routerDetail(router._id))}>Open router</Button>
+                          <Button size="sm" variant="ghost" leftIcon={<Link2Off className="h-4 w-4" />} isLoading={unlinkRouterClientMutation.isPending && unlinkTarget?.id === router._id} onClick={() => setUnlinkTarget({ id: router._id, name: router.name })}>Unlink</Button>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-text-secondary">Status: <span className="text-text-primary">{router.status}</span></p>
+                      <p className="text-text-secondary">VPN IP: <span className="text-text-primary">{router.vpnIp || "Unknown"}</span></p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm text-text-secondary">Delete is disabled while this client is assigned to routers so we do not leave broken management references behind.</p>
+              </div>
+            ) : null}
+
             <div className="flex flex-wrap gap-3">
               <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} isLoading={downloadConfigMutation.isPending} onClick={() => downloadConfigMutation.mutate(selectedDetail.name)}>Download `.conf`</Button>
               <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} isLoading={downloadAutoconfigMutation.isPending} onClick={() => downloadAutoconfigMutation.mutate(selectedDetail.name)}>Download autoconfig</Button>
-              <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} isLoading={downloadMikrotikMutation.isPending} onClick={() => downloadMikrotikMutation.mutate(selectedDetail.name)}>Download MikroTik script</Button>
-              <Button variant="outline" leftIcon={<Wifi className="h-4 w-4" />} isLoading={pingMutation.isPending} onClick={() => pingMutation.mutate({ name: selectedDetail.name })}>Ping client</Button>
+              <Button variant="outline" leftIcon={<Download className="h-4 w-4" />} isLoading={downloadMikrotikMutation.isPending} onClick={() => setMikrotikDialogOpen(true)}>Download MikroTik script</Button>
+              <Button variant="outline" leftIcon={<Wifi className="h-4 w-4" />} isLoading={pingMutation.isPending} onClick={() => setPingDialogOpen(true)}>Ping client</Button>
               <Button variant="outline" leftIcon={<KeyRound className="h-4 w-4" />} isLoading={regenerateMutation.isPending} onClick={() => regenerateMutation.mutate([selectedDetail.name] as never)}>Regenerate keys</Button>
               {selectedDetail.enabled ? (
                 <Button variant="ghost" leftIcon={<ShieldX className="h-4 w-4" />} isLoading={disableMutation.isPending} onClick={() => disableMutation.mutate([selectedDetail.name] as never)}>Disable</Button>
@@ -312,7 +436,7 @@ export function VpnClientsPage() {
                 <Button variant="ghost" leftIcon={<CheckCircle2 className="h-4 w-4" />} isLoading={enableMutation.isPending} onClick={() => enableMutation.mutate([selectedDetail.name] as never)}>Enable</Button>
               )}
               <Button variant="ghost" onClick={editDisclosure.onOpen}>Edit client</Button>
-              <Button variant="danger" leftIcon={<Trash2 className="h-4 w-4" />} onClick={deleteDisclosure.onOpen}>Delete</Button>
+              <Button variant="danger" leftIcon={<Trash2 className="h-4 w-4" />} disabled={selectedClientDeleteBlocked} onClick={deleteDisclosure.onOpen}>Delete</Button>
             </div>
 
             {pingMutation.data ? (
@@ -356,21 +480,65 @@ export function VpnClientsPage() {
             ip: selectedDetail.ip,
           }}
           onClose={editDisclosure.onClose}
-          onSubmit={(payload) => updateMutation.mutate([selectedDetail.name, {
-            notes: payload.notes,
-            interfaceName: payload.interfaceName,
-            allowedIPs: payload.allowedIPs,
-            endpoint: payload.endpoint,
-            dns: payload.dns,
-            persistentKeepalive: payload.persistentKeepalive,
-            enabled: payload.enabled,
-            ip: "ip" in payload ? payload.ip : undefined,
-          }] as never, { onSuccess: () => editDisclosure.onClose() })}
+          onSubmit={(payload) => updateMutation.mutate({
+            name: selectedDetail.name,
+            payload: {
+              name: payload.name,
+              notes: payload.notes,
+              interfaceName: payload.interfaceName,
+              allowedIPs: payload.allowedIPs,
+              endpoint: payload.endpoint,
+              dns: payload.dns,
+              persistentKeepalive: payload.persistentKeepalive,
+              enabled: payload.enabled,
+              ip: "ip" in payload ? payload.ip : undefined,
+            },
+          }, {
+            onSuccess: (data) => {
+              setSelectedClient(data.data);
+              editDisclosure.onClose();
+            },
+          })}
+        />
+      ) : null}
+
+      {pingDialogOpen && selectedDetail ? (
+        <PingClientDialog
+          loading={pingMutation.isPending}
+          defaultTarget={selectedDetail.ip?.split("/")[0] || ""}
+          onClose={() => setPingDialogOpen(false)}
+          onSubmit={({ target, count }) => pingMutation.mutate({ name: selectedDetail.name, target, count }, { onSuccess: () => setPingDialogOpen(false) })}
+        />
+      ) : null}
+
+      {mikrotikDialogOpen && selectedDetail ? (
+        <MikrotikScriptDialog
+          loading={downloadMikrotikMutation.isPending}
+          initialIface={selectedDetail.interfaceName || ""}
+          initialSubnet={selectedDetail.allowedIPs || ""}
+          onClose={() => setMikrotikDialogOpen(false)}
+          onSubmit={({ iface, subnet }) => downloadMikrotikMutation.mutate({ name: selectedDetail.name, iface, subnet }, { onSuccess: () => setMikrotikDialogOpen(false) })}
         />
       ) : null}
 
       <ConfirmDialog open={deleteDisclosure.open} title="Delete VPN client" description={`Remove ${selectedDetail?.name || "this client"} from WireGuard and delete its record.`} confirmLabel="Delete client" onClose={deleteDisclosure.onClose} onConfirm={() => { if (!selectedDetail) return; deleteMutation.mutate([selectedDetail.name] as never, { onSuccess: () => deleteDisclosure.onClose() }); }} />
       <ConfirmDialog open={bulkDeleteDisclosure.open} title="Bulk delete VPN clients" description={`Delete ${selectedNames.length} selected client records and remove their peers from WireGuard.`} confirmLabel="Delete selected" onClose={bulkDeleteDisclosure.onClose} onConfirm={() => bulkDeleteMutation.mutate([selectedNames] as never, { onSuccess: () => { setSelectedNames([]); bulkDeleteDisclosure.onClose(); } })} />
+      <ConfirmDialog
+        open={Boolean(unlinkTarget)}
+        title="Unlink router from client"
+        description={`Remove ${unlinkTarget?.name || "this router"} from this VPN client's linked routers. The router record will stay in the system, but its direct WireGuard client assignment will be cleared.`}
+        confirmLabel="Unlink router"
+        onClose={() => setUnlinkTarget(null)}
+        onConfirm={() => {
+          if (!unlinkTarget) return;
+          unlinkRouterClientMutation.mutate({ id: unlinkTarget.id }, {
+            onSuccess: async () => {
+              await detailQuery.refetch();
+              setUnlinkTarget(null);
+            },
+          });
+        }}
+      />
     </section>
   );
 }

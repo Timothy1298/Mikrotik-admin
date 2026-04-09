@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -43,13 +43,13 @@ export function UsersTable({
   const navigate = useNavigate();
   const [navigatingUserId, setNavigatingUserId] = useState<string | null>(null);
 
-  const openFullPage = (user: UserRow) => {
+  const openFullPage = useCallback((user: UserRow) => {
     if (navigatingUserId) return;
     setNavigatingUserId(user.id);
     requestAnimationFrame(() => {
       navigate(appRoutes.userDetail(user.id));
     });
-  };
+  }, [navigate, navigatingUserId]);
 
   const columns = useMemo<ColumnDef<UserRow>[]>(() => [
     {
@@ -110,7 +110,7 @@ export function UsersTable({
         return <Dropdown items={items} />;
       },
     },
-  ], [navigatingUserId, navigate, onAddFlag, onAddNote, onDelete, onEditProfile, onExtendTrial, onForceLogout, onOpenDetails, onPasswordReset, onReactivate, onResendVerification, onSuspend, onVerify]);
+  ], [navigatingUserId, onAddFlag, onAddNote, onDelete, onEditProfile, onExtendTrial, onForceLogout, onOpenDetails, onPasswordReset, onReactivate, onResendVerification, onSuspend, onVerify, openFullPage]);
 
   return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle="No users found" emptyDescription="Adjust your filters or onboard a new customer to populate the directory." />;
 }

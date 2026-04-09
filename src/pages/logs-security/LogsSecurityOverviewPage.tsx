@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertTriangle, Fingerprint, LockKeyhole, ShieldAlert, UserCog } from "lucide-react";
+import { AlertTriangle, Fingerprint, ShieldAlert, UserCog } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";

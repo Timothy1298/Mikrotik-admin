@@ -1,0 +1,1 @@
+import{j as r}from"./react-vendor-BVYMGCgy.js";import{S as o}from"./index-C0PcWtQl.js";function m(){return r.jsx("div",{className:"rounded-2xl border border-background-border bg-background-panel p-4",children:Array.from({length:6}).map((a,e)=>r.jsx(o,{className:"mb-3 h-12 w-full last:mb-0"},e))})}export{m as T};

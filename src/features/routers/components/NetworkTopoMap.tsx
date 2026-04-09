@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -63,10 +63,14 @@ export function NetworkTopoMap({
   onDeviceClick,
   height = '500px'
 }: NetworkTopoMapProps) {
+  void routerId;
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
   const linesRef = useRef<L.Polyline[]>([]);
+  const parentLatitude = parentLocation?.latitude;
+  const parentLongitude = parentLocation?.longitude;
+  const parentAddress = parentLocation?.address;
 
   // Initialize map
   useEffect(() => {
@@ -87,8 +91,8 @@ export function NetworkTopoMap({
     mapRef.current = map;
 
     // Add parent router marker if location available
-    if (parentLocation?.latitude && parentLocation?.longitude) {
-      const parentMarker = L.marker([parentLocation.latitude, parentLocation.longitude], {
+    if (parentLatitude && parentLongitude) {
+      const parentMarker = L.marker([parentLatitude, parentLongitude], {
         icon: L.icon({
           iconUrl: `data:image/svg+xml;base64,${btoa(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FF0000">
@@ -103,11 +107,11 @@ export function NetworkTopoMap({
       }).addTo(map);
 
       parentMarker.bindPopup(
-        `<strong>Main Router</strong><br>${parentLocation.address || 'Coordinates: ' + parentLocation.latitude.toFixed(4) + ', ' + parentLocation.longitude.toFixed(4)}`
+        `<strong>Main Router</strong><br>${parentAddress || 'Coordinates: ' + parentLatitude.toFixed(4) + ', ' + parentLongitude.toFixed(4)}`
       );
 
       // Set initial view to parent
-      map.setView([parentLocation.latitude, parentLocation.longitude], 4);
+      map.setView([parentLatitude, parentLongitude], 4);
     }
 
     return () => {
@@ -115,7 +119,7 @@ export function NetworkTopoMap({
         mapRef.current.remove();
       }
     };
-  }, []);
+  }, [parentAddress, parentLatitude, parentLongitude]);
 
   // Update device markers
   useEffect(() => {
@@ -152,7 +156,7 @@ export function NetworkTopoMap({
     });
 
     // Draw connection lines from parent to devices
-    if (parentLocation?.latitude && parentLocation?.longitude) {
+    if (parentLatitude && parentLongitude) {
       linesRef.current.forEach(line => map.removeLayer(line));
       linesRef.current = [];
 
@@ -160,7 +164,7 @@ export function NetworkTopoMap({
         if (device.lat && device.lng) {
           const line = L.polyline(
             [
-              [parentLocation.latitude, parentLocation.longitude],
+              [parentLatitude, parentLongitude],
               [device.lat, device.lng]
             ],
             {
@@ -179,14 +183,14 @@ export function NetworkTopoMap({
     // Fit bounds to show all markers
     if (devices.length > 0 && mapRef.current) {
       const group = new L.FeatureGroup([...markersRef.current.values()]);
-      if (parentLocation?.latitude && parentLocation?.longitude) {
+      if (parentLatitude && parentLongitude) {
         group.addLayer(
-          L.marker([parentLocation.latitude, parentLocation.longitude])
+          L.marker([parentLatitude, parentLongitude])
         );
       }
       map.fitBounds(group.getBounds().pad(0.1), { maxZoom: 12 });
     }
-  }, [devices, parentLocation]);
+  }, [devices, onDeviceClick, parentLatitude, parentLongitude]);
 
   return (
     <div

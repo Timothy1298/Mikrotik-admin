@@ -25,7 +25,7 @@ export function ApplyPlanDialog({
   onConfirm: (payload: ApplyPlanPayload) => void;
 }) {
   const plansQuery = useServicePlans({ isActive: "true" });
-  const plans = plansQuery.data || [];
+  const plans = useMemo(() => plansQuery.data || [], [plansQuery.data]);
   const options = useMemo(() => plans.map((plan) => ({ label: `${plan.name} (${(plan.speedDownloadKbps / 1000).toFixed(1)}/${(plan.speedUploadKbps / 1000).toFixed(1)} Mbps)`, value: plan.id })), [plans]);
   const { register, handleSubmit, watch, reset } = useForm<ApplyPlanForm>({
     defaultValues: {

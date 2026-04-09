@@ -59,6 +59,18 @@ interface ConnectedDevicesResponse {
   }>;
 }
 
+type ConnectedDevice = ConnectedDevicesResponse["devices"][number];
+
+interface DeviceCluster {
+  id: string;
+  latitude: number;
+  longitude: number;
+  count: number;
+  deviceType?: ConnectedDevice["deviceType"];
+  onlineCount?: number;
+  offlineCount?: number;
+}
+
 interface NetworkTopology {
   router: {
     id: string;
@@ -67,7 +79,7 @@ interface NetworkTopology {
     location: ParentLocation | null;
   };
   connections: Array<{
-    device: any;
+    device: ConnectedDevice;
     childRouter?: {
       id: string;
       name: string;
@@ -164,7 +176,7 @@ export function useConnectionStats(routerId: string) {
 export function useDeviceClusters(routerId: string, zoom: number = 4) {
   return useQuery({
     queryKey: ['device-clusters', routerId, zoom],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async (): Promise<DeviceCluster[]> => {
       try {
         const response = await apiClient.get(endpoints.admin.routerTopologyClusters(routerId, zoom));
         if (response.data?.data) {
@@ -184,16 +196,16 @@ export function useDeviceClusters(routerId: string, zoom: number = 4) {
 /**
  * Transform connected devices to map marker format
  */
-export function transformDevicesToMarkers(devices: any[], parentLocation: ParentLocation | null | undefined): DeviceMarker[] {
+export function transformDevicesToMarkers(devices: ConnectedDevice[]): DeviceMarker[] {
   return devices
-    .filter(d => d.latitude && d.longitude)
-    .map(d => ({
-      id: d._id,
-      name: d.deviceName || d.ipAddress,
-      lat: d.latitude,
-      lng: d.longitude,
-      online: d.isOnline,
-      type: d.deviceType || 'unknown'
+    .filter((device) => Boolean(device.latitude && device.longitude))
+    .map((device) => ({
+      id: device._id,
+      name: device.deviceName || device.ipAddress,
+      lat: device.latitude,
+      lng: device.longitude,
+      online: device.isOnline,
+      type: (device.deviceType || 'unknown') as DeviceMarker["type"],
     }));
 }
 
@@ -209,5 +221,4 @@ export async function discoverRouterDevices(routerId: string, options?: { timeou
   }
 }
 
-
-export type { ConnectedDevicesResponse, NetworkTopology, ConnectionStats, DeviceMarker };
+export type { ConnectedDevice, ConnectedDevicesResponse, DeviceCluster, NetworkTopology, ConnectionStats, DeviceMarker };

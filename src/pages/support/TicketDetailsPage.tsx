@@ -12,6 +12,9 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { Button } from "@/components/ui/Button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { appRoutes } from "@/config/routes";
@@ -35,6 +38,7 @@ import {
   useReopenTicket,
   useReplyToTicket,
   useResolveTicket,
+  useSupportContextOptions,
   useSupportAgents,
   useTicket,
   useTicketActivity,
@@ -42,6 +46,7 @@ import {
   useTicketMessages,
   useTicketNotes,
   useUnassignTicket,
+  useUpdateTicketContext,
 } from "@/features/support/hooks/useSupport";
 import type { SupportTeam } from "@/features/support/types/support.types";
 import { supportTabs } from "@/config/module-tabs";
@@ -67,6 +72,24 @@ function formatAwaiting(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function fileToAttachment(file: File) {
+  return new Promise<{ filename: string; contentType: string; size: number; dataBase64: string }>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const [, dataBase64 = ""] = result.split(",");
+      resolve({
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+        size: file.size,
+        dataBase64,
+      });
+    };
+    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function TicketDetailsPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -79,6 +102,9 @@ export function TicketDetailsPage() {
   const [teamValue, setTeamValue] = useState<SupportTeam>("general");
   const [flagValue, setFlagValue] = useState("manual_review");
   const [selectedFlagId, setSelectedFlagId] = useState("");
+  const [contextSearch, setContextSearch] = useState("");
+  const [replyAttachments, setReplyAttachments] = useState<Array<{ filename: string; contentType: string; size: number; dataBase64: string }>>([]);
+  const [contextForm, setContextForm] = useState({ routerId: "", serverId: "", incidentId: "", subscriptionId: "", transactionId: "", reason: "" });
 
   const assignDisclosure = useDisclosure(false);
   const reassignDisclosure = useDisclosure(false);
@@ -96,6 +122,7 @@ export function TicketDetailsPage() {
   const statusDisclosure = useDisclosure(false);
   const priorityDisclosure = useDisclosure(false);
   const categoryDisclosure = useDisclosure(false);
+  const contextDisclosure = useDisclosure(false);
 
   const ticketQuery = useTicket(id);
   const messagesQuery = useTicketMessages(id, { limit: 100 });
@@ -103,6 +130,7 @@ export function TicketDetailsPage() {
   const flagsQuery = useTicketFlags(id);
   const activityQuery = useTicketActivity(id, { limit: 50 });
   const agentsQuery = useSupportAgents();
+  const contextOptionsQuery = useSupportContextOptions({ q: contextSearch || undefined, limit: 8 }, contextDisclosure.open);
 
   const assignMutation = useAssignTicket();
   const reassignMutation = useReassignTicket();
@@ -121,6 +149,7 @@ export function TicketDetailsPage() {
   const priorityMutation = useChangeTicketPriority();
   const categoryMutation = useChangeTicketCategory();
   const replyMutation = useReplyToTicket();
+  const updateContextMutation = useUpdateTicketContext();
 
   const detail = ticketQuery.data;
   const showManageActions = can(currentUser, permissions.supportManage);
@@ -138,6 +167,14 @@ export function TicketDetailsPage() {
     setStatusValue(detail.ticket.status);
     setCategoryValue(detail.ticket.category);
     setTeamValue((detail.ticket.assignedTeam as SupportTeam) || "general");
+    setContextForm({
+      routerId: detail.context.router?.id || "",
+      serverId: detail.context.vpnServer?.id || "",
+      incidentId: detail.context.incident?.id || "",
+      subscriptionId: detail.context.subscription?.id || "",
+      transactionId: detail.context.transaction?.id || "",
+      reason: "",
+    });
   }, [detail]);
 
   useEffect(() => {
@@ -255,6 +292,7 @@ export function TicketDetailsPage() {
             <CardTitle>Customer & Context</CardTitle>
             <CardDescription>Subscriber-first context and linked operational resources.</CardDescription>
           </div>
+          {showManageActions ? <Button variant="ghost" size="sm" onClick={contextDisclosure.onOpen}>Edit context</Button> : null}
         </CardHeader>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="rounded-2xl border border-background-border bg-background-panel p-4 text-sm text-text-primary">
@@ -337,14 +375,46 @@ export function TicketDetailsPage() {
             <div className="mt-4">
               <Textarea placeholder="Type a reply to send to the subscriber..." value={replyBody} onChange={(event) => setReplyBody(event.target.value)} />
             </div>
+            <div className="mt-4 space-y-3">
+              <Input
+                label="Attachments"
+                type="file"
+                multiple
+                onChange={(event) => {
+                  const files = Array.from(event.target.files || []);
+                  if (!files.length) return;
+                  Promise.all(files.map((file) => fileToAttachment(file)))
+                    .then((attachments) => {
+                      setReplyAttachments((current) => [...current, ...attachments].slice(0, 5));
+                    })
+                    .catch(() => undefined);
+                  event.currentTarget.value = "";
+                }}
+              />
+              {replyAttachments.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {replyAttachments.map((attachment) => (
+                    <button
+                      key={`${attachment.filename}-${attachment.size}`}
+                      type="button"
+                      onClick={() => setReplyAttachments((current) => current.filter((item) => item !== attachment))}
+                      className="rounded-full border border-background-border px-3 py-1 text-xs text-text-secondary transition hover:border-danger/40 hover:text-danger"
+                    >
+                      {attachment.filename} · remove
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <div className="mt-4 flex justify-end">
               <Button
                 isLoading={replyMutation.isPending}
                 disabled={!replyBody.trim()}
                 onClick={() => {
-                  replyMutation.mutate([id, { message: replyBody.trim() }] as never, {
+                  replyMutation.mutate([id, { message: replyBody.trim(), attachments: replyAttachments }] as never, {
                     onSuccess: () => {
                       setReplyBody("");
+                      setReplyAttachments([]);
                       void messagesQuery.refetch();
                       void ticketQuery.refetch();
                     },
@@ -411,6 +481,43 @@ export function TicketDetailsPage() {
         </CardHeader>
         {activityQuery.isPending ? <SectionLoader /> : timelineItems.length ? <ActivityTimeline items={timelineItems} /> : <EmptyState icon={LifeBuoy} title="No activity yet" description="No workflow events have been recorded for this ticket yet." />}
       </Card>
+
+      <Modal open={contextDisclosure.open} onClose={contextDisclosure.onClose} title="Edit ticket context" description="Link or correct the router, VPN server, incident, subscription, and payment context behind this support issue.">
+        <div className="space-y-4">
+          <Input label="Search linked resources" placeholder="Search router, server, incident, subscription, or transaction" value={contextSearch} onChange={(event) => setContextSearch(event.target.value)} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Select label="Router" value={contextForm.routerId} onChange={(event) => setContextForm((current) => ({ ...current, routerId: event.target.value }))} options={[{ label: "No linked router", value: "" }, ...(contextOptionsQuery.data?.routers || []).map((item) => ({ label: `${item.label} · ${item.description}`, value: item.id }))]} />
+            <Select label="VPN server" value={contextForm.serverId} onChange={(event) => setContextForm((current) => ({ ...current, serverId: event.target.value }))} options={[{ label: "No linked VPN server", value: "" }, ...(contextOptionsQuery.data?.vpnServers || []).map((item) => ({ label: `${item.label} · ${item.description}`, value: item.id }))]} />
+            <Select label="Incident" value={contextForm.incidentId} onChange={(event) => setContextForm((current) => ({ ...current, incidentId: event.target.value }))} options={[{ label: "No linked incident", value: "" }, ...(contextOptionsQuery.data?.incidents || []).map((item) => ({ label: `${item.label} · ${item.description}`, value: item.id }))]} />
+            <Select label="Subscription" value={contextForm.subscriptionId} onChange={(event) => setContextForm((current) => ({ ...current, subscriptionId: event.target.value }))} options={[{ label: "No linked subscription", value: "" }, ...(contextOptionsQuery.data?.subscriptions || []).map((item) => ({ label: `${item.label} · ${item.description}`, value: item.id }))]} />
+            <Select label="Transaction" value={contextForm.transactionId} onChange={(event) => setContextForm((current) => ({ ...current, transactionId: event.target.value }))} options={[{ label: "No linked transaction", value: "" }, ...(contextOptionsQuery.data?.transactions || []).map((item) => ({ label: `${item.label} · ${item.description}`, value: item.id }))]} />
+            <Input label="Audit reason" value={contextForm.reason} onChange={(event) => setContextForm((current) => ({ ...current, reason: event.target.value }))} />
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="ghost" onClick={contextDisclosure.onClose}>Cancel</Button>
+            <Button
+              isLoading={updateContextMutation.isPending}
+              onClick={() => {
+                updateContextMutation.mutate([id, {
+                  routerId: contextForm.routerId || null,
+                  serverId: contextForm.serverId || null,
+                  incidentId: contextForm.incidentId || null,
+                  subscriptionId: contextForm.subscriptionId || null,
+                  transactionId: contextForm.transactionId || null,
+                  reason: contextForm.reason.trim() || undefined,
+                }] as never, {
+                  onSuccess: () => {
+                    contextDisclosure.onClose();
+                    void ticketQuery.refetch();
+                  },
+                });
+              }}
+            >
+              Save context
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <SupportActionDialog open={assignDisclosure.open} title="Assign ticket" description="Assign the selected ticket to a support agent." confirmLabel="Assign ticket" loading={assignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={assignDisclosure.onClose} onConfirm={({ reason }) => assigneeValue && assignMutation.mutate([id, assigneeValue, reason] as never, { onSuccess: () => { assignDisclosure.onClose(); void ticketQuery.refetch(); } })} />
       <SupportActionDialog open={reassignDisclosure.open} title="Reassign ticket" description="Move ticket ownership to another support agent." confirmLabel="Reassign ticket" loading={reassignMutation.isPending} select={{ label: "Assignee", value: assigneeValue, options: [{ label: "Choose an assignee", value: "" }, ...(agentsQuery.data || []).map((agent) => ({ label: `${agent.name} · ${agent.supportTeam}`, value: agent.id }))], onValueChange: setAssigneeValue }} onClose={reassignDisclosure.onClose} onConfirm={({ reason }) => assigneeValue && reassignMutation.mutate([id, assigneeValue, reason] as never, { onSuccess: () => { reassignDisclosure.onClose(); void ticketQuery.refetch(); } })} />

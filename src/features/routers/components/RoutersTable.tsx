@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -61,11 +61,11 @@ export function RoutersTable({
   const getTunnelStatus = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.tunnelStatus || "management_only") : row.healthSummary.state;
   const getHandshake = (row: RouterRow) => row.connectionMode === "management_only" ? (row.ownerTunnel?.lastHandshake || row.lastHandshake) : row.lastHandshake;
 
-  const openFullPage = (router: RouterRow) => {
+  const openFullPage = useCallback((router: RouterRow) => {
     if (navigatingRouterId) return;
     setNavigatingRouterId(router.id);
     requestAnimationFrame(() => navigate(appRoutes.routerDetail(router.id)));
-  };
+  }, [navigate, navigatingRouterId]);
 
   const columns = useMemo<ColumnDef<RouterRow>[]>(() => [
     {
@@ -139,7 +139,7 @@ export function RoutersTable({
         />
       ),
     },
-  ], [navigate, navigatingRouterId, onAddFlag, onAddNote, onDelete, onDisable, onMarkReviewed, onMoveServer, onOpenDetails, onReactivate, onRegenerateSetup, onReassignPorts, onReprovision, onResetPeer]);
+  ], [navigatingRouterId, onAddFlag, onAddNote, onDelete, onDisable, onMarkReviewed, onMoveServer, onOpenDetails, onReactivate, onRegenerateSetup, onReassignPorts, onReprovision, onResetPeer, openFullPage]);
 
   return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle={emptyTitle} emptyDescription={emptyDescription} />;
 }

@@ -1,0 +1,1 @@
+import{b as s}from"./tanstack-vendor-DLB_vFTB.js";import{q as r}from"./index-C0PcWtQl.js";import{w as t,x as u}from"./getUsers-D08ojqrD.js";function y(e){return s({queryKey:[...r.users,e],queryFn:()=>t(e),staleTime:3e4,refetchOnWindowFocus:!1})}function f(){return s({queryKey:[...r.users,"stats"],queryFn:u,staleTime:3e4,refetchOnWindowFocus:!1})}export{y as a,f as u};

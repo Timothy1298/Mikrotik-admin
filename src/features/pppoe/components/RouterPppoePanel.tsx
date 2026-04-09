@@ -87,13 +87,13 @@ export function RouterPppoePanel({ routerId }: { routerId: string }) {
     return map;
   }, [sessionsQuery.data]);
 
-  const subscribers = (secretsQuery.data?.items || []).map((item) => ({
+  const subscribers = useMemo(() => (secretsQuery.data?.items || []).map((item) => ({
     ...item,
     online: item.online || activeSessionsByName.has(item.name),
-  }));
-  const sessions = sessionsQuery.data || [];
-  const profiles = profilesQuery.data || [];
-  const queues = queuesQuery.data?.items || [];
+  })), [activeSessionsByName, secretsQuery.data?.items]);
+  const sessions = useMemo(() => sessionsQuery.data || [], [sessionsQuery.data]);
+  const profiles = useMemo(() => profilesQuery.data || [], [profilesQuery.data]);
+  const queues = useMemo(() => queuesQuery.data?.items || [], [queuesQuery.data?.items]);
   const subscribersByName = useMemo(() => new Map(subscribers.map((subscriber) => [subscriber.name, subscriber])), [subscribers]);
   const controlModeBySecretId = useMemo<Record<string, "profile" | "override">>(() => {
     const entries: Record<string, "profile" | "override"> = Object.fromEntries(subscribers.map((subscriber) => [subscriber.id, "profile" as const]));

@@ -16,7 +16,7 @@ import {
   regenerateVpnClientKeys,
   updateVpnClient,
 } from "@/features/vpn-clients/api/vpnClients";
-import type { CreateVpnClientPayload, UpdateVpnClientPayload, VpnClientQuery } from "@/features/vpn-clients/types/vpn-client.types";
+import type { CreateVpnClientPayload, DownloadMikrotikScriptPayload, UpdateVpnClientPayload, VpnClientDetail, VpnClientQuery } from "@/features/vpn-clients/types/vpn-client.types";
 
 const vpnClientsBase = [...queryKeys.vpnClients] as const;
 
@@ -66,7 +66,20 @@ export function useCreateVpnClient() {
 }
 
 export function useUpdateVpnClient() {
-  return useVpnClientMutation(updateVpnClient, "VPN client updated");
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ name, payload }: { name: string; payload: UpdateVpnClientPayload }) => updateVpnClient(name, payload),
+    onSuccess: async (data, variables) => {
+      toast.success(data.message || "VPN client updated");
+      await queryClient.invalidateQueries({ queryKey: vpnClientsBase });
+      const updated = data.data as VpnClientDetail | undefined;
+      if (updated?.name) {
+        queryClient.setQueryData([...vpnClientsBase, "detail", updated.name], updated);
+      }
+      await queryClient.invalidateQueries({ queryKey: [...vpnClientsBase, "detail", variables.name] });
+    },
+    onError: (error: Error) => toast.error(error.message || "VPN client action failed"),
+  });
 }
 
 export function useRegenerateVpnClientKeys() {
@@ -91,7 +104,7 @@ export function useBulkDeleteVpnClients() {
 
 export function usePingVpnClient() {
   return useMutation({
-    mutationFn: ({ name, target }: { name: string; target?: string }) => pingVpnClient(name, target),
+    mutationFn: ({ name, target, count }: { name: string; target?: string; count?: number }) => pingVpnClient(name, target, count),
     onSuccess: (data) => {
       toast.success(data.message || "Ping completed");
     },
@@ -115,7 +128,7 @@ export function useDownloadVpnClientAutoconfig() {
 
 export function useDownloadVpnClientMikrotik() {
   return useMutation({
-    mutationFn: (name: string) => downloadVpnClientMikrotik(name),
+    mutationFn: (payload: DownloadMikrotikScriptPayload) => downloadVpnClientMikrotik(payload),
     onError: (error: Error) => toast.error(error.message || "Download failed"),
   });
 }

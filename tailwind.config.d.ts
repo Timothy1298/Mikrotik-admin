@@ -88,6 +88,6 @@ declare const config: {
             };
         };
     };
-    plugins: any[];
+    plugins: unknown[];
 };
 export default config;

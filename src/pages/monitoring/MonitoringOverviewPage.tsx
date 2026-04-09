@@ -1,7 +1,7 @@
 import { useState } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Activity, ArrowRight, Router, Server, ShieldAlert, Users } from "lucide-react";
+import { ArrowRight, ShieldAlert, Users } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";

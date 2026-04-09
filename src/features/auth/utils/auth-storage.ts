@@ -1,6 +1,7 @@
 import type { AuthSession } from "@/types/auth/auth.types";
 
-export function persistSession(_session: AuthSession) {
+export function persistSession(session: AuthSession) {
+  void session;
   return undefined;
 }
 

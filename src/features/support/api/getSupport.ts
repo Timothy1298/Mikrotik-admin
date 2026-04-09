@@ -5,6 +5,7 @@ import type {
   SupportAgent,
   SupportAgentWorkload,
   SupportAnalytics,
+  SupportContextOptions,
   CreateTicketPayload,
   CreateTicketResponse,
   SupportFilterState,
@@ -57,6 +58,11 @@ export async function getTicketMessages(id: string, params?: SupportFilterState)
 export async function getTicketContext(id: string) {
   const { data } = await apiClient.get<{ success: boolean; context: SupportTicketDetail["context"] }>(endpoints.admin.supportTicketContext(id));
   return data.context;
+}
+
+export async function getSupportContextOptions(params?: { q?: string; limit?: number }) {
+  const { data } = await apiClient.get<{ success: boolean; options: SupportContextOptions }>(endpoints.admin.supportContextOptions, { params });
+  return data.options;
 }
 
 export async function getUnassignedQueue(params?: SupportFilterState) {
@@ -186,5 +192,10 @@ export async function addTicketFlag(ticketId: string, payload: { flag: string; s
 
 export async function removeTicketFlag(ticketId: string, flagId: string, reason?: string) {
   const { data } = await apiClient.delete<{ success: boolean; removed: SupportFlag }>(endpoints.admin.supportRemoveFlag(ticketId, flagId), { data: { reason } });
+  return data;
+}
+
+export async function updateTicketContext(ticketId: string, payload: { routerId?: string | null; serverId?: string | null; incidentId?: string | null; subscriptionId?: string | null; transactionId?: string | null; reason?: string }) {
+  const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.supportTicketContext(ticketId), payload);
   return data;
 }

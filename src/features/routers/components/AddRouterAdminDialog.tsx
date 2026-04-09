@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, Copy, Router, ShieldCheck, UserRound, Wifi, XCircle } from "lucide-react";
+import { CheckCircle2, Router, ShieldCheck, UserRound, Wifi, XCircle } from "lucide-react";
 import { InlineError } from "@/components/feedback/InlineError";
 import { SectionLoader } from "@/components/feedback/SectionLoader";
 import { CopyButton } from "@/components/shared/CopyButton";
@@ -28,6 +28,7 @@ import type {
   RouterOnboardingClaim,
   RouterOnboardingClaimPayload,
 } from "@/features/routers/types/router.types";
+import { parseManagementHostInput } from "@/features/routers/utils/managementEndpoint";
 import type { UserRow } from "@/features/users/types/user.types";
 import { formatDateTime } from "@/lib/formatters/date";
 
@@ -351,19 +352,22 @@ function DirectProvisioningPanel({
     }
 
     try {
+      const normalizedManagementEndpoint = managementOnly
+        ? parseManagementHostInput(String(form.managementHost || ""))
+        : { host: "", port: null };
       const router = await createRouterMutation.mutateAsync({
         userId: form.userId.trim(),
         name: form.name.trim(),
         connectionMode: managementOnly ? "management_only" : "wireguard",
         managementOnly,
         serverNode: managementOnly ? undefined : (form.serverNode?.trim() || "wireguard"),
-        managementHost: managementOnly ? String(form.managementHost || "").trim() : undefined,
+        managementHost: managementOnly ? normalizedManagementEndpoint.host || undefined : undefined,
         managementIp: managementOnly ? String(form.managementIp || "").trim() || undefined : undefined,
         localAddress: managementOnly ? String(form.localAddress || "").trim() || undefined : undefined,
         hostname: managementOnly ? String(form.hostname || "").trim() || undefined : undefined,
         apiUsername: managementOnly ? String(form.apiUsername || "").trim() || undefined : undefined,
         apiPassword: managementOnly ? (String(form.apiPassword || "").trim() || undefined) : undefined,
-        apiPort: managementOnly ? Number(form.apiPort || 8728) : undefined,
+        apiPort: managementOnly ? (normalizedManagementEndpoint.port ?? Number(form.apiPort || 8728)) : undefined,
         apiUseTls: managementOnly ? Boolean(form.apiUseTls) : undefined,
         sshPort: managementOnly ? Number(form.sshPort || 22) : undefined,
         includeSshFallback: managementOnly ? Boolean(form.includeSshFallback) : undefined,
@@ -493,8 +497,8 @@ function DirectProvisioningPanel({
             <div className="grid gap-5 lg:grid-cols-2">
               <Input
                 label="Primary management host"
-                placeholder="e.g. 192.168.88.1"
-                hint="Used as the main RouterOS management endpoint."
+                placeholder="e.g. 192.168.88.1 or 192.168.88.1:8728"
+                hint="Used as the main RouterOS management endpoint. Host:port is accepted."
                 value={form.managementHost || ""}
                 onChange={(event) => setForm((current) => ({ ...current, managementHost: event.target.value }))}
                 required

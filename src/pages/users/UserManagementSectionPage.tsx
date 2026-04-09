@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Flag, Plus, RefreshCw, ShieldAlert, Ticket, UserPlus2, Wallet } from 'lucide-react';
+import { Flag, Plus, ShieldAlert, Ticket, UserPlus2, Wallet } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { TableLoader } from '@/components/feedback/TableLoader';
@@ -89,8 +89,8 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser(true);
   const sectionMeta = userManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters ?? {};
-  const sectionFilters = { ...lockedFilters, ...defaultUserFilters };
+  const lockedFilters = useMemo(() => sectionMeta.lockedFilters ?? {}, [sectionMeta.lockedFilters]);
+  const sectionFilters = useMemo(() => ({ ...lockedFilters, ...defaultUserFilters }), [lockedFilters]);
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof UsersQuery>;
 
   const [filters, setFilters] = useState<UsersQuery>(sectionFilters);
@@ -118,7 +118,7 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
 
   useEffect(() => {
     setFilters((current) => (areUserFiltersEqual(current, sectionFilters) ? current : sectionFilters));
-  }, [section]);
+  }, [sectionFilters]);
 
   const suspendMutation = useSuspendUser();
   const reactivateMutation = useReactivateUser();
@@ -138,9 +138,6 @@ export function UserManagementSectionPage({ section }: { section: UserManagement
     ? baseRows.filter((row) => (row.flagCount || 0) > 0 || ['watchlist', 'flagged'].includes(row.riskStatus))
     : baseRows;
   const total = section === 'internal-notes' ? rows.length : (usersQuery.data?.pagination.total || rows.length);
-  const totalMrr = rows.reduce((sum, row) => sum + (row.monthlyValue || 0), 0);
-  const totalFlags = rows.reduce((sum, row) => sum + (row.flagCount || 0), 0);
-  const totalOpenTickets = rows.reduce((sum, row) => sum + (row.openTickets || 0), 0);
   const pagination = usersQuery.data?.pagination;
 
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== '').length;

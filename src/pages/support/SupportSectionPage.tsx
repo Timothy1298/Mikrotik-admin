@@ -83,7 +83,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
   const [categoryValue, setCategoryValue] = useState("technical");
   const [flagValue, setFlagValue] = useState("manual_review");
   const [assigneeValue, setAssigneeValue] = useState("");
-  const [teamValue, setTeamValue] = useState("general");
 
   const assignDisclosure = useDisclosure(false);
   const reassignDisclosure = useDisclosure(false);
@@ -175,7 +174,6 @@ export function SupportSectionPage({ section }: { section: SupportSection }) {
     setStatusValue(ticket.status);
     setCategoryValue(ticket.category);
     setFlagValue(ticket.flags[0]?.flag || "manual_review");
-    setTeamValue(ticket.assignedTeam || "general");
     setSelectedFlagId(ticket.flags[0]?.id || "");
     navigate(appRoutes.supportTicket(ticket.id));
   };

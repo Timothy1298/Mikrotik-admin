@@ -9,20 +9,14 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Tabs } from '@/components/ui/Tabs';
 import { useConnectedDevices, useConnectionStats, transformDevicesToMarkers, discoverRouterDevices } from '@/features/routers/hooks/useTopology';
+import type { ConnectedDevice, DeviceMarker } from '@/features/routers/hooks/useTopology';
 import { NetworkTopoMap } from './NetworkTopoMap';
 
 interface NetworkTopologyViewerProps {
   routerId: string;
 }
 
-interface SelectedDevice {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  online: boolean;
-  type: string;
-}
+type SelectedDevice = ConnectedDevice & DeviceMarker;
 
 const deviceTypeTabs = [
   { label: 'All Devices', value: 'all' },
@@ -48,9 +42,9 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
 
   const filteredByType = deviceTypeFilter === 'all'
     ? devices
-    : devices.filter((device: any) => device.deviceType === deviceTypeFilter);
-  const markers = transformDevicesToMarkers(filteredByType, parentLocation);
-  const filteredDevices = filteredByType.filter((device: any) => {
+    : devices.filter((device) => device.deviceType === deviceTypeFilter);
+  const markers = transformDevicesToMarkers(filteredByType);
+  const filteredDevices = filteredByType.filter((device) => {
     const query = searchTerm.toLowerCase();
     return (
       !query ||
@@ -60,9 +54,19 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
     );
   });
 
-  const handleDeviceClick = (device: SelectedDevice) => {
-    const fullDevice = devices.find((item: any) => item._id === device.id);
-    setSelectedDevice(fullDevice ? { ...device, ...fullDevice } : device);
+  const handleDeviceClick = (device: DeviceMarker) => {
+    const fullDevice = devices.find((item) => item._id === device.id);
+    setSelectedDevice(fullDevice ? { ...device, ...fullDevice } : {
+      ...device,
+      _id: device.id,
+      deviceName: device.name,
+      latitude: device.lat,
+      longitude: device.lng,
+      isOnline: device.online,
+      deviceType: device.type,
+      ipAddress: "",
+      lastSeen: "",
+    });
   };
 
   const handleDiscoverDevices = async () => {
@@ -216,7 +220,7 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
 
               {filteredDevices.length > 0 ? (
                 <div className="max-h-96 space-y-2 overflow-y-auto">
-                  {filteredDevices.map((device: any) => (
+                  {filteredDevices.map((device) => (
                     <div
                       key={device._id}
                       className={`cursor-pointer rounded-lg border p-3 transition ${
@@ -230,7 +234,7 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
                         lat: device.latitude,
                         lng: device.longitude,
                         online: device.isOnline,
-                        type: device.deviceType,
+                        type: (device.deviceType || 'unknown') as DeviceMarker["type"],
                       })}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -301,17 +305,17 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
                   <p className="text-xs uppercase text-text-muted">Type</p>
                   <Badge tone="neutral">{selectedDevice.type}</Badge>
                 </div>
-                {(selectedDevice as any).classificationConfidence !== undefined ? (
+                {selectedDevice.classificationConfidence !== undefined ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">Classification confidence</p>
-                    <p>{(selectedDevice as any).classificationConfidence}%</p>
+                    <p>{selectedDevice.classificationConfidence}%</p>
                   </div>
                 ) : null}
-                {Array.isArray((selectedDevice as any).classificationEvidence) && (selectedDevice as any).classificationEvidence.length ? (
+                {Array.isArray(selectedDevice.classificationEvidence) && selectedDevice.classificationEvidence.length ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">Evidence</p>
                     <div className="flex flex-wrap gap-2">
-                      {(selectedDevice as any).classificationEvidence.map((item: string) => (
+                      {selectedDevice.classificationEvidence.map((item) => (
                         <Badge key={item} tone="neutral">{item.replace(/_/g, ' ')}</Badge>
                       ))}
                     </div>
@@ -333,28 +337,28 @@ export function NetworkTopologyViewer({ routerId }: NetworkTopologyViewerProps) 
                     <p className="text-text-muted">Not available</p>
                   )}
                 </div>
-                {(selectedDevice as any).macAddress ? (
+                {selectedDevice.macAddress ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">MAC</p>
-                    <p className="font-mono text-sm">{(selectedDevice as any).macAddress}</p>
+                    <p className="font-mono text-sm">{selectedDevice.macAddress}</p>
                   </div>
                 ) : null}
-                {(selectedDevice as any).manufacturer || (selectedDevice as any).model ? (
+                {selectedDevice.manufacturer || selectedDevice.model ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">Hardware</p>
-                    <p>{[(selectedDevice as any).manufacturer, (selectedDevice as any).model].filter(Boolean).join(' • ')}</p>
+                    <p>{[selectedDevice.manufacturer, selectedDevice.model].filter(Boolean).join(' • ')}</p>
                   </div>
                 ) : null}
-                {(selectedDevice as any).latency ? (
+                {selectedDevice.latency ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">Latency</p>
-                    <p>{(selectedDevice as any).latency}ms</p>
+                    <p>{selectedDevice.latency}ms</p>
                   </div>
                 ) : null}
-                {(selectedDevice as any).bandwidth ? (
+                {selectedDevice.bandwidth ? (
                   <div>
                     <p className="text-xs uppercase text-text-muted">Bandwidth</p>
-                    <p>{(selectedDevice as any).bandwidth}Mbps</p>
+                    <p>{selectedDevice.bandwidth}Mbps</p>
                   </div>
                 ) : null}
 

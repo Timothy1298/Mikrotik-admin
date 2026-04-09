@@ -86,14 +86,14 @@ export function RouterHotspotPanel({ routerId }: { routerId: string }) {
     return map;
   }, [sessionsQuery.data]);
 
-  const users = (usersQuery.data?.items || []).map((user) => ({
+  const users = useMemo(() => (usersQuery.data?.items || []).map((user) => ({
     ...user,
     online: user.online || onlineSessionsByUser.has(user.username),
-  }));
-  const sessions = sessionsQuery.data || [];
-  const profiles = profilesQuery.data || [];
-  const vouchers = vouchersQuery.data?.items || [];
-  const queues = queuesQuery.data?.items || [];
+  })), [onlineSessionsByUser, usersQuery.data?.items]);
+  const sessions = useMemo(() => sessionsQuery.data || [], [sessionsQuery.data]);
+  const profiles = useMemo(() => profilesQuery.data || [], [profilesQuery.data]);
+  const vouchers = useMemo(() => vouchersQuery.data?.items || [], [vouchersQuery.data?.items]);
+  const queues = useMemo(() => queuesQuery.data?.items || [], [queuesQuery.data?.items]);
   const usersByUsername = useMemo(() => new Map(users.map((user) => [user.username, user])), [users]);
   const profileRateLimits = useMemo(() => new Map(profiles.map((profile) => [profile.name, profile.rateLimit || ""])), [profiles]);
   const controlModeByUserId = useMemo<Record<string, "profile" | "override">>(() => {

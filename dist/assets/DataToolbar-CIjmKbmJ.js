@@ -1,0 +1,1 @@
+import{j as r}from"./react-vendor-BVYMGCgy.js";function a({children:e}){return r.jsx("div",{className:"flex flex-col gap-4 rounded-3xl border border-background-border bg-background-panel p-4 md:flex-row md:items-center md:justify-between",children:e})}export{a as D};

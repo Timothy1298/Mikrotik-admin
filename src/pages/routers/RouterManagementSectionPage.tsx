@@ -103,8 +103,8 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const location = useLocation();
   const navigate = useNavigate();
   const sectionMeta = routerManagementSections[section];
-  const lockedFilters = sectionMeta.lockedFilters ?? {};
-  const sectionFilters = { ...lockedFilters, ...defaultRouterFilters };
+  const lockedFilters = useMemo(() => sectionMeta.lockedFilters ?? {}, [sectionMeta.lockedFilters]);
+  const sectionFilters = useMemo(() => ({ ...lockedFilters, ...defaultRouterFilters }), [lockedFilters]);
   const hiddenFields = Object.keys(lockedFilters) as Array<keyof RouterQuery>;
 
   const [filters, setFilters] = useState<RouterQuery>(sectionFilters);
@@ -133,7 +133,7 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
 
   useEffect(() => {
     setFilters((current) => (areRouterFiltersEqual(current, sectionFilters) ? current : sectionFilters));
-  }, [section]);
+  }, [sectionFilters]);
 
   const disableMutation = useDisableRouter();
   const deleteMutation = useDeleteRouter();
@@ -153,10 +153,6 @@ export function RouterManagementSectionPage({ section }: { section: RouterManage
   const baseRows = routersQuery.data?.items || [];
   const rows = filterRowsForSection(section, baseRows);
   const total = rows.length;
-  const unhealthyCount = rows.filter((row) => row.unhealthy).length;
-  const offlineCount = rows.filter((row) => row.connectionStatus === "offline").length;
-  const flaggedCount = rows.reduce((sum, row) => sum + row.issueFlags.length, 0);
-  const portIssueCount = rows.filter((row) => row.connectionMode !== "management_only" && (!row.winboxPort || !row.sshPort || !row.apiPort)).length;
 
   const activeFiltersCount = Object.entries(filters).filter(([, value]) => value && value !== "").length;
   const Icon = sectionIcons[section];

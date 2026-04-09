@@ -1,0 +1,1 @@
+import{r}from"./react-vendor-BVYMGCgy.js";import{Q as i}from"./vendor-Bq618mn4.js";import{t as p}from"./index-C0PcWtQl.js";function f(){const[o,t]=r.useState(!1);async function s(e,a=p.copied){await navigator.clipboard.writeText(e),t(!0),i.success(a),window.setTimeout(()=>t(!1),1500)}return{copied:o,copy:s}}export{f as u};

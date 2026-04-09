@@ -1,0 +1,1 @@
+import{j as n}from"./react-vendor-BVYMGCgy.js";import{g as e}from"./index-C0PcWtQl.js";function s({className:r}){return n.jsx("span",{className:e("inline-block h-5 w-5 animate-spin rounded-full border-2 border-primary border-r-transparent",r)})}export{s as S};

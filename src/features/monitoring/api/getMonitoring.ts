@@ -1,5 +1,5 @@
 import type { RouterDirectoryResponse, RouterRow } from "@/features/routers/types/router.types";
-import type { VpnServerDirectoryResponse, VpnServerRow } from "@/features/vpn-servers/types/vpn-server.types";
+import type { VpnServerDirectoryResponse } from "@/features/vpn-servers/types/vpn-server.types";
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import type {

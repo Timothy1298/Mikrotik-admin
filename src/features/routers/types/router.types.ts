@@ -97,6 +97,7 @@ export type RouterManagementEndpoint = {
   host: string;
   port: number;
   transport: string;
+  source?: string;
   priority: number;
   enabled: boolean;
   health: string;
@@ -440,6 +441,7 @@ export type RouterDetail = {
           sourceRouterName?: string | null;
         }>;
         trackingMarker?: string | null;
+        observedPeer?: ObservedRuntimePeer | null;
       }>;
       error: string | null;
     } | null;
@@ -588,6 +590,40 @@ export type TrackRuntimePeerResult = {
   name: string;
   connectionMode?: "wireguard" | "management_only";
   status: string;
+};
+
+export type ObservedRuntimePeer = {
+  id: string;
+  assetLabel: string | null;
+  publicKey: string | null;
+  interfaceName: string | null;
+  endpoint: string | null;
+  allowedIPs: string[];
+  sourceRouterId: string | null;
+  lastSeenAt: string | null;
+  seenOnRouters: Array<{
+    routerId: string | null;
+    routerName: string | null;
+    interfaceName: string | null;
+    endpoint: string | null;
+    allowedIPs: string[];
+    lastSeenAt: string | null;
+  }>;
+  classification: "mikrotik_router" | "wireguard_service" | "site_gateway" | "unknown";
+  classificationSource: "manual" | "heuristic" | "discovery" | "mixed";
+  confidenceScore: number;
+  promotionEligible: boolean;
+  promotionReadinessReason: string | null;
+  evidence: Array<{
+    kind: "runtime_observation" | "manual_classification" | "downstream_discovery" | "heuristic" | "promotion";
+    summary: string;
+    confidence: number;
+    sourceRouterId: string | null;
+    observedAt: string | null;
+    details: Record<string, unknown> | null;
+  }>;
+  promotedRouterIds: string[];
+  promotedRouterCount: number;
 };
 
 export type RouterDownstreamDiscoveryRun = {

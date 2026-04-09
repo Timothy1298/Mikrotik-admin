@@ -1,0 +1,1 @@
+import{j as r}from"./react-vendor-BVYMGCgy.js";import{j as t}from"./index-C0PcWtQl.js";import{av as n}from"./ui-vendor-DgRC1EAe.js";function f({loading:e,onClick:s}){return r.jsx(t,{variant:"outline",leftIcon:r.jsx(n,{className:`h-4 w-4 ${e?"animate-spin":""}`}),onClick:s,disabled:e,children:e?"Refreshing":"Refresh"})}export{f as R};

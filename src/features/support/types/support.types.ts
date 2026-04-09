@@ -212,6 +212,20 @@ export type SupportAgent = {
   supportTeam: string;
 };
 
+export type SupportContextOption = {
+  id: string;
+  label: string;
+  description: string;
+};
+
+export type SupportContextOptions = {
+  routers: SupportContextOption[];
+  vpnServers: SupportContextOption[];
+  incidents: SupportContextOption[];
+  subscriptions: SupportContextOption[];
+  transactions: SupportContextOption[];
+};
+
 export type SupportTeam =
   | "general"
   | "networking"

@@ -17,6 +17,7 @@ import {
   getEscalatedQueue,
   getSupportAgents,
   getSupportAnalytics,
+  getSupportContextOptions,
   getSupportOverview,
   getStaleQueue,
   getTicketActivity,
@@ -36,6 +37,7 @@ import {
   replyToTicket,
   resolveTicket,
   unassignTicket,
+  updateTicketContext,
 } from "@/features/support/api/getSupport";
 import type { SupportFilterState } from "@/features/support/types/support.types";
 
@@ -55,6 +57,7 @@ export const useAssigneeWorkload = (enabled = true) => useQuery({ queryKey: [...
 export const useTeamWorkload = () => useQuery({ queryKey: [...supportBase, "team-workload"], queryFn: getTeamWorkload, staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketsByAssignee = (id: string, params?: SupportFilterState, enabled = true) => useQuery({ queryKey: [...supportBase, "assignee-tickets", id, params], queryFn: () => getTicketsByAssignee(id, params), enabled: Boolean(id) && enabled, staleTime: 20_000, refetchOnWindowFocus: false });
 export const useSupportAgents = () => useQuery({ queryKey: [...supportBase, "agents"], queryFn: getSupportAgents, staleTime: 20_000, refetchOnWindowFocus: false });
+export const useSupportContextOptions = (params?: { q?: string; limit?: number }, enabled = true) => useQuery({ queryKey: [...supportBase, "context-options", params], queryFn: () => getSupportContextOptions(params), staleTime: 20_000, refetchOnWindowFocus: false, enabled });
 export const useTicketNotes = (id: string) => useQuery({ queryKey: [...supportBase, "notes", id], queryFn: () => getTicketNotes(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 export const useTicketFlags = (id: string) => useQuery({ queryKey: [...supportBase, "flags", id], queryFn: () => getTicketFlags(id), enabled: Boolean(id), staleTime: 20_000, refetchOnWindowFocus: false });
 
@@ -111,3 +114,4 @@ export const useMarkTicketReviewed = () => useSupportMutation(markTicketReviewed
 export const useAddTicketNote = () => useSupportMutation(addTicketNote as (...args: Parameters<typeof addTicketNote>) => Promise<{ message?: string }>, "Internal note added successfully");
 export const useAddTicketFlag = () => useSupportMutation(addTicketFlag as (...args: Parameters<typeof addTicketFlag>) => Promise<{ message?: string }>, "Ticket flag added successfully");
 export const useRemoveTicketFlag = () => useSupportMutation(removeTicketFlag as (...args: Parameters<typeof removeTicketFlag>) => Promise<{ message?: string }>, "Ticket flag removed successfully");
+export const useUpdateTicketContext = () => useSupportMutation(updateTicketContext, "Ticket context updated successfully");

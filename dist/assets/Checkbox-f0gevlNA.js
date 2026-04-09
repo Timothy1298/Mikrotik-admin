@@ -1,0 +1,1 @@
+import{j as e}from"./react-vendor-BVYMGCgy.js";function s({label:r,...t}){return e.jsxs("label",{className:"inline-flex items-center gap-3 text-sm text-text-secondary",children:[e.jsx("input",{type:"checkbox",className:"h-4 w-4 rounded border-background-border bg-background-panel text-primary focus:ring-primary/35",...t}),e.jsx("span",{children:r})]})}export{s as C};

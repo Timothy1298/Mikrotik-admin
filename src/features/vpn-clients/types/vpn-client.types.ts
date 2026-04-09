@@ -1,3 +1,10 @@
+export type LinkedRouterSummary = {
+  _id: string;
+  name: string;
+  status: string;
+  vpnIp?: string | null;
+};
+
 export type VpnClientRow = {
   _id: string;
   name: string;
@@ -18,10 +25,12 @@ export type VpnClientRow = {
   lastConnectionIp?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  linkedRouterCount?: number;
 };
 
 export type VpnClientDetail = VpnClientRow & {
   privateKey?: string;
+  linkedRouters?: LinkedRouterSummary[];
 };
 
 export type VpnClientListResponse = {
@@ -55,6 +64,7 @@ export type CreateVpnClientPayload = {
 };
 
 export type UpdateVpnClientPayload = {
+  name?: string;
   notes?: string;
   interfaceName?: string;
   enabled?: boolean;
@@ -72,4 +82,10 @@ export type ClientPingResult = {
   target: string;
   result?: string;
   details?: string;
+};
+
+export type DownloadMikrotikScriptPayload = {
+  name: string;
+  iface?: string;
+  subnet?: string;
 };

@@ -32,6 +32,7 @@ import type {
   RouterFlagsDetail,
   RouterAccessUpdatePayload,
   RouterManagementPolicyProfile,
+  ObservedRuntimePeer,
   TrackRuntimePeerResult,
 } from "@/features/routers/types/router.types";
 
@@ -121,6 +122,14 @@ export async function disableRouter(id: string, reason?: string) {
 
 export async function reactivateRouter(id: string, reason?: string) {
   const { data } = await apiClient.post<{ success: boolean; message: string }>(endpoints.admin.reactivateRouter(id), { reason });
+  return data;
+}
+
+export async function unlinkRouterClient(id: string, reason?: string) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: { routerId: string; detachedClientId: string | null; unlinked: boolean } }>(
+    endpoints.admin.unlinkRouterClient(id),
+    { reason },
+  );
   return data;
 }
 
@@ -293,6 +302,27 @@ export async function deleteRouter(id: string, reason?: string) {
 
 export async function trackRouterRuntimePeer(id: string, peerId: string, payload: { name: string; reason?: string }) {
   const { data } = await apiClient.post<{ success: boolean; message: string; data: TrackRuntimePeerResult }>(endpoints.admin.routerTrackRuntimePeer(id, peerId), payload);
+  return data.data;
+}
+
+export async function observeRouterRuntimePeer(
+  id: string,
+  peerId: string,
+  payload: { classification: ObservedRuntimePeer["classification"]; assetLabel?: string; reason?: string },
+) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: ObservedRuntimePeer }>(endpoints.admin.routerObserveRuntimePeer(id, peerId), payload);
+  return data.data;
+}
+
+export async function promoteObservedRouterPeer(
+  id: string,
+  observedPeerId: string,
+  payload: { name: string; reason?: string },
+) {
+  const { data } = await apiClient.post<{ success: boolean; message: string; data: TrackRuntimePeerResult }>(
+    endpoints.admin.routerPromoteObservedPeer(id, observedPeerId),
+    payload,
+  );
   return data.data;
 }
 

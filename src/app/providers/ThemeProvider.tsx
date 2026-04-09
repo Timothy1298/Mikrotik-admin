@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { createContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { themeConfig } from "@/config/theme";
 import { readStorage, writeStorage } from "@/lib/utils/storage";
 
@@ -44,8 +44,4 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
-export function useThemeContext() {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error("useThemeContext must be used within ThemeProvider");
-  return context;
-}
+export { ThemeContext };

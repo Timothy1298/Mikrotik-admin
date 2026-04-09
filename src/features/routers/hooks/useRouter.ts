@@ -29,7 +29,9 @@ import {
   markRouterBootstrapApplied,
   moveRouterServer,
   pingRouter,
+  promoteObservedRouterPeer,
   reactivateRouter,
+  unlinkRouterClient,
   rebootRouter,
   startRouterDiscoveryScan,
   regenerateRouterSetup,
@@ -42,6 +44,7 @@ import {
   setRouterCredentials,
   setRouterAccess,
   setRouterSafeMode,
+  observeRouterRuntimePeer,
   updateRouterManagementPolicy,
   trackRouterRuntimePeer,
   verifyDiscoveredRouter,
@@ -220,6 +223,22 @@ export function useReactivateRouter() {
   return useRouterMutation(reactivateRouter, "Router reactivated successfully");
 }
 
+export function useUnlinkRouterClient() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => unlinkRouterClient(id, reason),
+    onSuccess: async (result, variables) => {
+      toast.success(result.message || "Router unlinked from VPN client");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.vpnClients });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Router action failed");
+    },
+  });
+}
+
 export function useReprovisionRouter() {
   return useRouterMutation(reprovisionRouter, "Router reprovisioned successfully");
 }
@@ -280,6 +299,46 @@ export function useTrackRouterRuntimePeer() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to track runtime peer");
+    },
+  });
+}
+
+export function useObserveRouterRuntimePeer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      peerId,
+      payload,
+    }: {
+      id: string;
+      peerId: string;
+      payload: { classification: "mikrotik_router" | "wireguard_service" | "site_gateway" | "unknown"; assetLabel?: string; reason?: string };
+    }) => observeRouterRuntimePeer(id, peerId, payload),
+    onSuccess: async (result, variables) => {
+      toast.success(`Peer added to inventory as ${result.classification.replace(/_/g, " ")}`);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to observe runtime peer");
+    },
+  });
+}
+
+export function usePromoteObservedRouterPeer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, observedPeerId, payload }: { id: string; observedPeerId: string; payload: { name: string; reason?: string } }) =>
+      promoteObservedRouterPeer(id, observedPeerId, payload),
+    onSuccess: async (result, variables) => {
+      toast.success(`Observed peer promoted as ${result.name}`);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routerDetail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.routers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to promote observed peer");
     },
   });
 }

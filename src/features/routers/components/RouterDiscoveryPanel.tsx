@@ -19,7 +19,6 @@ import {
 } from "@/features/routers/hooks/useRouter";
 import type {
   CreateRouterResponse,
-  RouterDiscoveryCandidate,
   RouterDiscoveryImportPayload,
   RouterDiscoveryImportResult,
 } from "@/features/routers/types/router.types";
@@ -174,7 +173,7 @@ export function RouterDiscoveryPanel({
     try {
       await navigator.clipboard.writeText(value);
       setInlineError(null);
-    } catch (error) {
+    } catch {
       setInlineError(`Failed to copy ${label}.`);
     }
   };

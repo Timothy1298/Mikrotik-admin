@@ -23,6 +23,7 @@ import {
   usePlatformConfig,
   useSettings,
   useStartTwoFactorSetup,
+  useUpdatePlatformConfig,
   useUpdateAdminProfile,
 } from "@/features/settings/hooks";
 import { useForceLogoutUser } from "@/features/users/hooks";
@@ -456,10 +457,33 @@ function SystemInfoCard({
 function SystemTab({
   settingsQuery,
   platformQuery,
+  updatePlatformMutation,
 }: {
   settingsQuery: ReturnType<typeof useSettings>;
   platformQuery: ReturnType<typeof usePlatformConfig>;
+  updatePlatformMutation: ReturnType<typeof useUpdatePlatformConfig>;
 }) {
+  const [form, setForm] = useState({
+    routerMonthlyPrice: "",
+    trialDays: "",
+    serverRegion: "",
+    supportEmail: "",
+    billingGraceDays: "",
+    reason: "",
+  });
+
+  useEffect(() => {
+    if (!platformQuery.data) return;
+    setForm({
+      routerMonthlyPrice: String(platformQuery.data.routerMonthlyPrice ?? ""),
+      trialDays: String(platformQuery.data.trialDays ?? ""),
+      serverRegion: platformQuery.data.serverRegion || "",
+      supportEmail: platformQuery.data.supportEmail || "",
+      billingGraceDays: String(platformQuery.data.billingGraceDays ?? ""),
+      reason: "",
+    });
+  }, [platformQuery.data]);
+
   if (settingsQuery.isPending || platformQuery.isPending) {
     return <SectionLoader />;
   }
@@ -514,13 +538,45 @@ function SystemTab({
             <SummaryItem label="Trial period" value={`${platformQuery.data.trialDays} days`} />
             <SummaryItem label="Server region" value={platformQuery.data.serverRegion} />
             <SummaryItem label="App version" value={platformQuery.data.appVersion} />
+            <SummaryItem label="Support email" value={platformQuery.data.supportEmail || "Not set"} />
+            <SummaryItem label="Billing grace days" value={`${platformQuery.data.billingGraceDays} days`} />
           </div>
         </SystemInfoCard>
       </div>
 
-      <div className="rounded-2xl border border-background-border bg-background-elevated/70 p-4 text-sm text-text-secondary">
-        These values are configured via environment variables and platform defaults. Refresh each card independently to check the current frontend runtime versus the latest server-provided configuration.
-      </div>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Edit Platform Defaults</CardTitle>
+            <CardDescription>Persist the billing and provisioning defaults that the admin workspace relies on.</CardDescription>
+          </div>
+        </CardHeader>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input label="Router monthly price" type="number" min="0" step="0.01" value={form.routerMonthlyPrice} onChange={(event) => setForm((current) => ({ ...current, routerMonthlyPrice: event.target.value }))} />
+          <Input label="Trial days" type="number" min="1" step="1" value={form.trialDays} onChange={(event) => setForm((current) => ({ ...current, trialDays: event.target.value }))} />
+          <Input label="Server region" value={form.serverRegion} onChange={(event) => setForm((current) => ({ ...current, serverRegion: event.target.value }))} />
+          <Input label="Support email" type="email" value={form.supportEmail} onChange={(event) => setForm((current) => ({ ...current, supportEmail: event.target.value }))} />
+          <Input label="Billing grace days" type="number" min="0" step="1" value={form.billingGraceDays} onChange={(event) => setForm((current) => ({ ...current, billingGraceDays: event.target.value }))} />
+          <Input label="Audit reason" value={form.reason} onChange={(event) => setForm((current) => ({ ...current, reason: event.target.value }))} />
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            isLoading={updatePlatformMutation.isPending}
+            onClick={() => {
+              void updatePlatformMutation.mutateAsync({
+                routerMonthlyPrice: Number(form.routerMonthlyPrice) || 0,
+                trialDays: Number(form.trialDays) || 1,
+                serverRegion: form.serverRegion.trim(),
+                supportEmail: form.supportEmail.trim(),
+                billingGraceDays: Number(form.billingGraceDays) || 0,
+                reason: form.reason.trim() || undefined,
+              });
+            }}
+          >
+            Save Platform Defaults
+          </Button>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -537,6 +593,7 @@ export function SettingsPage() {
   const settingsQuery = useSettings();
   const adminProfileQuery = useAdminProfile();
   const platformQuery = usePlatformConfig();
+  const updatePlatformMutation = useUpdatePlatformConfig();
   const updateProfileMutation = useUpdateAdminProfile();
   const forceLogoutMutation = useForceLogoutUser();
   const startTwoFactorSetupMutation = useStartTwoFactorSetup();
@@ -766,7 +823,7 @@ export function SettingsPage() {
           ) : null}
 
           {location.pathname === appRoutes.settingsSystem ? (
-            <SystemTab settingsQuery={settingsQuery} platformQuery={platformQuery} />
+            <SystemTab settingsQuery={settingsQuery} platformQuery={platformQuery} updatePlatformMutation={updatePlatformMutation} />
           ) : null}
     </SettingsShell>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -42,11 +42,11 @@ export function VpnServersTable({
   const navigate = useNavigate();
   const [navigatingServerId, setNavigatingServerId] = useState<string | null>(null);
 
-  const openFullPage = (server: VpnServerRow) => {
+  const openFullPage = useCallback((server: VpnServerRow) => {
     if (navigatingServerId) return;
     setNavigatingServerId(server.id);
     requestAnimationFrame(() => navigate(appRoutes.vpnServerDetail(server.id)));
-  };
+  }, [navigate, navigatingServerId]);
 
   const columns = useMemo<ColumnDef<VpnServerRow>[]>(() => [
     {
@@ -88,7 +88,7 @@ export function VpnServersTable({
         />
       ),
     },
-  ], [navigatingServerId, navigate, onAddFlag, onAddNote, onClearMaintenance, onDisable, onEnableMaintenance, onMarkReviewed, onMigrateRouters, onOpenDetails, onReactivate, onReconcile, onRestartVpn]);
+  ], [navigatingServerId, onAddFlag, onAddNote, onClearMaintenance, onDisable, onEnableMaintenance, onMarkReviewed, onMigrateRouters, onOpenDetails, onReactivate, onReconcile, onRestartVpn, openFullPage]);
 
   return <DataTable data={rows} columns={columns} onRowClick={openFullPage} emptyTitle="No VPN servers found" emptyDescription="Adjust your filters or add a server to populate the infrastructure directory." />;
 }

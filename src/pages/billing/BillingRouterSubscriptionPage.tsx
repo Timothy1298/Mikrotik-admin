@@ -1,6 +1,6 @@
-import { CreditCard, Router, Search, Wallet } from "lucide-react";
+import { Router, Search, Wallet } from "lucide-react";
 import { useDeferredValue, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/feedback/EmptyState";
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { SectionLoader } from "@/components/feedback/SectionLoader";

@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
+import type { PlatformConfig, UpdatePlatformConfigPayload } from "@/features/settings/types";
 
 export type AdminProfileResponse = {
   id: string;
@@ -30,8 +31,13 @@ export async function updateAdminProfile(payload: { name?: string; currentPasswo
 }
 
 export async function getPlatformConfig() {
-  const { data } = await apiClient.get<{ success: boolean; config: { routerMonthlyPrice: number; trialDays: number; serverRegion: string; appVersion: string } }>(endpoints.admin.platformConfig);
+  const { data } = await apiClient.get<{ success: boolean; config: PlatformConfig }>(endpoints.admin.platformConfig);
   return data.config;
+}
+
+export async function updatePlatformConfig(payload: UpdatePlatformConfigPayload) {
+  const { data } = await apiClient.put<{ success: boolean; message: string; config: PlatformConfig }>(endpoints.admin.platformConfig, payload);
+  return data;
 }
 
 export async function startTwoFactorSetup(payload: { currentPassword: string }) {

@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCreateTicket, useSupportAgents } from "@/features/support/hooks/useSupport";
+import { useUsers } from "@/features/users/hooks";
 import type { CreateTicketPayload } from "@/features/support/types/support.types";
 
 const initialState: CreateTicketPayload = {
@@ -21,15 +22,23 @@ const initialState: CreateTicketPayload = {
 export function CreateTicketDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const createMutation = useCreateTicket();
   const agentsQuery = useSupportAgents();
+  const [userSearch, setUserSearch] = useState("");
   const [form, setForm] = useState<CreateTicketPayload>(initialState);
   const [inlineError, setInlineError] = useState<string | null>(null);
+  const usersQuery = useUsers({ q: userSearch.trim() || undefined, page: 1, limit: 6, sortBy: "createdAt", sortOrder: "desc" });
 
   useEffect(() => {
     if (!open) {
       setForm(initialState);
+      setUserSearch("");
       setInlineError(null);
     }
   }, [open]);
+
+  const selectedUser = useMemo(
+    () => (usersQuery.data?.items || []).find((item) => item.id === form.userId) || null,
+    [form.userId, usersQuery.data?.items],
+  );
 
   const assigneeOptions = useMemo(
     () => [
@@ -75,13 +84,46 @@ export function CreateTicketDialog({ open, onClose }: { open: boolean; onClose: 
     <Modal open={open} title="New Ticket" description="Open a support ticket on behalf of a subscriber and optionally assign it immediately." onClose={onClose}>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <Input
-          label="Subscriber User ID"
-          placeholder="Paste the user's ID"
-          hint="Find the user's ID in User Management"
-          value={form.userId}
-          onChange={(event) => handleChange("userId", event.target.value)}
-          required
+          label="Subscriber search"
+          placeholder="Search subscriber by name, email, or company"
+          hint={selectedUser ? `Selected: ${selectedUser.name} · ${selectedUser.email}` : "Choose the subscriber before creating the ticket."}
+          value={userSearch}
+          onChange={(event) => setUserSearch(event.target.value)}
         />
+        <div className="space-y-2 rounded-2xl border border-background-border bg-background-panel p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-text-primary">Subscriber selection</p>
+            {form.userId ? (
+              <Button type="button" variant="ghost" size="sm" onClick={() => handleChange("userId", "")}>
+                Clear
+              </Button>
+            ) : null}
+          </div>
+          <Input label="Selected subscriber ID" value={form.userId} readOnly required />
+          <div className="max-h-48 space-y-2 overflow-y-auto">
+            {(usersQuery.data?.items || []).length ? (
+              usersQuery.data?.items.map((user) => {
+                const isSelected = form.userId === user.id;
+                return (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => {
+                      handleChange("userId", user.id);
+                      setUserSearch(user.email || user.name);
+                    }}
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${isSelected ? "border-primary/50 bg-primary/10" : "border-background-border bg-background-elevated/40 hover:border-primary/30 hover:bg-primary/5"}`}
+                  >
+                    <p className="text-sm font-medium text-text-primary">{user.name}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{user.email} · {user.company || "Independent"} · {user.accountStatus}</p>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-sm text-text-secondary">No matching subscribers yet. Keep typing to search the user directory.</p>
+            )}
+          </div>
+        </div>
         <Input
           label="Subject"
           placeholder="e.g. Router offline after power cut"

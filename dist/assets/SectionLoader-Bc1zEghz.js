@@ -1,0 +1,1 @@
+import{j as s}from"./react-vendor-BVYMGCgy.js";import{S as a}from"./index-C0PcWtQl.js";function o(){return s.jsxs("div",{className:"surface-card p-5",children:[s.jsx(a,{className:"h-5 w-48"}),s.jsx(a,{className:"mt-4 h-24 w-full"})]})}export{o as S};

@@ -1,0 +1,1 @@
+import{b as r}from"./tanstack-vendor-DLB_vFTB.js";import{q as t}from"./index-C0PcWtQl.js";import{U as s,V as u}from"./getRouters-COwYvz20.js";function y(e){return r({queryKey:[...t.routers,e],queryFn:()=>s(e),staleTime:3e4,refetchOnWindowFocus:!1})}function f(){return r({queryKey:[...t.routers,"stats"],queryFn:u,staleTime:3e4,refetchOnWindowFocus:!1})}export{f as a,y as u};

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { RefreshButton } from "@/components/shared/RefreshButton";
 import { appRoutes } from "@/config/routes";
-import { useDiscoverRouterDownstreamMikrotiks, useRouterDownstreamMikrotiks, useTrackRouterRuntimePeer } from "@/features/routers/hooks/useRouter";
+import { useDiscoverRouterDownstreamMikrotiks, useObserveRouterRuntimePeer, usePromoteObservedRouterPeer, useRouterDownstreamMikrotiks } from "@/features/routers/hooks/useRouter";
 import { RouterTunnelHealthBadge } from "@/features/routers/components/RouterTunnelHealthBadge";
 import type { RouterDetail } from "@/features/routers/types/router.types";
 import { formatBytes } from "@/lib/formatters/bytes";
@@ -28,13 +28,29 @@ function buildSuggestedPeerName(routerName: string, interfaceName: string | null
   return `${normalizedRouter}-${normalizedInterface}`;
 }
 
+function formatPeerClassification(value: "mikrotik_router" | "wireguard_service" | "site_gateway" | "unknown") {
+  switch (value) {
+    case "mikrotik_router":
+      return "MikroTik router";
+    case "wireguard_service":
+      return "WireGuard service";
+    case "site_gateway":
+      return "Site gateway";
+    default:
+      return "External peer";
+  }
+}
+
 export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
   const navigate = useNavigate();
-  const trackPeerMutation = useTrackRouterRuntimePeer();
+  const observePeerMutation = useObserveRouterRuntimePeer();
+  const promotePeerMutation = usePromoteObservedRouterPeer();
   const downstreamDiscoveryMutation = useDiscoverRouterDownstreamMikrotiks();
   const downstreamDiscoveryQuery = useRouterDownstreamMikrotiks(router.id);
   const [trackingPeerId, setTrackingPeerId] = useState<string | null>(null);
-  const [trackName, setTrackName] = useState("");
+  const [assetLabel, setAssetLabel] = useState("");
+  const [promoteName, setPromoteName] = useState("");
+  const [peerClassification, setPeerClassification] = useState<"mikrotik_router" | "wireguard_service" | "site_gateway" | "unknown">("unknown");
   const [trackReason, setTrackReason] = useState("");
   const [inlineError, setInlineError] = useState<string | null>(null);
   const [peerSearch, setPeerSearch] = useState("");
@@ -64,8 +80,9 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
     const search = peerSearch.trim().toLowerCase();
 
     return items.filter((peer) => {
-      if (peerFilter === "tracked" && !peer.trackedDeviceCount) return false;
-      if (peerFilter === "untracked" && peer.trackedDeviceCount) return false;
+      const represented = Boolean(peer.observedPeer || peer.trackedDeviceCount);
+      if (peerFilter === "tracked" && !represented) return false;
+      if (peerFilter === "untracked" && represented) return false;
       if (!search) return true;
 
       const haystack = [
@@ -83,39 +100,72 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
     });
   }, [runtime?.peers, peerFilter, peerSearch]);
 
-  const openTrackModal = (peerId: string, interfaceName: string | null | undefined, index: number) => {
+  const openTrackModal = (
+    peerId: string,
+    interfaceName: string | null | undefined,
+    index: number,
+    classification: "mikrotik_router" | "wireguard_service" | "site_gateway" | "unknown",
+    existingLabel?: string | null,
+  ) => {
     setTrackingPeerId(peerId);
-    setTrackName(buildSuggestedPeerName(router.profile.name, interfaceName, index));
+    setPeerClassification(classification);
+    setAssetLabel(existingLabel || buildSuggestedPeerName(router.profile.name, interfaceName, index));
+    setPromoteName(buildSuggestedPeerName(router.profile.name, interfaceName, index));
     setTrackReason("");
     setInlineError(null);
   };
 
   const closeTrackModal = () => {
     setTrackingPeerId(null);
-    setTrackName("");
+    setAssetLabel("");
+    setPromoteName("");
+    setPeerClassification("unknown");
     setTrackReason("");
     setInlineError(null);
   };
 
-  const handleTrackPeer = async () => {
+  const handleObservePeer = async () => {
     if (!trackingPeerId) return;
-    if (!trackName.trim()) {
-      setInlineError("Router name is required.");
+    if (!assetLabel.trim()) {
+      setInlineError("A peer label is required.");
       return;
     }
 
     try {
-      await trackPeerMutation.mutateAsync({
+      await observePeerMutation.mutateAsync({
         id: router.id,
         peerId: trackingPeerId,
         payload: {
-          name: trackName.trim(),
+          classification: peerClassification,
+          assetLabel: assetLabel.trim(),
           reason: trackReason.trim() || undefined,
         },
       });
       closeTrackModal();
     } catch (error) {
-      setInlineError(error instanceof Error ? error.message : "Failed to track runtime peer");
+      setInlineError(error instanceof Error ? error.message : "Failed to observe runtime peer");
+    }
+  };
+
+  const handlePromotePeer = async () => {
+    if (!trackingPeer?.observedPeer?.id) return;
+    if (!promoteName.trim()) {
+      setInlineError("Router name is required for promotion.");
+      return;
+    }
+
+    try {
+      await promotePeerMutation.mutateAsync({
+        id: router.id,
+        observedPeerId: trackingPeer.observedPeer.id,
+        payload: {
+          name: promoteName.trim(),
+          reason: trackReason.trim() || undefined,
+        },
+      });
+      closeTrackModal();
+    } catch (error) {
+      setInlineError(error instanceof Error ? error.message : "Failed to promote observed peer");
     }
   };
 
@@ -408,16 +458,60 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <Badge tone={peer.disabled ? "neutral" : "success"}>{peer.disabled ? "disabled" : "enabled"}</Badge>
+                            {peer.observedPeer ? (
+                              <>
+                                <Badge tone={peer.observedPeer.classification === "mikrotik_router" ? "info" : "neutral"}>
+                                  {formatPeerClassification(peer.observedPeer.classification)}
+                                </Badge>
+                                <Badge tone="neutral">{peer.observedPeer.confidenceScore}% confidence</Badge>
+                              </>
+                            ) : null}
                             <Badge tone="neutral">{peer.trackedDeviceCount || 0} tracked devices</Badge>
                             {peer.id ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => openTrackModal(peer.id as string, peer.interface, index)}
-                                disabled={Boolean(peer.trackedDeviceCount)}
-                              >
-                                {peer.trackedDeviceCount ? "Already tracked" : "Track peer"}
-                              </Button>
+                              peer.observedPeer ? (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openTrackModal(peer.id as string, peer.interface, index, peer.observedPeer?.classification || "unknown", peer.observedPeer?.assetLabel)}
+                                  >
+                                    Review peer
+                                  </Button>
+                                  {peer.observedPeer.classification === "mikrotik_router" && peer.observedPeer.promotionEligible && !peer.trackedDeviceCount ? (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => openTrackModal(peer.id as string, peer.interface, index, "mikrotik_router", peer.observedPeer?.assetLabel)}
+                                    >
+                                      Promote as router
+                                    </Button>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openTrackModal(peer.id as string, peer.interface, index, "mikrotik_router")}
+                                  >
+                                    Track as router
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openTrackModal(peer.id as string, peer.interface, index, "wireguard_service")}
+                                  >
+                                    Track as WireGuard service
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => openTrackModal(peer.id as string, peer.interface, index, "unknown")}
+                                  >
+                                    Track as external peer
+                                  </Button>
+                                </>
+                              )
                             ) : null}
                           </div>
                         </div>
@@ -430,6 +524,41 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
                         <p className="mt-2 text-xs text-text-muted">
                           RX {formatBytes(peer.rx || 0)} • TX {formatBytes(peer.tx || 0)}
                         </p>
+                        {peer.observedPeer ? (
+                          <div className="mt-3 rounded-xl border border-background-border bg-background-panel/70 p-3">
+                            <div className="flex flex-wrap items-start justify-between gap-2">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Tracked peer inventory</p>
+                                <p className="mt-2 text-sm text-text-primary">{peer.observedPeer.assetLabel || peer.interface || "Unnamed peer"}</p>
+                                <p className="mt-1 text-xs text-text-muted">
+                                  {formatPeerClassification(peer.observedPeer.classification)} • {peer.observedPeer.classificationSource} • {peer.observedPeer.confidenceScore}% confidence
+                                </p>
+                              </div>
+                              {peer.observedPeer.classification === "mikrotik_router" ? (
+                                <Badge tone={peer.observedPeer.promotionEligible ? "success" : "warning"}>
+                                  {peer.observedPeer.promotionEligible ? "promotion ready" : "needs more evidence"}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <p className="mt-3 text-xs text-text-muted">
+                              {peer.observedPeer.promotionReadinessReason || "This peer is tracked as a tunnel asset and not yet promoted into a router."}
+                            </p>
+                            {peer.observedPeer.evidence?.length ? (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {peer.observedPeer.evidence.slice(0, 4).map((item, evidenceIndex) => (
+                                  <Badge key={`${item.kind}-${evidenceIndex}`} tone="neutral">
+                                    {item.kind.replace(/_/g, " ")} • {item.summary}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : null}
+                            {peer.observedPeer.classification === "mikrotik_router" && !peer.observedPeer.promotionEligible ? (
+                              <p className="mt-3 text-xs text-text-muted">
+                                Use downstream MikroTik discovery below to confirm RouterOS evidence before promotion.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
                         {peer.trackedDevices?.length ? (
                           <div className="mt-3 rounded-xl border border-background-border bg-background-panel/70 p-3">
                             <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Tracked managed devices</p>
@@ -454,7 +583,9 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
                           </div>
                         ) : (
                           <p className="mt-3 text-xs text-text-muted">
-                            This runtime peer is not yet represented as a managed router record in your platform.
+                            {peer.observedPeer
+                              ? "This peer is tracked in the tunnel inventory but is not yet represented as a managed router record in your platform."
+                              : "This runtime peer is not yet tracked in your peer inventory or represented as a managed router record in your platform."}
                           </p>
                         )}
                       </div>
@@ -688,8 +819,8 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
 
       <Modal
         open={Boolean(trackingPeer)}
-        title="Track Runtime Peer"
-        description="Create a management-only router record tied to this runtime WireGuard peer so it appears as a managed device in the workspace."
+        title={trackingPeer?.observedPeer ? "Review Tracked Peer" : "Track Runtime Peer"}
+        description="Observe this runtime WireGuard peer as a tunnel asset first. Promote it to a managed router only after the evidence supports that classification."
         onClose={closeTrackModal}
         maxWidthClass="max-w-xl"
       >
@@ -700,13 +831,57 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
           </div>
 
           <Input
-            label="Managed router name"
-            value={trackName}
-            onChange={(event) => setTrackName(event.target.value)}
+            label="Tracked peer label"
+            value={assetLabel}
+            onChange={(event) => setAssetLabel(event.target.value)}
             placeholder={trackingPeer ? buildSuggestedPeerName(router.profile.name, trackingPeer.interface, 0) : "tracked-wireguard-peer"}
-            hint="If this name already exists for the same owner, the server will automatically append a numeric suffix."
+            hint="Use a human-readable asset label. This does not create a router record by itself."
             required
           />
+
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Classification</p>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ["mikrotik_router", "MikroTik router"],
+                ["wireguard_service", "WireGuard service"],
+                ["site_gateway", "Site gateway"],
+                ["unknown", "External peer"],
+              ] as const).map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  variant={peerClassification === value ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setPeerClassification(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <p className="text-xs text-text-muted">
+              Downstream discovery is the recommended path for confirming actual MikroTik routers.
+            </p>
+          </div>
+
+          {trackingPeer?.observedPeer ? (
+            <div className="rounded-2xl border border-background-border bg-background-panel p-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge tone={trackingPeer.observedPeer.classification === "mikrotik_router" ? "info" : "neutral"}>
+                  {formatPeerClassification(trackingPeer.observedPeer.classification)}
+                </Badge>
+                <Badge tone="neutral">{trackingPeer.observedPeer.confidenceScore}% confidence</Badge>
+                {trackingPeer.observedPeer.classification === "mikrotik_router" ? (
+                  <Badge tone={trackingPeer.observedPeer.promotionEligible ? "success" : "warning"}>
+                    {trackingPeer.observedPeer.promotionEligible ? "promotion ready" : "needs more evidence"}
+                  </Badge>
+                ) : null}
+              </div>
+              <p className="mt-3 text-sm text-text-secondary">
+                {trackingPeer.observedPeer.promotionReadinessReason || "This tracked peer is not yet ready for router promotion."}
+              </p>
+            </div>
+          ) : null}
 
           <Input
             label="Reason"
@@ -714,6 +889,16 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
             onChange={(event) => setTrackReason(event.target.value)}
             placeholder="Optional note for why this peer is being tracked"
           />
+
+          {trackingPeer?.observedPeer?.classification === "mikrotik_router" ? (
+            <Input
+              label="Promoted router name"
+              value={promoteName}
+              onChange={(event) => setPromoteName(event.target.value)}
+              placeholder={trackingPeer ? buildSuggestedPeerName(router.profile.name, trackingPeer.interface, 0) : "tracked-router"}
+              hint="Used only if you promote this observed peer into a management-only router."
+            />
+          ) : null}
 
           {inlineError ? (
             <div className="rounded-xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm text-danger">
@@ -725,8 +910,13 @@ export function RouterWireGuardPanel({ router }: { router: RouterDetail }) {
             <Button type="button" variant="ghost" onClick={closeTrackModal}>
               Cancel
             </Button>
-            <Button type="button" onClick={() => void handleTrackPeer()} isLoading={trackPeerMutation.isPending}>
-              Track peer
+            {trackingPeer?.observedPeer?.classification === "mikrotik_router" && trackingPeer.observedPeer.promotionEligible && !trackingPeer.trackedDeviceCount ? (
+              <Button type="button" variant="outline" onClick={() => void handlePromotePeer()} isLoading={promotePeerMutation.isPending}>
+                Promote as router
+              </Button>
+            ) : null}
+            <Button type="button" onClick={() => void handleObservePeer()} isLoading={observePeerMutation.isPending}>
+              {trackingPeer?.observedPeer ? "Update tracked peer" : "Save tracked peer"}
             </Button>
           </div>
         </div>
